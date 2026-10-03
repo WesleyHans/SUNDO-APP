@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="truck" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0fdf4" />
+    </linearGradient>
+    <linearGradient id="leaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded squircle with safe margin -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  
+  <!-- Subtle Eco Rings -->
+  <circle cx="256" cy="256" r="210" stroke="rgba(255,255,255,0.15)" stroke-width="6" fill="none" />
+  
+  <!-- Sprouting Eco Leaf on Top of Truck -->
+  <path d="M 285 130 C 285 130 335 125 350 165 C 365 205 320 230 285 220 C 275 190 270 150 285 130 Z" fill="url(#leaf)" />
+  <path d="M 285 220 Q 305 175 345 155" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" />
+
+  <!-- SUNDO Garbage Truck Body -->
+  <g transform="translate(76, 175)">
+    <!-- Main Cargo Compactor Body -->
+    <path d="M 20 50 L 220 50 Q 240 50 240 70 L 240 180 L 20 180 Z" fill="url(#truck)" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.2))" />
+    <!-- Rear Hopper Angle -->
+    <path d="M 20 50 L 5 100 L 5 180 L 25 180 Z" fill="#e2e8f0" />
+    
+    <!-- Recycling Symbol on Cargo -->
+    <g transform="translate(110, 85) scale(0.65)" fill="none" stroke="#059669" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M 30 10 L 55 50 L 40 50 M 55 50 L 45 42 M 55 50 L 60 38" />
+      <path d="M 70 65 L 15 65 L 22 53 M 15 65 L 22 75 M 15 65 L 26 65" />
+      <path d="M 5 50 L 30 10 L 37 22 M 30 10 L 18 10 M 30 10 L 25 2" />
+    </g>
+
+    <!-- Truck Cab -->
+    <path d="M 240 85 L 290 85 Q 315 85 330 115 L 345 145 L 345 180 L 240 180 Z" fill="url(#truck)" />
+    <!-- Cab Window -->
+    <path d="M 255 100 L 288 100 L 318 140 L 255 140 Z" fill="#93c5fd" opacity="0.9" />
+
+    <!-- Chassis Line -->
+    <rect x="10" y="175" width="340" height="15" rx="5" fill="#334155" />
+
+    <!-- Front Bumper & Headlight -->
+    <rect x="345" y="150" width="12" height="25" rx="4" fill="#fbbf24" />
+
+    <!-- Wheels -->
+    <g transform="translate(70, 185)">
+      <circle cx="0" cy="0" r="32" fill="#1e293b" />
+      <circle cx="0" cy="0" r="18" fill="#94a3b8" />
+      <circle cx="0" cy="0" r="8" fill="#1e293b" />
+    </g>
+    <g transform="translate(290, 185)">
+      <circle cx="0" cy="0" r="32" fill="#1e293b" />
+      <circle cx="0" cy="0" r="18" fill="#94a3b8" />
+      <circle cx="0" cy="0" r="8" fill="#1e293b" />
+    </g>
+  </g>
+
+  <!-- SUNDO Text Label -->
+  <text x="256" y="445" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="44" fill="#ffffff" text-anchor="middle" letter-spacing="4">SUNDO</text>
+  <text x="256" y="475" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="16" fill="#a7f3d0" text-anchor="middle" letter-spacing="2">SIPALAY CITY</text>
+</svg>

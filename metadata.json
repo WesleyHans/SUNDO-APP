@@ -1,0 +1,6 @@
+{
+  "name": "SUNDO - Sipalay Smart Waste Navigation",
+  "description": "Smart Urban Navigation for Dynamic Waste Operations in Sipalay City. Track garbage trucks in real-time, view collection schedules, receive proximity alerts, and submit community reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
