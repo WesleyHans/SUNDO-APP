@@ -858,4 +858,295 @@ class SundoLogoGraphic extends StatelessWidget {
   }
 }
 
+/// 3D Isometric Eco-Station Building Marker (matching Sipalay City 3D Map)
+class IsometricStationBuilding extends StatelessWidget {
+  final String number;
+  final String title;
+  final double size;
+  final double tiltAngle;
+  final VoidCallback? onTap;
+
+  const IsometricStationBuilding({
+    super.key,
+    required this.number,
+    required this.title,
+    this.size = 54,
+    this.tiltAngle = 0.0,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Transform(
+        transform: Matrix4.identity()..rotateX(-tiltAngle),
+        alignment: Alignment.bottomCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Number badge pill #1, #2...
+            Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF047857), Color(0xFF065F46)],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x40000000),
+                  offset: Offset(0, 3),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF34D399),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  number,
+                  style: GoogleFonts.outfit(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+
+          // 3D Isometric Building Custom Painter
+          CustomPaint(
+            size: Size(size, size * 0.8),
+            painter: _IsometricBuildingPainter(),
+          ),
+
+          // Ground shadow
+          Container(
+            width: size * 0.75,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(height: 3),
+
+          // Station Title Tag
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x15000000),
+                  offset: Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: Text(
+              title,
+              maxLines: 1,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
+
+class _IsometricBuildingPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    // Roof Apex
+    final Offset apex = Offset(w * 0.5, h * 0.08);
+    // Roof Corners
+    final Offset roofLeft = Offset(w * 0.08, h * 0.38);
+    final Offset roofFront = Offset(w * 0.5, h * 0.54);
+    final Offset roofRight = Offset(w * 0.92, h * 0.38);
+
+    // Wall Bottom Corners
+    final Offset baseLeft = Offset(w * 0.16, h * 0.88);
+    final Offset baseFront = Offset(w * 0.5, h * 0.98);
+    final Offset baseRight = Offset(w * 0.84, h * 0.88);
+
+    // Wall Top Corners (under eaves)
+    final Offset wallLeft = Offset(w * 0.16, h * 0.44);
+    final Offset wallFront = Offset(w * 0.5, h * 0.54);
+    final Offset wallRight = Offset(w * 0.84, h * 0.44);
+
+    // 1. Left Wall (Front Facing, illuminated)
+    final leftWall = Path()
+      ..moveTo(wallLeft.dx, wallLeft.dy)
+      ..lineTo(wallFront.dx, wallFront.dy)
+      ..lineTo(baseFront.dx, baseFront.dy)
+      ..lineTo(baseLeft.dx, baseLeft.dy)
+      ..close();
+    canvas.drawPath(leftWall, Paint()..color = const Color(0xFFFFFFFF));
+    canvas.drawPath(
+      leftWall,
+      Paint()
+        ..color = const Color(0xFFCBD5E1)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // 2. Right Wall (Shaded)
+    final rightWall = Path()
+      ..moveTo(wallFront.dx, wallFront.dy)
+      ..lineTo(wallRight.dx, wallRight.dy)
+      ..lineTo(baseRight.dx, baseRight.dy)
+      ..lineTo(baseFront.dx, baseFront.dy)
+      ..close();
+    canvas.drawPath(rightWall, Paint()..color = const Color(0xFFE2E8F0));
+    canvas.drawPath(
+      rightWall,
+      Paint()
+        ..color = const Color(0xFF94A3B8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // Windows on Front Wall
+    final winPaint = Paint()..color = const Color(0xFF0F766E);
+    final glassPaint = Paint()..color = const Color(0xFF99F6E4);
+
+    // Left window
+    final win1 = Path()
+      ..moveTo(w * 0.23, h * 0.54)
+      ..lineTo(w * 0.34, h * 0.58)
+      ..lineTo(w * 0.34, h * 0.74)
+      ..lineTo(w * 0.23, h * 0.70)
+      ..close();
+    canvas.drawPath(win1, winPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.25, h * 0.56)
+        ..lineTo(w * 0.32, h * 0.59)
+        ..lineTo(w * 0.32, h * 0.72)
+        ..lineTo(w * 0.25, h * 0.69)
+        ..close(),
+      glassPaint,
+    );
+
+    // Right door/window
+    final win2 = Path()
+      ..moveTo(w * 0.37, h * 0.59)
+      ..lineTo(w * 0.46, h * 0.62)
+      ..lineTo(w * 0.46, h * 0.88)
+      ..lineTo(w * 0.37, h * 0.85)
+      ..close();
+    canvas.drawPath(win2, winPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.38, h * 0.61)
+        ..lineTo(w * 0.44, h * 0.63)
+        ..lineTo(w * 0.44, h * 0.82)
+        ..lineTo(w * 0.38, h * 0.80)
+        ..close(),
+      glassPaint,
+    );
+
+    // Window on shaded right wall
+    final win3 = Path()
+      ..moveTo(w * 0.56, h * 0.60)
+      ..lineTo(w * 0.72, h * 0.54)
+      ..lineTo(w * 0.72, h * 0.70)
+      ..lineTo(w * 0.56, h * 0.75)
+      ..close();
+    canvas.drawPath(win3, Paint()..color = const Color(0xFF0F766E));
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.58, h * 0.61)
+        ..lineTo(w * 0.70, h * 0.56)
+        ..lineTo(w * 0.70, h * 0.68)
+        ..lineTo(w * 0.58, h * 0.73)
+        ..close(),
+      Paint()..color = const Color(0xFF5EEAD4),
+    );
+
+    // 3. Eaves Under-lip (Wood/Amber warm accent)
+    final eavesUnder = Path()
+      ..moveTo(roofLeft.dx, roofLeft.dy)
+      ..lineTo(roofFront.dx, roofFront.dy)
+      ..lineTo(roofRight.dx, roofRight.dy)
+      ..lineTo(wallRight.dx, wallRight.dy)
+      ..lineTo(wallFront.dx, wallFront.dy)
+      ..lineTo(wallLeft.dx, wallLeft.dy)
+      ..close();
+    canvas.drawPath(eavesUnder, Paint()..color = const Color(0xFFFDE68A));
+
+    // 4. Left Roof Slope (Bright Emerald)
+    final leftRoof = Path()
+      ..moveTo(apex.dx, apex.dy)
+      ..lineTo(roofLeft.dx, roofLeft.dy)
+      ..lineTo(roofFront.dx, roofFront.dy)
+      ..close();
+    canvas.drawPath(leftRoof, Paint()..color = const Color(0xFF10B981));
+    canvas.drawPath(
+      leftRoof,
+      Paint()
+        ..color = const Color(0xFF34D399)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // 5. Right Roof Slope (Shaded Deep Emerald)
+    final rightRoof = Path()
+      ..moveTo(apex.dx, apex.dy)
+      ..lineTo(roofFront.dx, roofFront.dy)
+      ..lineTo(roofRight.dx, roofRight.dy)
+      ..close();
+    canvas.drawPath(rightRoof, Paint()..color = const Color(0xFF059669));
+    canvas.drawPath(
+      rightRoof,
+      Paint()
+        ..color = const Color(0xFF047857)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // Apex Flag/Finial (Yellow Flag from screenshot)
+    final flagPole = Paint()
+      ..color = const Color(0xFFF59E0B)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(apex.dx, apex.dy), Offset(apex.dx, apex.dy - 7), flagPole);
+
+    final flagPath = Path()
+      ..moveTo(apex.dx, apex.dy - 7)
+      ..lineTo(apex.dx + 6, apex.dy - 4.5)
+      ..lineTo(apex.dx, apex.dy - 2)
+      ..close();
+    canvas.drawPath(flagPath, Paint()..color = const Color(0xFFFBBF24));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 
