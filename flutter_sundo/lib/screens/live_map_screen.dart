@@ -496,18 +496,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                         onTap: _flyToSipalay,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x15000000),
-                                offset: Offset(0, 3),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
+                          decoration: ClayTheme.card(radius: 24),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -539,20 +528,13 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                         onTap: _handleGpsBadgeTap,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: _isRealGpsActive ? const Color(0xFFECFDF5) : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _isRealGpsActive ? const Color(0xFFA7F3D0) : const Color(0xFFE2E8F0),
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x10000000),
-                                offset: Offset(0, 2),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
+                          decoration: _isRealGpsActive
+                              ? ClayTheme.badge(
+                                  bgColor: const Color(0xFFECFDF5),
+                                  borderColor: const Color(0xFFA7F3D0),
+                                  radius: 20,
+                                )
+                              : ClayTheme.card(radius: 20),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -587,18 +569,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
               right: 14,
               top: 110,
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x18000000),
-                      offset: Offset(0, 3),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
+                decoration: ClayTheme.card(radius: 14),
                 child: Column(
                   children: [
                     IconButton(
@@ -639,14 +610,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                   // 300 m Scale Bar (Matching reference)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x12000000), offset: Offset(0, 2), blurRadius: 6),
-                      ],
-                    ),
+                    decoration: ClayTheme.card(radius: 12),
                     child: Text(
                       '300 m',
                       style: GoogleFonts.outfit(
@@ -667,14 +631,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                         child: Container(
                           width: 44,
                           height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x15000000), offset: Offset(0, 3), blurRadius: 8),
-                            ],
-                          ),
+                          decoration: ClayTheme.buttonSecondary(radius: 14),
                           child: const Icon(Icons.filter_center_focus_rounded, color: Color(0xFF334155), size: 22),
                         ),
                       ),
@@ -685,14 +642,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                         onTap: _toggle3DView,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x15000000), offset: Offset(0, 3), blurRadius: 8),
-                            ],
-                          ),
+                          decoration: ClayTheme.buttonSecondary(radius: 14),
                           child: Text(
                             _is3DView ? '2D view' : '3D view',
                             style: GoogleFonts.outfit(
@@ -711,14 +661,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                         child: Container(
                           width: 36,
                           height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x12000000), offset: Offset(0, 2), blurRadius: 6),
-                            ],
-                          ),
+                          decoration: ClayTheme.buttonSecondary(radius: 18),
                           child: const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF64748B)),
                         ),
                       ),

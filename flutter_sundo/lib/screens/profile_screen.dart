@@ -438,15 +438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
+                decoration: ClayTheme.cardMint(radius: 24),
                 child: Row(
                   children: [
                     Container(
@@ -502,11 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Settings & Menu Items
             Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
+              decoration: ClayTheme.card(radius: 22),
               child: Column(
                 children: [
                   _buildMenuItem(
@@ -558,10 +546,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: widget.onLogout,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFECDD3)),
+                decoration: ClayTheme.badge(
+                  bgColor: const Color(0xFFFFF1F2),
+                  borderColor: const Color(0xFFFECDD3),
+                  radius: 20,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

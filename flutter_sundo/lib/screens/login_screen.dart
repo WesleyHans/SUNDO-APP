@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -111,18 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              offset: Offset(0, 1),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
+                        decoration: ClayTheme.input(radius: 14),
                         child: TextField(
                           controller: _emailController,
                           style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF0F172A)),
@@ -154,18 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              offset: Offset(0, 1),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
+                        decoration: ClayTheme.input(radius: 14),
                         child: TextField(
                           controller: _passwordController,
                           obscureText: !_showPassword,
@@ -267,17 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF059669),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x35059669),
-                            offset: Offset(0, 4),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
+                      decoration: ClayTheme.buttonPrimary(radius: 24),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -321,18 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x06000000),
-                            offset: Offset(0, 2),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
+                      decoration: ClayTheme.buttonSecondary(radius: 24),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -362,18 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x06000000),
-                            offset: Offset(0, 2),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
+                      decoration: ClayTheme.buttonSecondary(radius: 24),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

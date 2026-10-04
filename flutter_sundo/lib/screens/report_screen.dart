@@ -372,11 +372,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
           // GPS Location Card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
+            decoration: ClayTheme.card(radius: 20),
             child: Row(
               children: [
                 Container(
@@ -429,11 +425,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
           // 1. Concern Type Card
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
+            decoration: ClayTheme.card(radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -508,11 +500,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
           // 2. Description Card
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
+            decoration: ClayTheme.card(radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -568,11 +556,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
           // 3. Add Photos Card
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
+            decoration: ClayTheme.card(radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -711,19 +695,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF059669), Color(0xFF10B981)],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x30059669),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
+              decoration: ClayTheme.buttonPrimary(radius: 24),
               child: Center(
                 child: Text(
                   'Submit Report',
