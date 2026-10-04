@@ -1,23 +1,37 @@
-// Real SUNDO Android APK, built by GitHub Actions (.github/workflows/build-apk.yml)
-// and published to GitHub Releases. `/latest/download/` always resolves to the newest build.
+// Official SUNDO Android APK, compiled from Flutter source code
+// and hosted on GitHub Releases. `/latest/download/` always delivers the newest build.
 export const APK_DOWNLOAD_URL =
-  'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO-debug.apk';
+  'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk';
 
 export const APK_RELEASES_PAGE =
   'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest';
 
-function startApkDownload(): void {
-  const a = document.createElement('a');
-  a.href = APK_DOWNLOAD_URL;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => document.body.removeChild(a), 1000);
+export function startApkDownload(): void {
+  try {
+    const a = document.createElement('a');
+    a.href = APK_DOWNLOAD_URL;
+    a.download = 'SUNDO.apk';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+    }, 500);
+
+    // Fail-safe trigger for mobile Android Chrome & in-app browsers
+    setTimeout(() => {
+      window.location.assign(APK_DOWNLOAD_URL);
+    }, 150);
+  } catch {
+    window.location.href = APK_DOWNLOAD_URL;
+  }
 }
 
 /**
  * Starts downloading the real SUNDO APK.
- * Kept with the original name/signature so existing callers continue to work.
  */
 export async function generateAndDownloadApk(onProgress?: (msg: string) => void): Promise<boolean> {
   try {

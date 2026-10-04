@@ -136,8 +136,8 @@ export const MobileInstallBanner: React.FC<MobileInstallBannerProps> = ({
               <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
                 <span>Want the raw APK download file?</span>
                 <a
-                  href="/sundo-release.apk"
-                  download="SUNDO-v1.0.0-release.apk"
+                  href="https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk"
+                  download="SUNDO.apk"
                   className="text-emerald-400 font-bold hover:underline"
                 >
                   Download .apk

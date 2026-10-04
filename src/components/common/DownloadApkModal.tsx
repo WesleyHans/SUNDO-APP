@@ -173,8 +173,8 @@ export const DownloadApkModal: React.FC<DownloadApkModalProps> = ({
 
                       {/* Direct APK File Download button */}
                       <a
-                        href="/sundo-release.apk"
-                        download="SUNDO-v1.0.0-release.apk"
+                        href="https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk"
+                        download="SUNDO.apk"
                         className="px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95 no-underline"
                       >
                         <Download className="w-4 h-4 text-emerald-400" />

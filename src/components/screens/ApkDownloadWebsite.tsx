@@ -189,16 +189,12 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
               <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
                 <div className="flex items-center gap-2">
                   <span>Mirrors:</span>
-                  <a href="/SUNDO-v1.0.0-release.apk" download="SUNDO-v1.0.0-release.apk" className="text-emerald-400 font-bold hover:underline">
-                    Mirror 1
+                  <a href="https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk" download="SUNDO.apk" className="text-emerald-400 font-bold hover:underline">
+                    Primary
                   </a>
                   <span>•</span>
-                  <a href="/sundo-release.apk" download="SUNDO-v1.0.0-release.apk" className="text-emerald-400 font-bold hover:underline">
+                  <a href="https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO-debug.apk" download="SUNDO-debug.apk" className="text-emerald-400 font-bold hover:underline">
                     Mirror 2
-                  </a>
-                  <span>•</span>
-                  <a href="/sundo.apk" download="SUNDO-v1.0.0-release.apk" className="text-emerald-400 font-bold hover:underline">
-                    Mirror 3
                   </a>
                 </div>
                 <span className="text-emerald-400 font-medium">Auto-saves to Downloads folder</span>

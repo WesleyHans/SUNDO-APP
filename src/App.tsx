@@ -541,12 +541,7 @@ export default function App() {
             <button
               onClick={() => {
                 setViewMode('apk_downloader');
-                const link = document.createElement('a');
-                link.href = '/SUNDO-v1.0.0-release.apk';
-                link.download = 'SUNDO-v1.0.0-release.apk';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                downloadOfficialApk();
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/40 text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95"
               title="Download Android APK file"
