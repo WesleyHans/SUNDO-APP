@@ -53,7 +53,7 @@ void main() {
         final context = tester.element(find.byKey(const ValueKey('preview')));
         await precacheImage(const AssetImage(clayHeroAsset), context);
         await precacheImage(
-            const AssetImage('assets/images/sundo_logo.png'), context);
+            const AssetImage('assets/images/sundo-brand-logo.png'), context);
       });
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);

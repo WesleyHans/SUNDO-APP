@@ -22,3 +22,6 @@ flutter_sundo/android/key.properties
 
 # Local release packaging notes and APK copies
 artifacts/
+
+# Android Kotlin compilation cache
+flutter_sundo/android/.kotlin/

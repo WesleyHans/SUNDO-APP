@@ -14,3 +14,7 @@ The illustration was created with the built-in image generation tool using this 
 > Production portrait background for SUNDO, inspired by the supplied reference: a green municipal recycling truck on a clean Sipalay road, rounded clay foliage, lime and emerald trees, pale cyan city buildings, warm sunshine, cream clouds and spacious pale blue sky for headings. Matte sculpted materials, soft bevels and ambient shadows. Truck and city in the lower half, foliage at the bottom corners. No phone frame, UI, written words or watermark.
 
 The installer page is deployed to https://sundo-app.vercel.app through GitHub/Vercel. The v1.1.0 APK is published on GitHub Releases. Browser inspection was declined by the permission system for both the deployment and local web preview. Web validation therefore consists of TypeScript checks and a successful production build; native visual verification uses rendered Flutter screens.
+
+## Supplied SUNDO logo
+
+The user-supplied transparent PNG is preserved as flutter_sundo/assets/images/sundo-brand-logo.png and public/sundo-brand-logo.png. It replaces the previous brand mark on splash, sign-in, welcome, and installer branding. Android launcher and adaptive icon files are packaged from this artwork without redrawing the logo. Regenerate them with node scripts/package-brand-icons.mjs. Operational truck markers remain separate illustrations.

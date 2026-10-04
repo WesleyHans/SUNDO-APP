@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+const sundoBrandLogoAsset = 'assets/images/sundo-brand-logo.png';
+
+/// The supplied SUNDO brand artwork, preserved without redrawing.
+class SundoBrandMark extends StatelessWidget {
+  final double width;
+  const SundoBrandMark({super.key, this.width = 80});
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    sundoBrandLogoAsset,
+    width: width,
+    height: width * 1049 / 1499,
+    fit: BoxFit.contain,
+    semanticLabel: 'SUNDO recycling truck, leaf and location pin logo',
+    filterQuality: FilterQuality.high,
+  );
+}
+
 /// Sundo Garbage Truck Vector Graphic
 class SundoTruckGraphic extends StatelessWidget {
   final double width;
@@ -802,7 +819,7 @@ class SundoLogoGraphic extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SundoTruckGraphic(width: size * 1.5, height: size * 1.2),
+        SundoBrandMark(width: size * 1.5),
         Text('SUNDO', style: GoogleFonts.outfit(fontSize: size * 0.43,
           height: 1, fontWeight: FontWeight.w900, color: const Color(0xFF185632), letterSpacing: -1)),
         if (showSubtitle) ...[

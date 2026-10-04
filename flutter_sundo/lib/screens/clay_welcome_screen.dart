@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/clay_theme.dart';
+import '../widgets/sundo_graphics.dart';
 import '../widgets/scenic_backdrop.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -50,11 +51,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('SUNDO',
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF185632))),
+                                  Row(children: [
+                                    const SundoBrandMark(width: 34),
+                                    const SizedBox(width: 6),
+                                    Text('SUNDO', style: GoogleFonts.outfit(
+                                      fontSize: 14, fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF185632))),
+                                  ]),
                                   TextButton(
                                       onPressed: widget.onGetStarted,
                                       child: const Text('Explore demo')),
