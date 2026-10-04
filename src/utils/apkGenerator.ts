@@ -1,7 +1,7 @@
 // Real SUNDO Android APK, built by GitHub Actions (.github/workflows/build-apk.yml)
 // and published to GitHub Releases. `/latest/download/` always resolves to the newest build.
 export const APK_DOWNLOAD_URL =
-  'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk';
+  'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO-debug.apk';
 
 export const APK_RELEASES_PAGE =
   'https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest';
