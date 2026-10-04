@@ -461,8 +461,8 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                     // Mathematically anchored at Alignment.bottomCenter directly over _userLocation
                     Marker(
                       point: _userLocation,
-                      width: 68,
-                      height: 74,
+                      width: 90,
+                      height: 76,
                       alignment: Alignment.bottomCenter,
                       child: _buildZeroDriftHouseMarker(),
                     ),
@@ -1001,8 +1001,8 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
         );
       },
       child: SizedBox(
-        width: 68,
-        height: 74,
+        width: 90,
+        height: 76,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.center,
