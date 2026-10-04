@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/app_store.dart';
 import '../theme/clay_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -271,9 +272,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 24),
 
-              // Create Account Primary Clay Button
+              // Create Account Primary Button
               GestureDetector(
-                onTap: widget.onRegisterSuccess,
+                onTap: () async {
+                  final name = _nameController.text.trim();
+                  final email = _emailController.text.trim();
+                  final phone = _phoneController.text.trim();
+                  final pass = _passwordController.text;
+
+                  if (name.isEmpty || email.isEmpty || phone.isEmpty || pass.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please complete all required fields.')),
+                    );
+                    return;
+                  }
+
+                  if (pass.length < 6) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Password must be at least 6 characters.')),
+                    );
+                    return;
+                  }
+
+                  await AppStore.setName(name);
+                  await AppStore.setEmail(email);
+                  await AppStore.setPhone(phone);
+                  await AppStore.setBarangay(_selectedBarangay);
+
+                  widget.onRegisterSuccess();
+                },
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),

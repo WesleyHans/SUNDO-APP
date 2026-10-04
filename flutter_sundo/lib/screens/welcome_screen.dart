@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -25,44 +24,30 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   final List<Map<String, dynamic>> _slides = [
     {
-      'title1': 'A Cleaner Sipalay\n',
-      'title2': 'Starts with You',
-      'accentColor': const Color(0xFF047857),
-      'underlineColor': const Color(0xFF34D399),
+      'title1': 'A Cleaner Sipalay\nStarts with ',
+      'title2': 'You',
+      'accentColor': const Color(0xFF65A30D),
       'description':
           'Track garbage trucks, know collection schedules, receive alerts, and help keep our city clean.',
-      'graphic': const WelcomeSceneGraphic(height: 195),
+      'graphic': const WelcomeSceneGraphic(height: 200),
     },
     {
-      'title1': 'Live GPS Tracking\n',
-      'title2': 'Never Miss a Truck',
+      'title1': 'Live GPS Tracking\nNever Miss a ',
+      'title2': 'Truck',
       'accentColor': const Color(0xFF059669),
-      'underlineColor': const Color(0xFF10B981),
       'description':
           'Watch collection trucks approach your barangay in real-time with accurate distance meters and proximity sirens.',
-      'graphic': const GpsTrackingSceneGraphic(height: 195),
+      'graphic': const GpsTrackingSceneGraphic(height: 200),
     },
     {
-      'title1': 'Report & Keep Track\n',
-      'title2': 'Zero Waste Sipalay',
-      'accentColor': const Color(0xFF0D9488),
-      'underlineColor': const Color(0xFF2DD4BF),
+      'title1': 'Report & Keep Track\nZero Waste ',
+      'title2': 'Sipalay',
+      'accentColor': const Color(0xFF059669),
       'description':
           'Snap photos of uncollected waste or illegal dumping, earn Eco-Points, and keep our coastlines pristine.',
-      'graphic': const ReportCommunitySceneGraphic(height: 195),
+      'graphic': const ReportCommunitySceneGraphic(height: 200),
     },
   ];
-
-  void _onNext() {
-    if (_currentPage < _slides.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-      );
-    } else {
-      widget.onGetStarted();
-    }
-  }
 
   @override
   void dispose() {
@@ -76,87 +61,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Top Bar: SUNDO Logo badge & Skip button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x20059669),
-                              blurRadius: 8,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(
-                            'assets/images/sundo_logo.png',
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.recycling_rounded,
-                              color: Color(0xFF059669),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'SUNDO',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF0F172A),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_currentPage < _slides.length - 1)
-                    GestureDetector(
-                      onTap: () {
-                        _pageController.animateToPage(
-                          _slides.length - 1,
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOutCubic,
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          'Skip',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 28, width: 48),
-                ],
-              ),
-
               const SizedBox(height: 10),
 
               // Interactive Swipeable Walkthrough Slides
               SizedBox(
-                height: 360,
+                height: 380,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) {
@@ -170,12 +83,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Headline with custom underline
+                        // Headline matching Mockup 2
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: GoogleFonts.outfit(
-                              fontSize: 25,
+                              fontSize: 26,
                               fontWeight: FontWeight.w900,
                               color: const Color(0xFF0F172A),
                               height: 1.25,
@@ -186,32 +99,29 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                 text: slide['title2'],
                                 style: TextStyle(
                                   color: slide['accentColor'],
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: slide['underlineColor'],
-                                  decorationThickness: 3,
                                 ),
                               ),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
 
                         // Subtitle
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             slide['description'],
                             textAlign: TextAlign.center,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: const Color(0xFF475569),
+                              fontSize: 12.5,
+                              color: const Color(0xFF64748B),
                               height: 1.45,
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 18),
 
                         // Custom Scene Graphic for this slide
                         Padding(
@@ -224,9 +134,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              // Interactive Claymorphic Pagination Dots
+              // Carousel Dots Indicator (Mockup 2: 3 dots)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_slides.length, (index) {
@@ -243,44 +153,45 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 24 : 8,
+                      width: isActive ? 22 : 8,
                       height: 8,
                       decoration: BoxDecoration(
                         color: isActive ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
                         borderRadius: BorderRadius.circular(4),
-                        boxShadow: isActive
-                            ? const [
-                                BoxShadow(
-                                  color: Color(0x40059669),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
-                                ),
-                              ]
-                            : null,
                       ),
                     ),
                   );
                 }),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
-              // 1. Primary Clay Button: Next / Get Started
+              // 1. Primary Button: Get Started →
               GestureDetector(
-                onTap: _onNext,
+                onTap: widget.onGetStarted,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  decoration: ClayTheme.buttonPrimary(),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF059669),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x35059669),
+                        offset: Offset(0, 4),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
+                        'Get Started',
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 14,
+                          fontSize: 15,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -292,27 +203,38 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
               const SizedBox(height: 12),
 
-              // 2. Secondary Clay Button: Log In
+              // 2. Secondary Button: Log In
               GestureDetector(
                 onTap: widget.onLogIn,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: ClayTheme.buttonSecondary(),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x08000000),
+                        offset: Offset(0, 2),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
                   child: Center(
                     child: Text(
                       'Log In',
                       style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF1E293B),
+                        color: const Color(0xFF0F172A),
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // 3. Text Link: Create an Account
               GestureDetector(
@@ -323,7 +245,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   child: Text(
                     'Create an Account',
                     style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF047857),
+                      color: const Color(0xFF059669),
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),

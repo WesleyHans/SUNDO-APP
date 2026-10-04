@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
 
@@ -14,6 +15,7 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   String _activeTab = 'Today'; // 'Today', 'This Week', 'Calendar'
+  DateTime _selectedMonth = DateTime(2024, 11);
   int _selectedDay = 12;
 
   final List<Map<String, dynamic>> _schedules = const [
@@ -64,43 +66,27 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     },
   ];
 
-  final List<Map<String, dynamic>> _calendarDays = const [
-    {'day': 27, 'currentMonth': false, 'hasCollection': false},
-    {'day': 28, 'currentMonth': false, 'hasCollection': false},
-    {'day': 29, 'currentMonth': false, 'hasCollection': false},
-    {'day': 30, 'currentMonth': false, 'hasCollection': false},
-    {'day': 31, 'currentMonth': false, 'hasCollection': false},
-    {'day': 1, 'currentMonth': true, 'hasCollection': false},
-    {'day': 2, 'currentMonth': true, 'hasCollection': false},
-    {'day': 3, 'currentMonth': true, 'hasCollection': false},
-    {'day': 4, 'currentMonth': true, 'hasCollection': false},
-    {'day': 5, 'currentMonth': true, 'hasCollection': false},
-    {'day': 6, 'currentMonth': true, 'hasCollection': false},
-    {'day': 7, 'currentMonth': true, 'hasCollection': false},
-    {'day': 8, 'currentMonth': true, 'hasCollection': false},
-    {'day': 9, 'currentMonth': true, 'hasCollection': false},
-    {'day': 10, 'currentMonth': true, 'hasCollection': false},
-    {'day': 11, 'currentMonth': true, 'hasCollection': false},
-    {'day': 12, 'currentMonth': true, 'hasCollection': true},
-    {'day': 13, 'currentMonth': true, 'hasCollection': true},
-    {'day': 14, 'currentMonth': true, 'hasCollection': true},
-    {'day': 15, 'currentMonth': true, 'hasCollection': false},
-    {'day': 16, 'currentMonth': true, 'hasCollection': false},
-    {'day': 17, 'currentMonth': true, 'hasCollection': false},
-    {'day': 18, 'currentMonth': true, 'hasCollection': false},
-    {'day': 19, 'currentMonth': true, 'hasCollection': true},
-    {'day': 20, 'currentMonth': true, 'hasCollection': false},
-    {'day': 21, 'currentMonth': true, 'hasCollection': false},
-    {'day': 22, 'currentMonth': true, 'hasCollection': false},
-    {'day': 23, 'currentMonth': true, 'hasCollection': false},
-    {'day': 24, 'currentMonth': true, 'hasCollection': false},
-    {'day': 25, 'currentMonth': true, 'hasCollection': false},
-    {'day': 26, 'currentMonth': true, 'hasCollection': true},
-    {'day': 27, 'currentMonth': true, 'hasCollection': false},
-    {'day': 28, 'currentMonth': true, 'hasCollection': false},
-    {'day': 29, 'currentMonth': true, 'hasCollection': false},
-    {'day': 30, 'currentMonth': true, 'hasCollection': false},
-  ];
+  List<Map<String, dynamic>> _getDynamicCalendarDays() {
+    final firstDayOfMonth = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+    final daysInMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
+    final startingWeekday = firstDayOfMonth.weekday % 7; // 0 = Sunday
+    final daysInPrevMonth = DateTime(_selectedMonth.year, _selectedMonth.month, 0).day;
+
+    final List<Map<String, dynamic>> result = [];
+    for (int i = startingWeekday - 1; i >= 0; i--) {
+      result.add({'day': daysInPrevMonth - i, 'currentMonth': false, 'hasCollection': false});
+    }
+    for (int d = 1; d <= daysInMonth; d++) {
+      final date = DateTime(_selectedMonth.year, _selectedMonth.month, d);
+      final hasCollection = (date.weekday >= 1 && date.weekday <= 6); // Mon-Sat
+      result.add({'day': d, 'currentMonth': true, 'hasCollection': hasCollection});
+    }
+    int remaining = (7 - (result.length % 7)) % 7;
+    for (int i = 1; i <= remaining; i++) {
+      result.add({'day': i, 'currentMonth': false, 'hasCollection': false});
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -302,10 +288,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF64748B), size: 24),
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+                        _selectedDay = 1;
+                      });
+                    },
                   ),
                   Text(
-                    'November 2024',
+                    DateFormat('MMMM yyyy').format(_selectedMonth),
                     style: GoogleFonts.outfit(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -314,7 +305,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 24),
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+                        _selectedDay = 1;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -342,18 +338,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               const SizedBox(height: 10),
 
               // Calendar Days Grid
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _calendarDays.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 6,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final item = _calendarDays[index];
+              Builder(
+                builder: (context) {
+                  final days = _getDynamicCalendarDays();
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: days.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 6,
+                      childAspectRatio: 1,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = days[index];
                   final int day = item['day'] as int;
                   final bool isCurrentMonth = item['currentMonth'] as bool;
                   final bool hasCollection = item['hasCollection'] as bool;
@@ -407,9 +406,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ],
                       ),
                     ),
-                  );
-                },
-              ),
+                    );
+                  },
+                );
+              },
+            ),
             ],
           ),
         ),
