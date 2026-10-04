@@ -45,4 +45,4 @@ flutter build apk --release
 
 Output: `flutter_sundo/build/app/outputs/flutter-apk/app-release.apk`.
 
-The GitHub Android workflow now runs analysis and tests before building, using the same Flutter version. It publishes a GitHub Release when triggered; no changes have been pushed from this workspace.
+The GitHub Android workflow now runs analysis and tests before building, using the same Flutter version. It publishes a GitHub Release when triggered. Source changes are pushed to GitHub. The current Actions run was blocked because the GitHub account is locked due to a billing issue; the locally verified v1.1.0 APK was published directly as a GitHub Release.

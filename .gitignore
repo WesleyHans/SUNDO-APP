@@ -19,3 +19,6 @@ flutter_sundo/android/local.properties
 flutter_sundo/android/key.properties
 *.jks
 *.keystore
+
+# Local release packaging notes and APK copies
+artifacts/
