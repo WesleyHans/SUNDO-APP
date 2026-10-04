@@ -1,20 +1,26 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_store.dart';
+import '../core/storage/app_store.dart';
+import './push_notification_service.dart';
 
 class BackendService {
   static const url = String.fromEnvironment('SUPABASE_URL');
   static const key = String.fromEnvironment('SUPABASE_ANON_KEY');
   static bool get configured => url.isNotEmpty && key.isNotEmpty;
   static bool demoMode = true;
+  static bool _initialized = false;
   static bool get live => configured && !demoMode;
   static SupabaseClient get client => Supabase.instance.client;
   static Future<void> initialize() async {
     if (configured) {
-      await Supabase.initialize(url: url, publishableKey: key);
+      if (!_initialized) {
+        await Supabase.initialize(url: url, publishableKey: key);
+        _initialized = true;
+      }
       final preferences = await SharedPreferences.getInstance();
       if (preferences.getBool('sundo_remember_session') == false) {
+        await PushNotificationService.unregisterCurrentDevice();
         await client.auth.signOut(scope: SignOutScope.local);
       }
       demoMode = client.auth.currentSession == null;
@@ -28,8 +34,12 @@ class BackendService {
     }
   }
 
-  static Future<void> login(String email, String password, {bool remember = true}) async {
+  static Future<void> login(String email, String password,
+      {bool remember = true}) async {
     requireBackend();
+    if (client.auth.currentUser != null) {
+      await PushNotificationService.unregisterCurrentDevice();
+    }
     await client.auth.signInWithPassword(email: email, password: password);
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool('sundo_remember_session', remember);
@@ -37,13 +47,18 @@ class BackendService {
     await loadProfile();
   }
 
-  static Future<bool> register(String name, String email, String phone,
-      String barangay, String password) async {
+  static Future<bool> register(
+      String name, String email, String phone, String barangay, String password,
+      {String zone = '', String street = ''}) async {
     requireBackend();
-    final result = await client.auth.signUp(
-        email: email,
-        password: password,
-        data: {'name': name, 'phone': phone, 'barangay': barangay});
+    final result =
+        await client.auth.signUp(email: email, password: password, data: {
+      'name': name,
+      'phone': phone,
+      'barangay': barangay,
+      'zone': zone,
+      'street': street
+    });
     if (result.session == null) return false;
     demoMode = false;
     await loadProfile();
@@ -56,16 +71,23 @@ class BackendService {
         .select()
         .eq('id', client.auth.currentUser!.id)
         .single();
+    AppStore.setIdentity(client.auth.currentUser!.id);
     await AppStore.setName(profile['name'] as String);
     await AppStore.setEmail(client.auth.currentUser!.email ?? '');
     await AppStore.setPhone(profile['phone'] as String);
     await AppStore.setBarangay(profile['barangay'] as String);
+    await AppStore.setZone(profile['zone'] as String? ?? '');
+    await AppStore.setStreet(profile['street'] as String? ?? '');
     return profile;
   }
 
   static Future<void> logout() async {
-    if (configured) await client.auth.signOut();
+    if (configured) {
+      await PushNotificationService.unregisterCurrentDevice();
+      await client.auth.signOut();
+    }
     demoMode = true;
+    AppStore.setIdentity(null);
   }
 
   static Future<List<GarbageReportItem>> reports() async {

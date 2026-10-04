@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.LibraryExtension
+
 allprojects {
     repositories {
         google()
@@ -17,6 +19,18 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+// API 37 is distributed as android-37.0. The permission plugin declares the
+// integer API only, so specify its minor level without editing the Pub cache.
+subprojects {
+    if (name == "permission_handler_android") {
+        afterEvaluate {
+            extensions.configure<LibraryExtension> {
+                compileSdkMinor = 0
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

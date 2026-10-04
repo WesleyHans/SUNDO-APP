@@ -4,14 +4,17 @@ create table public.profiles (
   name text not null default '',
   phone text not null default '',
   barangay text not null default '',
+  zone text not null default '',
+  street text not null default '',
   role text not null default 'resident' check (role in ('resident','driver','staff'))
 );
 create function public.create_resident_profile() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles(id,name,phone,barangay)
+  insert into public.profiles(id,name,phone,barangay,zone,street)
   values(new.id, coalesce(new.raw_user_meta_data->>'name',''),
-    coalesce(new.raw_user_meta_data->>'phone',''), coalesce(new.raw_user_meta_data->>'barangay',''));
+    coalesce(new.raw_user_meta_data->>'phone',''), coalesce(new.raw_user_meta_data->>'barangay',''),
+    coalesce(new.raw_user_meta_data->>'zone',''), coalesce(new.raw_user_meta_data->>'street',''));
   return new;
 end; $$;
 create trigger on_resident_signup after insert on auth.users
@@ -29,7 +32,14 @@ create table public.trucks (
   longitude double precision check(longitude between -180 and 180),
   speed_kmh double precision not null default 0 check(speed_kmh >= 0),
   updated_at timestamptz,
-  active boolean not null default false
+  active boolean not null default false,
+  heading double precision check(heading between 0 and 360),
+  eta_minutes integer check(eta_minutes >= 0),
+  next_stop text,
+  current_area text,
+  progress double precision check(progress between 0 and 1),
+  status text check(status in ('Not Started','On Route','Approaching','Nearby','Completed')),
+  active_route jsonb
 );
 create table public.reports (
   id text primary key,
@@ -62,9 +72,9 @@ grant select,insert,update on public.reports to authenticated;
 grant select,insert,update,delete on public.trucks,public.schedules to authenticated;
 grant usage,select on sequence public.schedules_id_seq to authenticated;
 grant select on public.profiles to authenticated;
-grant update(name,phone,barangay) on public.profiles to authenticated;
+grant update(name,phone,barangay,zone,street) on public.profiles to authenticated;
 revoke update on public.profiles from authenticated;
-grant update(name,phone,barangay) on public.profiles to authenticated;
+grant update(name,phone,barangay,zone,street) on public.profiles to authenticated;
 create policy profile_read on public.profiles for select to authenticated using(id=auth.uid() or public.is_staff());
 create policy profile_edit on public.profiles for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
 create policy truck_read on public.trucks for select to authenticated using(true);
@@ -84,7 +94,7 @@ create index reports_resident_created on public.reports(resident_id,created_at d
 create index reports_truck_status on public.reports(truck_id,status);
 create index schedules_pickup on public.schedules(pickup_at);
 
-create function public.publish_position(lat double precision,lng double precision,speed double precision,is_active boolean)
+create function public.publish_position(lat double precision,lng double precision,speed double precision,is_active boolean,heading_value double precision default null)
 returns void language plpgsql security definer set search_path=public as $$
 begin
   if not exists(select 1 from profiles where id=auth.uid() and role='driver') then
@@ -94,7 +104,8 @@ begin
     or lat not between -90 and 90 or lng not between -180 and 180 or speed < 0 then
     raise exception 'Invalid position';
   end if;
-  update trucks set latitude=lat,longitude=lng,speed_kmh=speed,active=is_active,updated_at=now() where driver_id=auth.uid();
+  update trucks set latitude=lat,longitude=lng,speed_kmh=speed,active=is_active,updated_at=now(),
+    heading=case when heading_value between 0 and 360 then heading_value else null end where driver_id=auth.uid();
   if not found then raise exception 'No truck assigned'; end if;
 end; $$;
 create function public.complete_report(report_id text) returns void
@@ -106,8 +117,8 @@ begin
   if not found then raise exception 'Scheduled report not assigned to this driver'; end if;
 end; $$;
 revoke all on function public.create_resident_profile() from public;
-revoke all on function public.is_staff(), public.publish_position(double precision,double precision,double precision,boolean), public.complete_report(text) from public;
-grant execute on function public.is_staff(), public.publish_position(double precision,double precision,double precision,boolean), public.complete_report(text) to authenticated;
+revoke all on function public.is_staff(), public.publish_position(double precision,double precision,double precision,boolean,double precision), public.complete_report(text) from public;
+grant execute on function public.is_staff(), public.publish_position(double precision,double precision,double precision,boolean,double precision), public.complete_report(text) to authenticated;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('report-photos','report-photos',false,5242880,array['image/jpeg','image/png']);
@@ -124,3 +135,23 @@ create policy photo_remove on storage.objects for delete to authenticated using(
   bucket_id='report-photos' and (storage.foldername(name))[1]=auth.uid()::text
   and not exists(select 1 from reports r where name=any(r.photo_paths))
 );
+
+-- Tokens are private per account. Only trusted server code may send FCM messages.
+create table public.device_push_tokens (
+  resident_id uuid not null references public.profiles(id) on delete cascade,
+  token text not null unique,
+  updated_at timestamptz not null default now(),
+  primary key(resident_id,token)
+);
+alter table public.device_push_tokens enable row level security;
+revoke all on public.device_push_tokens from anon;
+grant select,insert,update,delete on public.device_push_tokens to authenticated;
+create policy push_token_owner on public.device_push_tokens for all to authenticated
+  using(resident_id=auth.uid()) with check(resident_id=auth.uid());
+-- Publish the public fleet table only. Resident GPS remains local to each device.
+do $$ begin
+ if exists(select 1 from pg_publication where pubname='supabase_realtime')
+ and not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='trucks') then
+  alter publication supabase_realtime add table public.trucks;
+ end if;
+end $$;

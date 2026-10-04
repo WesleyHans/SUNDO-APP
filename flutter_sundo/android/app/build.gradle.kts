@@ -6,7 +6,10 @@ plugins {
 
 android {
     namespace = "com.sundo.sipalay"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android uses API 37; keep all modules on that SDK.
+    compileSdk {
+        version = release(37) { minorApiLevel = 0 }
+    }
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

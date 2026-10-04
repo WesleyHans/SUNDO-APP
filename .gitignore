@@ -25,3 +25,7 @@ artifacts/
 
 # Android Kotlin compilation cache
 flutter_sundo/android/.kotlin/
+
+# Flutter IDE files
+flutter_sundo/.idea/
+*.iml

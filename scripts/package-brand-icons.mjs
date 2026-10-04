@@ -24,3 +24,13 @@ await fs.writeFile(path.join(res,'values/colors.xml'),`<?xml version="1.0" encod
 <resources><color name="sundo_launcher_background">#F7FAEF</color></resources>
 `);
 console.log('Packaged supplied artwork into Android launcher assets.');
+
+// Package the same supplied artwork for the later macOS/iOS build.
+const iosIcons=path.join(root,'flutter_sundo/ios/Runner/Assets.xcassets/AppIcon.appiconset');
+const catalog=JSON.parse(await fs.readFile(path.join(iosIcons,'Contents.json'),'utf8'));
+for(const entry of catalog.images){
+ if(!entry.filename)continue;
+ const size=Math.round(Number(entry.size.split('x')[0])*Number(entry.scale.replace('x','')));
+ const mark=await sharp(asset).resize(Math.round(size*.84),Math.round(size*.84),{fit:'inside'}).toBuffer();
+ await sharp({create:{width:size,height:size,channels:3,background:bg}}).composite([{input:mark,gravity:'center'}]).flatten({background:bg}).png().toFile(path.join(iosIcons,entry.filename));
+}

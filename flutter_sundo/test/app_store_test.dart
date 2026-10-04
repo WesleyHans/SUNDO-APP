@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sundo_sipalay/services/app_store.dart';
+import 'package:sundo_sipalay/core/storage/app_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('new installations have no invented reports; saved reports persist', () async {
+  test('new installations have no invented reports; saved reports persist',
+      () async {
     SharedPreferences.setMockInitialValues({});
     expect(await AppStore.getReports(), isEmpty);
     final report = GarbageReportItem(
@@ -26,7 +27,9 @@ void main() {
     expect(preferences.getStringList('sundo_reports'), hasLength(1));
   });
 
-  test('report serialization preserves absent GPS without inventing coordinates', () {
+  test(
+      'report serialization preserves absent GPS without inventing coordinates',
+      () {
     final report = GarbageReportItem.fromJson({
       'id': 'legacy-report',
       'createdAt': '2026-10-04T00:00:00.000Z',
