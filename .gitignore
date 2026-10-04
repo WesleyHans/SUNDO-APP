@@ -11,3 +11,11 @@ coverage/
 *.apk
 *.aab
 .vercel
+
+# Flutter generated files and local Android configuration
+flutter_sundo/.dart_tool/
+flutter_sundo/.flutter-plugins-dependencies
+flutter_sundo/android/local.properties
+flutter_sundo/android/key.properties
+*.jks
+*.keystore

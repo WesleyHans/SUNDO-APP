@@ -25,30 +25,31 @@ class GarbageReportItem {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'concernType': concernType,
-    'description': description,
-    'photoPaths': photoPaths,
-    'latitude': latitude,
-    'longitude': longitude,
-    'locationAddress': locationAddress,
-    'createdAt': createdAt.toIso8601String(),
-    'status': status,
-  };
+        'id': id,
+        'concernType': concernType,
+        'description': description,
+        'photoPaths': photoPaths,
+        'latitude': latitude,
+        'longitude': longitude,
+        'locationAddress': locationAddress,
+        'createdAt': createdAt.toIso8601String(),
+        'status': status,
+      };
 
-  factory GarbageReportItem.fromJson(Map<String, dynamic> map) => GarbageReportItem(
-    id: map['id'] as String? ?? 'SUNDO-000',
-    concernType: map['concernType'] as String? ?? 'Missed Collection',
-    description: map['description'] as String? ?? '',
-    photoPaths: List<String>.from(map['photoPaths'] as List? ?? []),
-    latitude: (map['latitude'] as num?)?.toDouble(),
-    longitude: (map['longitude'] as num?)?.toDouble(),
-    locationAddress: map['locationAddress'] as String? ?? 'Sipalay City',
-    createdAt: map['createdAt'] != null
-        ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()
-        : DateTime.now(),
-    status: map['status'] as String? ?? 'Pending',
-  );
+  factory GarbageReportItem.fromJson(Map<String, dynamic> map) =>
+      GarbageReportItem(
+        id: map['id'] as String? ?? 'SUNDO-000',
+        concernType: map['concernType'] as String? ?? 'Missed Collection',
+        description: map['description'] as String? ?? '',
+        photoPaths: List<String>.from(map['photoPaths'] as List? ?? []),
+        latitude: (map['latitude'] as num?)?.toDouble(),
+        longitude: (map['longitude'] as num?)?.toDouble(),
+        locationAddress: map['locationAddress'] as String? ?? 'Sipalay City',
+        createdAt: map['createdAt'] != null
+            ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()
+            : DateTime.now(),
+        status: map['status'] as String? ?? 'Pending',
+      );
 }
 
 class AppStore {
@@ -127,17 +128,23 @@ class AppStore {
     if (raw == null || raw.isEmpty) {
       return [
         {'label': 'Home', 'address': 'Barangay 1, Poblacion, Sipalay City'},
-        {'label': 'Store', 'address': 'Barangay 2, Public Market, Sipalay City'},
+        {
+          'label': 'Store',
+          'address': 'Barangay 2, Public Market, Sipalay City'
+        },
       ];
     }
-    return raw.map((item) => Map<String, String>.from(jsonDecode(item) as Map)).toList();
+    return raw
+        .map((item) => Map<String, String>.from(jsonDecode(item) as Map))
+        .toList();
   }
 
   static Future<void> addSavedAddress(String label, String address) async {
     final p = await _getPrefs();
     final list = await getSavedAddresses();
     list.add({'label': label, 'address': address});
-    await p.setStringList(_keySavedAddresses, list.map((e) => jsonEncode(e)).toList());
+    await p.setStringList(
+        _keySavedAddresses, list.map((e) => jsonEncode(e)).toList());
   }
 
   static Future<void> removeSavedAddress(int index) async {
@@ -145,7 +152,8 @@ class AppStore {
     final list = await getSavedAddresses();
     if (index >= 0 && index < list.length) {
       list.removeAt(index);
-      await p.setStringList(_keySavedAddresses, list.map((e) => jsonEncode(e)).toList());
+      await p.setStringList(
+          _keySavedAddresses, list.map((e) => jsonEncode(e)).toList());
     }
   }
 
@@ -153,29 +161,20 @@ class AppStore {
   static Future<List<GarbageReportItem>> getReports() async {
     final p = await _getPrefs();
     final raw = p.getStringList(_keyReports);
-    if (raw == null || raw.isEmpty) {
-      return [
-        GarbageReportItem(
-          id: 'SUNDO-2026-000120',
-          concernType: 'Uncollected Waste',
-          description: 'Recyclables accumulated at the corner of Poblacion Plaza Road.',
-          photoPaths: [],
-          latitude: 9.7525,
-          longitude: 122.4038,
-          locationAddress: 'Poblacion Plaza Road, Barangay 1',
-          createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-          status: 'Scheduled',
-        ),
-      ];
-    }
-    return raw.map((e) => GarbageReportItem.fromJson(jsonDecode(e) as Map<String, dynamic>)).toList();
+    if (raw == null || raw.isEmpty) return [];
+    return raw
+        .map((e) =>
+            GarbageReportItem.fromJson(jsonDecode(e) as Map<String, dynamic>))
+        .toList();
   }
 
   static Future<void> saveReport(GarbageReportItem report) async {
     final p = await _getPrefs();
     final list = await getReports();
     list.insert(0, report);
-    await p.setStringList(_keyReports, list.map((e) => jsonEncode(e.toJson())).toList());
+    final saved = await p.setStringList(
+        _keyReports, list.map((e) => jsonEncode(e.toJson())).toList());
+    if (!saved) throw StateError('Unable to save your report on this device.');
   }
 
   // Read Notifications

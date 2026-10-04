@@ -1,10 +1,11 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../services/app_store.dart';
+import '../services/backend_service.dart';
 import '../theme/clay_theme.dart';
 
 class ReportGarbageScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   final TextEditingController _descController = TextEditingController();
   final List<String> _photos = [];
   bool _isSubmitted = false;
+  bool _isSaving = false;
   String _submittedTicketId = '';
 
   // GPS state for report
@@ -55,11 +57,21 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   }
 
   Future<void> _loadPastReports() async {
-    final list = await AppStore.getReports();
-    if (mounted) {
-      setState(() {
-        _pastReports = list;
-      });
+    try {
+      final list = BackendService.live
+          ? await BackendService.reports()
+          : await AppStore.getReports();
+      if (mounted) {
+        setState(() {
+          _pastReports = list;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('Could not load report history. Check your connection.')));
+      }
     }
   }
 
@@ -67,9 +79,12 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
     setState(() => _isLoadingGps = true);
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!mounted) return;
       if (!serviceEnabled) {
         setState(() {
-          _locationSummary = 'Poblacion Plaza Road, Barangay 1';
+          _reportLat = null;
+          _reportLng = null;
+          _locationSummary = 'Location services are off. Enable GPS and retry.';
           _isLoadingGps = false;
         });
         return;
@@ -79,10 +94,15 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
+      if (!mounted) return;
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         setState(() {
-          _locationSummary = 'Barangay 1, Sipalay City (Default)';
+          _reportLat = null;
+          _reportLng = null;
+          _locationSummary =
+              'Location permission denied. Enable it in app settings.';
           _isLoadingGps = false;
         });
         return;
@@ -97,14 +117,18 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
         setState(() {
           _reportLat = pos.latitude;
           _reportLng = pos.longitude;
-          _locationSummary = 'Lat: ${pos.latitude.toStringAsFixed(4)}, Lng: ${pos.longitude.toStringAsFixed(4)} (±${pos.accuracy.toStringAsFixed(1)}m)';
+          _locationSummary =
+              'Lat: ${pos.latitude.toStringAsFixed(4)}, Lng: ${pos.longitude.toStringAsFixed(4)} (±${pos.accuracy.toStringAsFixed(1)}m)';
           _isLoadingGps = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _locationSummary = 'Barangay 1, Sipalay City';
+          _reportLat = null;
+          _reportLng = null;
+          _locationSummary =
+              'GPS unavailable. Retry before saving your report.';
           _isLoadingGps = false;
         });
       }
@@ -140,6 +164,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSaving) return;
     final text = _descController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,42 +177,76 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
       return;
     }
 
-    final randNum = 100000 + math.Random().nextInt(899999);
-    final ticketId = 'SUNDO-2026-$randNum';
+    if (_isLoadingGps || _reportLat == null || _reportLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Get your current GPS location before saving.')),
+      );
+      return;
+    }
+    setState(() => _isSaving = true);
+    final now = DateTime.now();
+    final ticketId = 'SUNDO-${now.year}-${now.microsecondsSinceEpoch}';
+    final copiedPhotos = <File>[];
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final photoDirectory = Directory('${directory.path}/reports/$ticketId');
+      if (_photos.isNotEmpty) await photoDirectory.create(recursive: true);
+      for (var index = 0; index < _photos.length; index++) {
+        final original = File(_photos[index]);
+        final extension = original.path.split('.').last;
+        copiedPhotos.add(
+            await original.copy('${photoDirectory.path}/$index.$extension'));
+      }
 
-    final report = GarbageReportItem(
-      id: ticketId,
-      concernType: _concernType,
-      description: text,
-      photoPaths: List.from(_photos),
-      latitude: _reportLat ?? 9.7525,
-      longitude: _reportLng ?? 122.4038,
-      locationAddress: _locationSummary,
-      createdAt: DateTime.now(),
-      status: 'Pending',
-    );
+      final report = GarbageReportItem(
+        id: ticketId,
+        concernType: _concernType,
+        description: text,
+        photoPaths: copiedPhotos.map((file) => file.path).toList(),
+        latitude: _reportLat,
+        longitude: _reportLng,
+        locationAddress: _locationSummary,
+        createdAt: now,
+        status: 'Pending',
+      );
 
-    await AppStore.saveReport(report);
-    await _loadPastReports();
+      if (BackendService.live) {
+        await BackendService.submitReport(report);
+      } else {
+        await AppStore.saveReport(report);
+      }
+      await _loadPastReports();
 
-    if (mounted) {
-      setState(() {
-        _submittedTicketId = ticketId;
-        _isSubmitted = true;
-      });
+      if (mounted) {
+        setState(() {
+          _submittedTicketId = ticketId;
+          _isSubmitted = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Could not save your report. Please retry.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: widget.onBack != null
             ? IconButton(
-                icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Color(0xFF334155)),
+                icon: const Icon(Icons.chevron_left_rounded,
+                    size: 28, color: Color(0xFF334155)),
                 onPressed: widget.onBack,
               )
             : null,
@@ -216,7 +275,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                       onTap: () => setState(() => _activeTab = 0),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _activeTab == 0 ? const Color(0xFF059669) : Colors.transparent,
+                          color: _activeTab == 0
+                              ? const Color(0xFF059669)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(
@@ -225,7 +286,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: _activeTab == 0 ? Colors.white : const Color(0xFF64748B),
+                              color: _activeTab == 0
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ),
@@ -237,7 +300,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                       onTap: () => setState(() => _activeTab = 1),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _activeTab == 1 ? const Color(0xFF059669) : Colors.transparent,
+                          color: _activeTab == 1
+                              ? const Color(0xFF059669)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(
@@ -246,7 +311,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: _activeTab == 1 ? Colors.white : const Color(0xFF64748B),
+                              color: _activeTab == 1
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ),
@@ -276,11 +343,14 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
               width: 80,
               height: 80,
               decoration: ClayTheme.cardMint(radius: 40),
-              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 48),
+              child: const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFF059669), size: 48),
             ),
             const SizedBox(height: 20),
             Text(
-              'Report Submitted!',
+              BackendService.live
+                  ? 'Report Submitted'
+                  : 'Report Saved on Device',
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -306,7 +376,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Thank you for keeping Sipalay City clean. Our sanitation dispatch team has received your ticket and GPS location.',
+              BackendService.live
+                  ? 'Your report was submitted to the city. Track its status in your reports.'
+                  : 'Your report and photos are saved on this phone. City submission will be available when the dispatch service is connected.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
@@ -321,7 +393,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
                     ),
                     onPressed: () {
                       setState(() {
@@ -331,7 +404,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                         _photos.clear();
                       });
                     },
-                    child: Text('View Reports', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                    child: Text('View Reports',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -340,7 +415,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF059669),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
                     ),
                     onPressed: () {
                       setState(() {
@@ -351,7 +427,9 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                       });
                       if (widget.onBack != null) widget.onBack!();
                     },
-                    child: Text('Done', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
+                    child: Text('Done',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800, color: Colors.white)),
                   ),
                 ),
               ],
@@ -382,7 +460,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.my_location_rounded, color: Color(0xFF2563EB), size: 20),
+                  child: const Icon(Icons.my_location_rounded,
+                      color: Color(0xFF2563EB), size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -412,8 +491,12 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                 ),
                 IconButton(
                   icon: _isLoadingGps
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.refresh_rounded, color: Color(0xFF059669), size: 20),
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.refresh_rounded,
+                          color: Color(0xFF059669), size: 20),
                   onPressed: _isLoadingGps ? null : _fetchCurrentLocation,
                 ),
               ],
@@ -446,17 +529,21 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                       child: GestureDetector(
                         onTap: () => setState(() => _concernType = type),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           decoration: isSelected
                               ? BoxDecoration(
                                   color: const Color(0xFFECFDF5),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFA7F3D0), width: 1.5),
+                                  border: Border.all(
+                                      color: const Color(0xFFA7F3D0),
+                                      width: 1.5),
                                 )
                               : BoxDecoration(
                                   color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
                                 ),
                           child: Row(
                             children: [
@@ -466,13 +553,18 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
+                                    color: isSelected
+                                        ? const Color(0xFF059669)
+                                        : const Color(0xFFCBD5E1),
                                     width: 2,
                                   ),
-                                  color: isSelected ? const Color(0xFF059669) : Colors.transparent,
+                                  color: isSelected
+                                      ? const Color(0xFF059669)
+                                      : Colors.transparent,
                                 ),
                                 child: isSelected
-                                    ? const Icon(Icons.circle, size: 8, color: Colors.white)
+                                    ? const Icon(Icons.circle,
+                                        size: 8, color: Colors.white)
                                     : null,
                               ),
                               const SizedBox(width: 12),
@@ -480,8 +572,12 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                                 type,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12.5,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                  color: isSelected ? const Color(0xFF064E3B) : const Color(0xFF334155),
+                                  fontWeight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: isSelected
+                                      ? const Color(0xFF064E3B)
+                                      : const Color(0xFF334155),
                                 ),
                               ),
                             ],
@@ -537,12 +633,15 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                     maxLength: 300,
                     maxLines: 3,
                     onChanged: (_) => setState(() {}),
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5, color: const Color(0xFF0F172A)),
                     decoration: InputDecoration(
                       counterText: '',
                       border: InputBorder.none,
-                      hintText: 'Describe details, landmarks, or street address...',
-                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      hintText:
+                          'Describe details, landmarks, or street address...',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5, color: const Color(0xFF94A3B8)),
                       contentPadding: const EdgeInsets.all(14),
                     ),
                   ),
@@ -585,7 +684,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.camera_alt_rounded, color: Color(0xFF059669), size: 22),
+                            const Icon(Icons.camera_alt_rounded,
+                                color: Color(0xFF059669), size: 22),
                             const SizedBox(height: 3),
                             Text(
                               'Camera',
@@ -615,7 +715,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.photo_library_rounded, color: Color(0xFF2563EB), size: 22),
+                            const Icon(Icons.photo_library_rounded,
+                                color: Color(0xFF2563EB), size: 22),
                             const SizedBox(height: 3),
                             Text(
                               'Gallery',
@@ -654,7 +755,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                                   ? Image.file(file, fit: BoxFit.cover)
                                   : Container(
                                       color: const Color(0xFFECFDF5),
-                                      child: const Icon(Icons.image_rounded, color: Color(0xFF059669)),
+                                      child: const Icon(Icons.image_rounded,
+                                          color: Color(0xFF059669)),
                                     ),
                             ),
                           ),
@@ -674,7 +776,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                                   color: Color(0xFF1E293B),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                                child: const Icon(Icons.close_rounded,
+                                    color: Colors.white, size: 14),
                               ),
                             ),
                           ),
@@ -691,14 +794,18 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
 
           // Submit Button
           GestureDetector(
-            onTap: _submit,
+            onTap: _isSaving ? null : _submit,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: ClayTheme.buttonPrimary(radius: 24),
               child: Center(
                 child: Text(
-                  'Submit Report',
+                  _isSaving
+                      ? 'Saving...'
+                      : BackendService.live
+                          ? 'Submit Report'
+                          : 'Save Report on Device',
                   style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -719,16 +826,21 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.assignment_outlined, size: 48, color: Color(0xFF94A3B8)),
+            const Icon(Icons.assignment_outlined,
+                size: 48, color: Color(0xFF94A3B8)),
             const SizedBox(height: 12),
             Text(
               'No Reports Submitted Yet',
-              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+              style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A)),
             ),
             const SizedBox(height: 4),
             Text(
-              'Submitted reports will appear here with live tracking status.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+              'Reports saved on this phone will appear here.',
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12, color: const Color(0xFF64748B)),
             ),
           ],
         ),
@@ -759,7 +871,10 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: const [
-              BoxShadow(color: Color(0x06000000), blurRadius: 6, offset: Offset(0, 2)),
+              BoxShadow(
+                  color: Color(0x06000000),
+                  blurRadius: 6,
+                  offset: Offset(0, 2)),
             ],
           ),
           child: Column(
@@ -777,7 +892,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(12),
@@ -813,12 +929,14 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 13, color: Color(0xFF64748B)),
+                  const Icon(Icons.location_on_outlined,
+                      size: 13, color: Color(0xFF64748B)),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       r.locationAddress,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11, color: const Color(0xFF64748B)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

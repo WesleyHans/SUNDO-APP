@@ -1,43 +1,21 @@
-# SUNDO - Smart Urban Navigation for Dynamic Waste Operations (Flutter + Dart)
-Official Mobile Application for Sipalay City, Negros Occidental • CENRO
+# SUNDO native Android app
 
-## Requirements
-- Flutter SDK 3.0.0 or higher
-- Dart SDK 3.0.0 or higher
-- Android Studio or VS Code with Flutter extension
-- Android Device or Android Emulator (API 26+)
+This directory is the Flutter project. It includes the illustrated claymorphism resident interface and connected resident, driver and city staff workflows.
 
-## Getting Started
+Use Flutter 3.47.6, Dart 3.13.5, Java 17 and an installed Android SDK.
 
-1. **Install Dependencies**:
-```bash
+```powershell
 flutter pub get
-```
-
-2. **Run in Development Mode (Live on Phone or Emulator)**:
-```bash
+flutter analyze
+flutter test
 flutter run
-```
-
-3. **Build Official Release APK**:
-```bash
 flutter build apk --release
 ```
-Your compiled, signed native Android APK will be ready at:
-`build/app/outputs/flutter-apk/app-release.apk`
 
-4. **Install on Phone via USB**:
-```bash
-flutter install
-```
-or:
-```bash
-adb install -r build/app/outputs/flutter-apk/app-release.apk
-```
+Output: `build/app/outputs/flutter-apk/app-release.apk`.
 
-## Features Included in Flutter Codebase
-- **Live OpenStreetMap GPS Tracking**: Real-time waste collection vehicle movements on Leaflet OpenStreetMap with polyline routing.
-- **Dynamic ETA Telemetry**: Instant calculations of vehicle distance, arrival minutes, speed, and compactor capacity.
-- **Resident Garbage Reporting**: Camera capture, automatic GPS geotagging, categorization, and dispatch ticketing.
-- **Barangay Schedules**: Full waste collection schedule for Gil Montilla, Poblacion, Nauhang, San Jose, Canturay, and Cayhagan.
-- **Material 3 Design**: Fully responsive, high-contrast accessible layout for mobile screens.
+The default build opens a local demo. To activate real accounts, shared reports, private photos, schedules and driver GPS, follow `../supabase/README.md` and run `../supabase/schema.sql` in your own project. Build with `SUPABASE_URL` and `SUPABASE_ANON_KEY` as described there.
+
+The existing release signing configuration uses a development key. Configure production signing before public distribution. Device permissions and the connected workflows need validation on physical phones. Background tracking, push notifications and iPhone packaging are not included.
+
+See `../MOBILE_STATUS.md` for the current implementation and remaining release requirements, and `../DESIGN_NOTES.md` for the design assets and rendered previews.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
+import '../services/backend_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -20,8 +21,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'juan@gmail.com');
-  final TextEditingController _passwordController = TextEditingController(text: 'password123');
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _busy = false;
   bool _showPassword = false;
   bool _rememberMe = true;
 
@@ -35,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Stack(
           children: [
@@ -63,7 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Color(0xFF334155)),
+                        icon: const Icon(Icons.chevron_left_rounded,
+                            size: 28, color: Color(0xFF334155)),
                         onPressed: widget.onBack,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -103,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Email or Mobile Number',
+                        'Email Address',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -123,9 +126,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'juan@gmail.com',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                            prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                                color: const Color(0xFF94A3B8), fontSize: 13.5),
+                            prefixIcon: const Icon(Icons.person_outline_rounded,
+                                color: Color(0xFF94A3B8), size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
                           ),
                         ),
                       ),
@@ -160,11 +166,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: '••••••••',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                                color: const Color(0xFF94A3B8), fontSize: 13.5),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded,
+                                color: Color(0xFF94A3B8), size: 20),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                _showPassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
                                 color: const Color(0xFF94A3B8),
                                 size: 20,
                               ),
@@ -174,7 +184,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 });
                               },
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
                           ),
                         ),
                       ),
@@ -183,9 +194,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Remember me & Forgot Password
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Wrap on compact phones and when text is enlarged.
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       Row(
                         children: [
@@ -195,8 +209,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Checkbox(
                               value: _rememberMe,
                               activeColor: const Color(0xFF059669),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                              side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5)),
+                              side: const BorderSide(
+                                  color: Color(0xFFCBD5E1), width: 1.5),
                               onChanged: (val) {
                                 setState(() {
                                   _rememberMe = val ?? true;
@@ -207,7 +223,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'Remember me',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF475569), fontWeight: FontWeight.w500),
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: const Color(0xFF475569),
+                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -215,7 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Password reset link sent to your email!'),
+                              content: Text(
+                                  'Contact your city administrator to reset your account password.'),
                               backgroundColor: Color(0xFF059669),
                             ),
                           );
@@ -236,20 +256,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Log In Primary Button
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
+                      if (_busy) return;
                       final email = _emailController.text.trim();
                       final pass = _passwordController.text;
                       if (email.isEmpty || pass.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Please enter your email and password to log in.'),
+                            content: Text(
+                                'Please enter your email and password to log in.'),
                             backgroundColor: Color(0xFFEF4444),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                         return;
                       }
-                      widget.onLoginSuccess();
+                      setState(() => _busy = true);
+                      try {
+                        await BackendService.login(email, pass, remember: _rememberMe);
+                        if (context.mounted) widget.onLoginSuccess();
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(BackendService.configured
+                                  ? 'Login failed. Check your email, password and connection.'
+                                  : 'City service is not configured yet. Use Get Started to try the demo.')));
+                        }
+                      } finally {
+                        if (mounted) setState(() => _busy = false);
+                      }
                     },
                     child: Container(
                       width: double.infinity,
@@ -259,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Log In',
+                            _busy ? 'Logging in...' : 'Log In',
                             style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
@@ -267,7 +302,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                          const Icon(Icons.arrow_forward_rounded,
+                              color: Colors.white, size: 18),
                         ],
                       ),
                     ),
@@ -283,7 +319,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'or',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
+                          style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12, color: const Color(0xFF94A3B8)),
                         ),
                       ),
                       const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
@@ -294,7 +331,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Google Social Button
                   GestureDetector(
-                    onTap: widget.onLoginSuccess,
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Google sign-in is not enabled. Use email and password.'))),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -324,7 +364,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Facebook Social Button
                   GestureDetector(
-                    onTap: widget.onLoginSuccess,
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Facebook sign-in is not enabled. Use email and password.'))),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -373,7 +416,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         "Don't have an account? ",
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5, color: const Color(0xFF64748B)),
                       ),
                       GestureDetector(
                         onTap: widget.onCreateAccount,
@@ -409,8 +453,10 @@ class _DecorativeLeafPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(size.width, 0)
-      ..cubicTo(size.width * 0.4, size.height * 0.2, size.width * 0.2, size.height * 0.6, 0, size.height)
-      ..cubicTo(size.width * 0.5, size.height * 0.9, size.width * 0.9, size.height * 0.5, size.width, 0)
+      ..cubicTo(size.width * 0.4, size.height * 0.2, size.width * 0.2,
+          size.height * 0.6, 0, size.height)
+      ..cubicTo(size.width * 0.5, size.height * 0.9, size.width * 0.9,
+          size.height * 0.5, size.width, 0)
       ..close();
 
     canvas.drawPath(path, leafPaint);
@@ -428,10 +474,22 @@ class _GoogleIconPainter extends CustomPainter {
     final center = Offset(w / 2, h / 2);
     final double radius = w / 2;
 
-    final bluePaint = Paint()..color = const Color(0xFF4285F4)..strokeWidth = 3.2..style = PaintingStyle.stroke;
-    final greenPaint = Paint()..color = const Color(0xFF34A853)..strokeWidth = 3.2..style = PaintingStyle.stroke;
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05)..strokeWidth = 3.2..style = PaintingStyle.stroke;
-    final redPaint = Paint()..color = const Color(0xFFEA4335)..strokeWidth = 3.2..style = PaintingStyle.stroke;
+    final bluePaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke;
+    final greenPaint = Paint()
+      ..color = const Color(0xFF34A853)
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke;
+    final yellowPaint = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke;
+    final redPaint = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke;
 
     final rect = Rect.fromCircle(center: center, radius: radius - 1.6);
     const pi = 3.141592653589793;
@@ -441,7 +499,9 @@ class _GoogleIconPainter extends CustomPainter {
     canvas.drawArc(rect, 3 * pi / 4, pi / 2, false, yellowPaint);
     canvas.drawArc(rect, 5 * pi / 4, pi / 2, false, redPaint);
 
-    final fillBlue = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
+    final fillBlue = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(w * 0.48, h * 0.42, w * 0.48, 3.2), fillBlue);
   }
 

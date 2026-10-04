@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/splash_screen.dart';
-import 'screens/welcome_screen.dart';
+import 'screens/clay_splash_screen.dart';
+import 'screens/clay_welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
@@ -9,9 +9,14 @@ import 'screens/live_map_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/operations_screen.dart';
+import 'services/backend_service.dart';
+import 'widgets/scenic_backdrop.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+  await BackendService.initialize();
   runApp(const SundoApp());
 }
 
@@ -23,6 +28,7 @@ class SundoApp extends StatelessWidget {
     return MaterialApp(
       title: 'SUNDO - Sipalay Smart Waste',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => ScenicBackdrop(child: child!),
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: const Color(0xFF059669),
@@ -31,7 +37,32 @@ class SundoApp extends StatelessWidget {
           primary: const Color(0xFF059669),
         ),
         textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-        scaffoldBackgroundColor: const Color(0xFFF4F7F6),
+        scaffoldBackgroundColor: Colors.transparent,
+        appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xEEFAFFF8),
+            elevation: 0,
+            foregroundColor: Color(0xFF185632),
+            surfaceTintColor: Colors.transparent),
+        filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF07853D),
+                foregroundColor: Colors.white,
+                elevation: 5,
+                shadowColor: const Color(0x660A6B34),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22)))),
+        inputDecorationTheme: InputDecorationTheme(
+            filled: false,
+            fillColor: const Color(0xEEFFFFFF),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: Color(0xFFDDEADA)))),
+        navigationBarTheme: const NavigationBarThemeData(
+            backgroundColor: Color(0xF7FAFFF8),
+            indicatorColor: Color(0xFFCDEBCF),
+            height: 72),
       ),
       home: const AppFlowCoordinator(),
     );
@@ -67,11 +98,14 @@ class _AppFlowCoordinatorState extends State<AppFlowCoordinator> {
     switch (_state) {
       case AppFlowState.splash:
         return SplashScreen(
-          onContinue: () => _setState(AppFlowState.welcome),
+          onContinue: () => _setState(BackendService.live ? AppFlowState.mainShell : AppFlowState.welcome),
         );
       case AppFlowState.welcome:
         return WelcomeScreen(
-          onGetStarted: () => _setState(AppFlowState.mainShell),
+          onGetStarted: () {
+            BackendService.demoMode = true;
+            _setState(AppFlowState.mainShell);
+          },
           onLogIn: () => _setState(AppFlowState.login),
           onCreateAccount: () => _setState(AppFlowState.register),
         );
@@ -88,6 +122,10 @@ class _AppFlowCoordinatorState extends State<AppFlowCoordinator> {
           onGoToLogin: () => _setState(AppFlowState.login),
         );
       case AppFlowState.mainShell:
+        if (BackendService.live) {
+          return OperationsScreen(
+              onLogout: () => _setState(AppFlowState.welcome));
+        }
         return MainNavigationShell(
           onLogout: () => _setState(AppFlowState.welcome),
         );
@@ -125,9 +163,27 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Container(
+              width: double.infinity,
+              color: const Color(0xFFFFF7ED),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const Text(
+                'Demo mode: truck locations, schedules and alerts are samples. Reports are saved on this phone.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF9A3412)),
+              ),
+            ),
+          ),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildClayBottomNav(),
     );
@@ -139,7 +195,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Color(0x2894A3B8), // 0 -8px 25px rgba(148, 163, 184, 0.22)
@@ -164,16 +221,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
 
               // 2. Live Map
-              _buildNavItem(1, Icons.map_rounded, Icons.map_outlined, 'Live Map'),
+              _buildNavItem(
+                  1, Icons.map_rounded, Icons.map_outlined, 'Live Map'),
 
               // 3. Elevated 3D Clay Report Button (+)
               _buildElevatedReportButton(),
 
               // 4. Schedules
-              _buildNavItem(3, Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Schedules'),
+              _buildNavItem(3, Icons.calendar_month_rounded,
+                  Icons.calendar_month_outlined, 'Schedules'),
 
               // 5. Profile
-              _buildNavItem(4, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+              _buildNavItem(4, Icons.person_rounded,
+                  Icons.person_outline_rounded, 'Profile'),
             ],
           ),
         ),
@@ -181,7 +241,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
+  Widget _buildNavItem(
+      int index, IconData activeIcon, IconData inactiveIcon, String label) {
     final bool isActive = _currentIndex == index;
     return GestureDetector(
       onTap: () => _onTabSelected(index),
@@ -193,7 +254,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           color: isActive ? const Color(0xFFECFDF5) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: isActive
-              ? Border.all(color: const Color(0xFFA7F3D0).withValues(alpha: 0.8), width: 1)
+              ? Border.all(
+                  color: const Color(0xFFA7F3D0).withValues(alpha: 0.8),
+                  width: 1)
               : null,
           boxShadow: isActive
               ? const [
@@ -216,7 +279,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             Icon(
               isActive ? activeIcon : inactiveIcon,
               size: 22,
-              color: isActive ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+              color:
+                  isActive ? const Color(0xFF059669) : const Color(0xFF94A3B8),
             ),
             const SizedBox(height: 3),
             Text(
@@ -224,7 +288,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? const Color(0xFF065F46) : const Color(0xFF94A3B8),
+                color: isActive
+                    ? const Color(0xFF065F46)
+                    : const Color(0xFF94A3B8),
               ),
             ),
           ],
@@ -249,7 +315,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               height: 54,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF34D399), Color(0xFF059669), Color(0xFF047857)],
+                  colors: [
+                    Color(0xFF34D399),
+                    Color(0xFF059669),
+                    Color(0xFF047857)
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -280,7 +350,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               style: GoogleFonts.outfit(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                color: isReportActive ? const Color(0xFF065F46) : const Color(0xFF475569),
+                color: isReportActive
+                    ? const Color(0xFF065F46)
+                    : const Color(0xFF475569),
               ),
             ),
           ],

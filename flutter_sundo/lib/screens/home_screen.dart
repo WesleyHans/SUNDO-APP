@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
+import '../widgets/scenic_backdrop.dart';
 import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,7 +15,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
 
   @override
@@ -35,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -46,7 +48,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -96,7 +99,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        image: DecorationImage(
+            image: AssetImage(clayHeroAsset),
+            fit: BoxFit.cover,
+            opacity: 0.2,
+            alignment: Alignment(0, -0.1)),
+        gradient: LinearGradient(
+            colors: [Color(0xFFF2FAED), Color(0xFFEAF8F8)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight),
         border: Border(
           bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
         ),
@@ -153,7 +164,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => NotificationsScreen(onBack: () => Navigator.pop(context)),
+                      builder: (_) => NotificationsScreen(
+                          onBack: () => Navigator.pop(context)),
                     ),
                   );
                 },
@@ -200,7 +212,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF059669), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFF059669), width: 2),
                     gradient: const LinearGradient(
                       colors: [Color(0xFF059669), Color(0xFF10B981)],
                       begin: Alignment.topLeft,
@@ -403,8 +416,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF10B981)
-                                    .withValues(alpha: 0.6 * _pulseController.value),
+                                color: const Color(0xFF10B981).withValues(
+                                    alpha: 0.6 * _pulseController.value),
                                 blurRadius: 6 * _pulseController.value,
                                 spreadRadius: 2 * _pulseController.value,
                               ),
@@ -486,7 +499,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
 
             // Node 2: Current Truck (Active Pulsing)
-            _buildNode(isCompleted: false, isActive: true, icon: Icons.local_shipping),
+            _buildNode(
+                isCompleted: false, isActive: true, icon: Icons.local_shipping),
 
             // Line 2: Inactive Gray
             Expanded(
@@ -508,7 +522,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
 
             // Node 4: Destination / Home
-            _buildNode(isCompleted: false, isActive: false, icon: Icons.home_rounded),
+            _buildNode(
+                isCompleted: false, isActive: false, icon: Icons.home_rounded),
           ],
         ),
         const SizedBox(height: 8),
@@ -525,7 +540,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildNode({required bool isCompleted, required bool isActive, IconData? icon}) {
+  Widget _buildNode(
+      {required bool isCompleted, required bool isActive, IconData? icon}) {
     if (isActive) {
       return AnimatedBuilder(
         animation: _pulseController,
@@ -538,7 +554,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF059669).withValues(alpha: 0.5 * _pulseController.value),
+                  color: const Color(0xFF059669)
+                      .withValues(alpha: 0.5 * _pulseController.value),
                   blurRadius: 8 * _pulseController.value,
                   spreadRadius: 3 * _pulseController.value,
                 ),
@@ -598,15 +615,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildStepLabel(String text, {required bool isHighlighted}) {
-    return SizedBox(
-      width: 64,
+    return Expanded(
       child: Text(
         text,
         textAlign: TextAlign.center,
         style: GoogleFonts.plusJakartaSans(
           fontSize: 10.5,
           fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
-          color: isHighlighted ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+          color:
+              isHighlighted ? const Color(0xFF059669) : const Color(0xFF94A3B8),
         ),
       ),
     );
@@ -659,7 +676,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => NotificationsScreen(onBack: () => Navigator.pop(context)),
+                      builder: (_) => NotificationsScreen(
+                          onBack: () => Navigator.pop(context)),
                     ),
                   );
                 },
@@ -857,7 +875,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       color: const Color(0xFFD1FAE5),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.recycling_rounded, color: Color(0xFF059669), size: 22),
+                    child: const Icon(Icons.recycling_rounded,
+                        color: Color(0xFF059669), size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -890,7 +909,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 badge: 'BIODEGRADABLE (Nabubulok)',
                 badgeColor: const Color(0xFF059669),
                 bgColor: const Color(0xFFECFDF5),
-                description: 'Food scraps, fruit peelings, garden leaves, left-overs.',
+                description:
+                    'Food scraps, fruit peelings, garden leaves, left-overs.',
                 schedule: 'Collected every Mon, Wed, Fri',
               ),
               const SizedBox(height: 10),
@@ -898,7 +918,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 badge: 'RECYCLABLE (Nareresiklo)',
                 badgeColor: const Color(0xFF2563EB),
                 bgColor: const Color(0xFFEFF6FF),
-                description: 'Plastic bottles, glass containers, clean paper & cardboard, aluminum cans.',
+                description:
+                    'Plastic bottles, glass containers, clean paper & cardboard, aluminum cans.',
                 schedule: 'Collected every Tuesday & Thursday',
               ),
               const SizedBox(height: 10),
@@ -906,7 +927,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 badge: 'RESIDUAL (Di-nabubulok)',
                 badgeColor: const Color(0xFFD97706),
                 bgColor: const Color(0xFFFFFBEB),
-                description: 'Sachets, snack wrappers, soiled plastic, worn fabric, ceramics.',
+                description:
+                    'Sachets, snack wrappers, soiled plastic, worn fabric, ceramics.',
                 schedule: 'Collected every Saturday',
               ),
               const SizedBox(height: 10),
@@ -914,7 +936,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 badge: 'SPECIAL / HAZARDOUS',
                 badgeColor: const Color(0xFFDC2626),
                 bgColor: const Color(0xFFFEF2F2),
-                description: 'Batteries, electronics, paint cans, fluorescent tubes, broken glass.',
+                description:
+                    'Batteries, electronics, paint cans, fluorescent tubes, broken glass.',
                 schedule: 'Special designated drop-off or quarterly dispatch',
               ),
 

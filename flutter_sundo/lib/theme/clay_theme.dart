@@ -7,10 +7,15 @@ class ClayTheme {
   // 1. Standard Realistic Clay Card (.clay-card)
   static BoxDecoration card({double radius = 24}) {
     return BoxDecoration(
-      color: Colors.white,
+      gradient: const LinearGradient(
+          colors: [Color(0xFFFFFFFF), Color(0xFFF1F7ED)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
       boxShadow: const [
+        BoxShadow(
+            color: Color(0xF0FFFFFF), offset: Offset(-4, -4), blurRadius: 12),
         BoxShadow(
           color: Color(0x180F172A), // Soft ambient depth shadow
           offset: Offset(0, 12),
@@ -91,13 +96,16 @@ class ClayTheme {
   static BoxDecoration buttonPrimary({double radius = 20}) {
     return BoxDecoration(
       gradient: const LinearGradient(
-        colors: [Color(0xFF10B981), Color(0xFF059669)],
+        colors: [Color(0xFF23A54E), Color(0xFF07853D), Color(0xFF056D34)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0x5534D399), width: 1.2), // Tactile rim light
+      border: Border.all(
+          color: const Color(0x5534D399), width: 1.2), // Tactile rim light
       boxShadow: const [
+        BoxShadow(
+            color: Color(0x66FFFFFF), offset: Offset(-2, -3), blurRadius: 5),
         BoxShadow(
           color: Color(0x4C059669), // Rich emerald downward cast shadow
           offset: Offset(0, 10),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/app_store.dart';
+import '../services/backend_service.dart';
 import '../theme/clay_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -20,13 +20,14 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Juan Dela Cruz');
-  final TextEditingController _phoneController = TextEditingController(text: '0912 345 6789');
-  final TextEditingController _emailController = TextEditingController(text: 'juan@gmail.com');
-  final TextEditingController _passwordController = TextEditingController(text: 'secret123');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _busy = false;
 
   bool _showPassword = false;
-  bool _agreeTerms = true;
+  bool _agreeTerms = false;
   bool _useCurrentLocation = true;
   String _selectedBarangay = 'Barangay 1, Sipalay City';
 
@@ -62,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
@@ -71,7 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               // Top Back Button
               IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, size: 24, color: Color(0xFF0F172A)),
+                icon: const Icon(Icons.arrow_back_rounded,
+                    size: 24, color: Color(0xFF0F172A)),
                 onPressed: widget.onBack,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -113,9 +115,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Full Name',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.person_outline_rounded,
+                        color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
@@ -136,9 +141,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Phone Number',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                    prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.phone_outlined,
+                        color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
@@ -159,9 +167,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Email Address',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                    prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.mail_outline_rounded,
+                        color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
@@ -182,11 +193,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Password',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded,
+                        color: Color(0xFF94A3B8), size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _showPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: const Color(0xFF94A3B8),
                         size: 20,
                       ),
@@ -196,7 +211,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         });
                       },
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
@@ -205,18 +221,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // 5. Barangay / Address Molded Clay Dropdown
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                 decoration: ClayTheme.input(radius: 18),
                 child: Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, color: Color(0xFF94A3B8), size: 20),
+                    const Icon(Icons.location_on_outlined,
+                        color: Color(0xFF94A3B8), size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedBarangay,
                           isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                              color: Color(0xFF94A3B8)),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.5,
                             color: const Color(0xFF0F172A),
@@ -229,7 +248,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             );
                           }).toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _selectedBarangay = val);
+                            if (val != null) {
+                              setState(() => _selectedBarangay = val);
+                            }
                           },
                         ),
                       ),
@@ -268,7 +289,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           height: 1.35,
                         ),
                         children: [
-                          const TextSpan(text: 'By creating an account, you agree to our '),
+                          const TextSpan(
+                              text:
+                                  'By creating an account, you agree to our '),
                           TextSpan(
                             text: 'Terms',
                             style: GoogleFonts.plusJakartaSans(
@@ -295,11 +318,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // Location Option Pill
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: ClayTheme.insetBox(radius: 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.my_location_rounded, color: Color(0xFF059669), size: 18),
+                    const Icon(Icons.my_location_rounded,
+                        color: Color(0xFF059669), size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -332,38 +357,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // 7. Primary Inflated Clay Button: Sign Up
               GestureDetector(
                 onTap: () async {
+                  if (_busy) return;
                   final name = _nameController.text.trim();
                   final email = _emailController.text.trim();
                   final phone = _phoneController.text.trim();
                   final pass = _passwordController.text;
 
-                  if (name.isEmpty || email.isEmpty || phone.isEmpty || pass.isEmpty) {
+                  if (name.isEmpty ||
+                      email.isEmpty ||
+                      phone.isEmpty ||
+                      pass.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please complete all required fields.')),
+                      const SnackBar(
+                          content:
+                              Text('Please complete all required fields.')),
                     );
                     return;
                   }
 
-                  if (pass.length < 6) {
+                  if (pass.length < 8) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Password must be at least 6 characters.')),
+                      const SnackBar(
+                          content:
+                              Text('Password must be at least 8 characters.')),
                     );
                     return;
                   }
 
                   if (!_agreeTerms) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please agree to the Terms and Conditions.')),
+                      const SnackBar(
+                          content: Text(
+                              'Please agree to the Terms and Conditions.')),
                     );
                     return;
                   }
 
-                  await AppStore.setName(name);
-                  await AppStore.setEmail(email);
-                  await AppStore.setPhone(phone);
-                  await AppStore.setBarangay(_selectedBarangay);
-
-                  widget.onRegisterSuccess();
+                  setState(() => _busy = true);
+                  try {
+                    final signedIn = await BackendService.register(
+                        name, email, phone, _selectedBarangay, pass);
+                    if (!context.mounted) return;
+                    if (signedIn) {
+                      widget.onRegisterSuccess();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text(
+                              'Check your email to confirm your account, then log in.')));
+                      widget.onGoToLogin();
+                    }
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(BackendService.configured
+                              ? 'Registration failed. Check your email and connection, then retry.'
+                              : 'City service is not configured yet. Use the demo from the welcome screen.')));
+                    }
+                  } finally {
+                    if (mounted) setState(() => _busy = false);
+                  }
                 },
                 child: Container(
                   width: double.infinity,
@@ -371,7 +423,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: ClayTheme.buttonPrimary(radius: 20),
                   child: Center(
                     child: Text(
-                      'Sign Up',
+                      _busy ? 'Creating account...' : 'Sign Up',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -436,7 +488,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // 10. Secondary Inflated Clay Button: Continue with Google
               GestureDetector(
-                onTap: widget.onRegisterSuccess,
+                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Google sign-in is not enabled. Register with email and password.'))),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -479,10 +534,22 @@ class _GoogleIconPainter extends CustomPainter {
     final center = Offset(w / 2, h / 2);
     final double radius = w / 2;
 
-    final bluePaint = Paint()..color = const Color(0xFF4285F4)..strokeWidth = 3.0..style = PaintingStyle.stroke;
-    final greenPaint = Paint()..color = const Color(0xFF34A853)..strokeWidth = 3.0..style = PaintingStyle.stroke;
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05)..strokeWidth = 3.0..style = PaintingStyle.stroke;
-    final redPaint = Paint()..color = const Color(0xFFEA4335)..strokeWidth = 3.0..style = PaintingStyle.stroke;
+    final bluePaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+    final greenPaint = Paint()
+      ..color = const Color(0xFF34A853)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+    final yellowPaint = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+    final redPaint = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
 
     final rect = Rect.fromCircle(center: center, radius: radius - 1.5);
     const pi = 3.141592653589793;
@@ -492,7 +559,9 @@ class _GoogleIconPainter extends CustomPainter {
     canvas.drawArc(rect, 3 * pi / 4, pi / 2, false, yellowPaint);
     canvas.drawArc(rect, 5 * pi / 4, pi / 2, false, redPaint);
 
-    final fillBlue = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
+    final fillBlue = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(w * 0.48, h * 0.42, w * 0.48, 3.0), fillBlue);
   }
 
