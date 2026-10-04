@@ -123,7 +123,32 @@ class ClayTheme {
     );
   }
 
-  // 6. Clay Status Chip
+  // 6. Amber Clay Badge (.clay-amber-badge)
+  static BoxDecoration amberBadge({double radius = 9999}) {
+    return BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: const Color(0xFFFCD34D), width: 1),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x22F59E0B),
+          offset: Offset(3, 3),
+          blurRadius: 8,
+        ),
+        BoxShadow(
+          color: Colors.white,
+          offset: Offset(-2, -2),
+          blurRadius: 6,
+        ),
+      ],
+    );
+  }
+
+  // 7. Clay Status Chip
   static BoxDecoration statusChip({
     required Color bgColor,
     required Color borderColor,
@@ -149,7 +174,7 @@ class ClayTheme {
     );
   }
 
-  // 7. Clay Inset Box
+  // 8. Clay Inset Box
   static BoxDecoration insetBox({double radius = 16}) {
     return BoxDecoration(
       color: const Color(0xFFF8FAFC),
@@ -160,6 +185,22 @@ class ClayTheme {
           color: Color(0x0A000000),
           offset: Offset(1, 1),
           blurRadius: 3,
+        ),
+      ],
+    );
+  }
+
+  // 9. Clay Input Box (.clay-input)
+  static BoxDecoration input({double radius = 16}) {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x1294A3B8),
+          offset: Offset(0, 2),
+          blurRadius: 6,
         ),
       ],
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/clay_theme.dart';
+import 'notifications_screen.dart';
+import 'truck_alert_modal.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(int) onNavigate;
@@ -124,7 +126,14 @@ class HomeScreen extends StatelessWidget {
             children: [
               // Notification Bell (.clay-button-secondary)
               GestureDetector(
-                onTap: () => _showNotificationDialog(context),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificationsScreen(onBack: () => Navigator.pop(context)),
+                    ),
+                  );
+                },
                 child: Container(
                   width: 44,
                   height: 44,
@@ -325,7 +334,13 @@ class HomeScreen extends StatelessWidget {
 
           // Inner Truck Card (.clay-input / inset box)
           InkWell(
-            onTap: () => onNavigate(1), // Live Map
+            onTap: () {
+              TruckAlertModal.show(
+                context,
+                etaMinutes: 10,
+                onViewTruck: () => onNavigate(1), // Live Map
+              );
+            },
             borderRadius: BorderRadius.circular(18),
             child: Container(
               padding: const EdgeInsets.all(14),
@@ -692,87 +707,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showNotificationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.notifications_active, color: Color(0xFF059669), size: 20),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Alerts & Notices',
-              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _notificationItem(
-              'Truck Proximity Alert',
-              'Truck 02 is now within 500m of your street. Please bring out segregated waste.',
-              '5m ago',
-              const Color(0xFF10B981),
-            ),
-            const Divider(height: 16),
-            _notificationItem(
-              'Report Verified',
-              'Your report #REP-00120 was verified by CENRO dispatch.',
-              '1h ago',
-              const Color(0xFF3B82F6),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Dismiss', style: TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _notificationItem(String title, String desc, String time, Color iconColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 3),
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: iconColor, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                  Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(desc, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

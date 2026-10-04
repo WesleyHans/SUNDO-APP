@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/splash_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/live_map_screen.dart';
 import 'screens/report_screen.dart';
@@ -27,15 +31,74 @@ class SundoApp extends StatelessWidget {
           primary: const Color(0xFF059669),
         ),
         textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        scaffoldBackgroundColor: const Color(0xFFF4F7F6),
       ),
-      home: const MainNavigationShell(),
+      home: const AppFlowCoordinator(),
     );
   }
 }
 
+enum AppFlowState {
+  splash,
+  welcome,
+  login,
+  register,
+  mainShell,
+}
+
+class AppFlowCoordinator extends StatefulWidget {
+  const AppFlowCoordinator({super.key});
+
+  @override
+  State<AppFlowCoordinator> createState() => _AppFlowCoordinatorState();
+}
+
+class _AppFlowCoordinatorState extends State<AppFlowCoordinator> {
+  AppFlowState _state = AppFlowState.splash;
+
+  void _setState(AppFlowState next) {
+    setState(() {
+      _state = next;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    switch (_state) {
+      case AppFlowState.splash:
+        return SplashScreen(
+          onContinue: () => _setState(AppFlowState.welcome),
+        );
+      case AppFlowState.welcome:
+        return WelcomeScreen(
+          onGetStarted: () => _setState(AppFlowState.mainShell),
+          onLogIn: () => _setState(AppFlowState.login),
+          onCreateAccount: () => _setState(AppFlowState.register),
+        );
+      case AppFlowState.login:
+        return LoginScreen(
+          onLoginSuccess: () => _setState(AppFlowState.mainShell),
+          onCreateAccount: () => _setState(AppFlowState.register),
+          onBack: () => _setState(AppFlowState.welcome),
+        );
+      case AppFlowState.register:
+        return RegisterScreen(
+          onBack: () => _setState(AppFlowState.welcome),
+          onRegisterSuccess: () => _setState(AppFlowState.mainShell),
+          onGoToLogin: () => _setState(AppFlowState.login),
+        );
+      case AppFlowState.mainShell:
+        return MainNavigationShell(
+          onLogout: () => _setState(AppFlowState.welcome),
+        );
+    }
+  }
+}
+
 class MainNavigationShell extends StatefulWidget {
-  const MainNavigationShell({super.key});
+  final VoidCallback onLogout;
+
+  const MainNavigationShell({super.key, required this.onLogout});
 
   @override
   State<MainNavigationShell> createState() => _MainNavigationShellState();
@@ -57,11 +120,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       const LiveMapScreen(),
       const ReportGarbageScreen(),
       const ScheduleScreen(),
-      const ProfileScreen(),
+      ProfileScreen(onLogout: widget.onLogout),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF4F7F6),
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
@@ -70,7 +133,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // Authentic 3D Claymorphic Bottom Navigation Bar matching web simulator BottomNav.tsx
+  // Authentic 3D Claymorphic Bottom Navigation Bar matching React mockup
   Widget _buildClayBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -194,7 +257,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 border: Border.all(color: Colors.white, width: 3.5),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x55059669), // rgba(5, 150, 105, 0.38)
+                    color: Color(0x55059669),
                     offset: Offset(0, 8),
                     blurRadius: 18,
                   ),

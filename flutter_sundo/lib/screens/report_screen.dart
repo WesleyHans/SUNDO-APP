@@ -3,321 +3,432 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/clay_theme.dart';
 
 class ReportGarbageScreen extends StatefulWidget {
-  const ReportGarbageScreen({super.key});
+  final VoidCallback? onBack;
+
+  const ReportGarbageScreen({super.key, this.onBack});
 
   @override
   State<ReportGarbageScreen> createState() => _ReportGarbageScreenState();
 }
 
 class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
-  String _selectedCategory = 'Uncollected Waste';
-  String _selectedBarangay = 'Barangay 1';
-  final TextEditingController _notesController = TextEditingController();
-  bool _photoCaptured = false;
-  bool _isSubmitting = false;
+  String _concernType = 'Missed Collection';
+  final TextEditingController _descController = TextEditingController();
+  final List<String> _photos = [];
+  bool _isSubmitted = false;
 
-  final List<String> _categories = [
+  final List<String> _concernOptions = [
+    'Missed Collection',
     'Uncollected Waste',
-    'Overflowing Public Bin',
-    'Illegal Dumping Site',
-    'Hazardous / Medical Waste',
-    'Bulky Furniture / Debris',
-  ];
-
-  final List<String> _barangays = [
-    'Barangay 1',
-    'Barangay 2',
-    'Barangay 3',
-    'Barangay 4',
-    'Barangay 5',
-    'Brgy. Gil Montilla',
-    'Brgy. Poblacion',
-    'Brgy. San Jose',
-    'Brgy. Nauhang',
-    'Brgy. Cayhagan',
-    'Brgy. Canturay',
+    'Route Concern',
+    'Other Concern',
   ];
 
   @override
   void dispose() {
-    _notesController.dispose();
+    _descController.dispose();
     super.dispose();
   }
 
-  void _submitReport() {
-    setState(() => _isSubmitting = true);
+  void _addSamplePhoto() {
+    if (_photos.length < 3) {
+      setState(() {
+        _photos.add('sample_${_photos.length + 1}');
+      });
+    }
+  }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.check_circle, color: Color(0xFF059669), size: 24),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Report Submitted',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ],
-            ),
-            content: Text(
-              'Your waste report has been forwarded to Sipalay City CENRO dispatch. Reference Ticket: #REP-2026-891.',
-              style: GoogleFonts.plusJakartaSans(color: const Color(0xFF475569), fontSize: 13, height: 1.4),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _photoCaptured = false;
-                    _notesController.clear();
-                  });
-                },
-                child: const Text('OK', style: TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold)),
-              )
-            ],
-          ),
-        );
-      }
+  void _submit() {
+    setState(() {
+      _isSubmitted = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
-        title: Text(
-          'Report Waste Concern',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A), fontSize: 18),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFF1F5F9), height: 1),
+        leading: widget.onBack != null
+            ? IconButton(
+                icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Color(0xFF334155)),
+                onPressed: widget.onBack,
+              )
+            : null,
+        title: Text(
+          'Report a Concern',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            color: const Color(0xFF0F172A),
+          ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
+      body: _isSubmitted ? _buildSuccessView() : _buildFormView(),
+    );
+  }
+
+  Widget _buildSuccessView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // 1. Clay Photo Capture Box
-            GestureDetector(
-              onTap: () {
-                setState(() => _photoCaptured = !_photoCaptured);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                height: 190,
-                width: double.infinity,
-                decoration: _photoCaptured
-                    ? ClayTheme.cardMint(radius: 24)
-                    : ClayTheme.card(radius: 24),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: _photoCaptured ? const Color(0xFFD1FAE5) : const Color(0xFFF1F5F9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _photoCaptured ? Icons.check_circle : Icons.camera_alt_rounded,
-                          size: 30,
-                          color: _photoCaptured ? const Color(0xFF059669) : const Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _photoCaptured
-                            ? 'GPS Photo Attached'
-                            : 'Tap to Take GPS-Tagged Photo',
-                        style: GoogleFonts.outfit(
-                          color: _photoCaptured ? const Color(0xFF059669) : const Color(0xFF0F172A),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _photoCaptured
-                            ? 'Sipalay GPS: 9.7548° N, 122.4038° E'
-                            : 'Camera auto-tags location coordinates',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: const Color(0xFF94A3B8),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 22),
-
-            // 2. Category Selector (.clay-card)
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: ClayTheme.card(radius: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ISSUE CATEGORY',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF065F46),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: ClayTheme.insetBox(radius: 14),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _selectedCategory,
-                        items: _categories
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(c, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
-                                ))
-                            .toList(),
-                        onChanged: (val) => setState(() => _selectedCategory = val!),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 3. Barangay Location (.clay-card)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: ClayTheme.card(radius: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'BARANGAY LOCATION',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF065F46),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: ClayTheme.insetBox(radius: 14),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _selectedBarangay,
-                        items: _barangays
-                            .map((b) => DropdownMenuItem(
-                                  value: b,
-                                  child: Text(b, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
-                                ))
-                            .toList(),
-                        onChanged: (val) => setState(() => _selectedBarangay = val!),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 4. Notes (.clay-card)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: ClayTheme.card(radius: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'LANDMARK & DETAILS',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF065F46),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: ClayTheme.insetBox(radius: 14),
-                    child: TextField(
-                      controller: _notesController,
-                      maxLines: 3,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 13),
-                      decoration: const InputDecoration(
-                        hintText: 'e.g. Near Purok Mangga Basketball court, behind the school...',
-                        hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 5. Large Clay Submit Button (.clay-button-primary)
-            GestureDetector(
-              onTap: _isSubmitting ? null : _submitReport,
-              child: Container(
-                width: double.infinity,
-                height: 54,
-                decoration: ClayTheme.buttonPrimary(radius: 28),
-                child: Center(
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : Text(
-                          'SUBMIT TO SIPALAY CENRO',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                ),
-              ),
+              width: 80,
+              height: 80,
+              decoration: ClayTheme.cardMint(radius: 40),
+              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 48),
             ),
             const SizedBox(height: 20),
+            Text(
+              'Report Submitted!',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Thank you for keeping Sipalay City clean. Our sanitation dispatch team has received your ticket.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                color: const Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isSubmitted = false;
+                  _descController.clear();
+                  _photos.clear();
+                });
+                if (widget.onBack != null) widget.onBack!();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                decoration: ClayTheme.buttonPrimary(),
+                child: Text(
+                  'Done',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFormView() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Concern Type Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: ClayTheme.card(radius: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Concern Type',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Column(
+                  children: _concernOptions.map((type) {
+                    final bool isSelected = _concernType == type;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _concernType = type),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: isSelected
+                              ? ClayTheme.cardMint(radius: 16)
+                              : BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 18,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
+                                    width: 2,
+                                  ),
+                                  color: isSelected ? const Color(0xFF059669) : Colors.transparent,
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.circle, size: 8, color: Colors.white)
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                type,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  color: isSelected ? const Color(0xFF064E3B) : const Color(0xFF334155),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Description Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: ClayTheme.card(radius: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Description',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      '${_descController.text.length}/300',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: ClayTheme.input(),
+                  child: TextField(
+                    controller: _descController,
+                    maxLength: 300,
+                    maxLines: 3,
+                    onChanged: (_) => setState(() {}),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      border: InputBorder.none,
+                      hintText: 'Please describe your concern in detail...',
+                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.all(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Add Photos Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: ClayTheme.card(radius: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Add Photos (optional)',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // Camera Button
+                    GestureDetector(
+                      onTap: _addSamplePhoto,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: ClayTheme.buttonSecondary(radius: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.camera_alt_outlined, color: Color(0xFF059669), size: 22),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Camera',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Gallery Button
+                    GestureDetector(
+                      onTap: _addSamplePhoto,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: ClayTheme.buttonSecondary(radius: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.image_outlined, color: Color(0xFF64748B), size: 22),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Gallery',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Sample Photo Button
+                    GestureDetector(
+                      onTap: _addSamplePhoto,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: ClayTheme.badge(
+                          bgColor: const Color(0xFFECFDF5),
+                          borderColor: const Color(0xFFA7F3D0),
+                          radius: 14,
+                        ),
+                        child: Text(
+                          '+ Sample Photo',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF065F46),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Thumbnails
+                if (_photos.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Row(
+                    children: _photos.asMap().entries.map((entry) {
+                      final int idx = entry.key;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFA7F3D0)),
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.image_rounded, color: Color(0xFF059669), size: 28),
+                              ),
+                            ),
+                            Positioned(
+                              top: -6,
+                              right: -6,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _photos.removeAt(idx);
+                                  });
+                                },
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF1E293B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 13),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Submit Button
+          GestureDetector(
+            onTap: _submit,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: ClayTheme.buttonPrimary(),
+              child: Center(
+                child: Text(
+                  'Submit Report',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
