@@ -1,29 +1,31 @@
 import 'package:flutter/material.dart';
 
-/// Claymorphism Design System matching SUNDO web simulator CSS (.clay-card, .clay-card-mint, .clay-button-primary, etc.)
+/// Sharp Claymorphism Design System matching SUNDO specifications
+/// Clean, crisp, defined edges with ZERO blurry white halos or washed-out glowing overlays.
 class ClayTheme {
-  // 1. Standard Clay Card (.clay-card)
+  // 1. Standard Sharp Clay Card (.clay-card)
   static BoxDecoration card({double radius = 24}) {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
+      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x2694A3B8), // rgba(148, 163, 184, 0.18)
-          offset: Offset(8, 8),
+          color: Color(0x140F172A), // Crisp subtle ambient shadow
+          offset: Offset(0, 8),
           blurRadius: 20,
+          spreadRadius: -2,
         ),
         BoxShadow(
-          color: Colors.white,
-          offset: Offset(-6, -6),
-          blurRadius: 16,
+          color: Color(0x0A0F172A), // Crisp contact shadow
+          offset: Offset(0, 2),
+          blurRadius: 6,
         ),
       ],
     );
   }
 
-  // 2. Mint Clay Card (.clay-card-mint)
+  // 2. Mint Sharp Clay Card (.clay-card-mint)
   static BoxDecoration cardMint({double radius = 24}) {
     return BoxDecoration(
       gradient: const LinearGradient(
@@ -32,17 +34,18 @@ class ClayTheme {
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
+      border: Border.all(color: const Color(0xFFA7F3D0), width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x386EE7B7), // rgba(110, 231, 183, 0.22)
-          offset: Offset(8, 8),
-          blurRadius: 20,
+          color: Color(0x18059669),
+          offset: Offset(0, 8),
+          blurRadius: 18,
+          spreadRadius: -2,
         ),
         BoxShadow(
-          color: Colors.white,
-          offset: Offset(-6, -6),
-          blurRadius: 16,
+          color: Color(0x0A059669),
+          offset: Offset(0, 2),
+          blurRadius: 4,
         ),
       ],
     );
@@ -57,17 +60,18 @@ class ClayTheme {
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.2),
+      border: Border.all(color: const Color(0xFF34D399), width: 1.0),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x55059669), // rgba(5, 150, 105, 0.35)
-          offset: Offset(6, 6),
-          blurRadius: 18,
+          color: Color(0x35059669),
+          offset: Offset(0, 6),
+          blurRadius: 14,
+          spreadRadius: -1,
         ),
         BoxShadow(
-          color: Color(0x75FFFFFF),
-          offset: Offset(-3, -3),
-          blurRadius: 10,
+          color: Color(0x15059669),
+          offset: Offset(0, 2),
+          blurRadius: 4,
         ),
       ],
     );
@@ -82,17 +86,18 @@ class ClayTheme {
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white, width: 1.5),
+      border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x2894A3B8), // rgba(148, 163, 184, 0.2)
-          offset: Offset(5, 5),
-          blurRadius: 14,
+          color: Color(0x120F172A),
+          offset: Offset(0, 4),
+          blurRadius: 10,
+          spreadRadius: -1,
         ),
         BoxShadow(
-          color: Colors.white,
-          offset: Offset(-4, -4),
-          blurRadius: 10,
+          color: Color(0x080F172A),
+          offset: Offset(0, 1),
+          blurRadius: 3,
         ),
       ],
     );
@@ -107,17 +112,12 @@ class ClayTheme {
     return BoxDecoration(
       color: bgColor,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: borderColor, width: 1),
+      border: Border.all(color: borderColor, width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x1F94A3B8),
-          offset: Offset(3, 3),
-          blurRadius: 8,
-        ),
-        BoxShadow(
-          color: Colors.white,
-          offset: Offset(-2, -2),
-          blurRadius: 6,
+          color: Color(0x0E0F172A),
+          offset: Offset(0, 2),
+          blurRadius: 5,
         ),
       ],
     );
@@ -132,17 +132,13 @@ class ClayTheme {
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0xFFFCD34D), width: 1),
+      border: Border.all(color: const Color(0xFFFCD34D), width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x22F59E0B),
-          offset: Offset(3, 3),
+          color: Color(0x1AD97706),
+          offset: Offset(0, 3),
           blurRadius: 8,
-        ),
-        BoxShadow(
-          color: Colors.white,
-          offset: Offset(-2, -2),
-          blurRadius: 6,
+          spreadRadius: -1,
         ),
       ],
     );
@@ -158,17 +154,12 @@ class ClayTheme {
     return BoxDecoration(
       color: bgColor,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: borderColor, width: 1),
+      border: Border.all(color: borderColor, width: 1.2),
       boxShadow: [
         BoxShadow(
-          color: shadowColor.withValues(alpha: 0.15),
-          offset: const Offset(3, 3),
-          blurRadius: 8,
-        ),
-        const BoxShadow(
-          color: Colors.white,
-          offset: Offset(-2, -2),
-          blurRadius: 6,
+          color: shadowColor.withValues(alpha: 0.14),
+          offset: const Offset(0, 2),
+          blurRadius: 5,
         ),
       ],
     );
@@ -179,11 +170,11 @@ class ClayTheme {
     return BoxDecoration(
       color: const Color(0xFFF8FAFC),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.8), width: 1),
+      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0A000000),
-          offset: Offset(1, 1),
+          color: Color(0x08000000),
+          offset: Offset(0, 1),
           blurRadius: 3,
         ),
       ],
@@ -195,12 +186,12 @@ class ClayTheme {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+      border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x1294A3B8),
+          color: Color(0x0A0F172A),
           offset: Offset(0, 2),
-          blurRadius: 6,
+          blurRadius: 5,
         ),
       ],
     );
