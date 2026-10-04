@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/models.dart';
+import '../theme/clay_theme.dart';
 
 class LiveMapScreen extends StatefulWidget {
   const LiveMapScreen({super.key});
@@ -165,12 +166,9 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
-                      ],
+                    decoration: ClayTheme.badge(
+                      bgColor: Colors.white,
+                      borderColor: const Color(0xFFF1F5F9),
                     ),
                     child: Row(
                       children: [
@@ -196,13 +194,16 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                   ),
 
                   // Re-center button
-                  FloatingActionButton.small(
-                    heroTag: 'recenter',
-                    backgroundColor: Colors.white,
-                    onPressed: () {
-                      _mapController.move(truck.position, 15.5);
-                    },
-                    child: const Icon(Icons.my_location, color: Color(0xFF059669)),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: ClayTheme.buttonSecondary(radius: 22),
+                    child: IconButton(
+                      icon: const Icon(Icons.my_location, color: Color(0xFF059669), size: 20),
+                      onPressed: () {
+                        _mapController.move(truck.position, 15.5);
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -216,17 +217,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
             bottom: 24,
             child: Container(
               padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 20,
-                    offset: Offset(0, 8),
-                  )
-                ],
-              ),
+              decoration: ClayTheme.card(radius: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

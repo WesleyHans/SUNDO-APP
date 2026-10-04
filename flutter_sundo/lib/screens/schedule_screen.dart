@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/clay_theme.dart';
 
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({super.key});
 
   final List<Map<String, String>> _schedules = const [
+    {
+      'barangay': 'Barangay 1 (Poblacion Central)',
+      'days': 'Mon, Wed, Fri',
+      'time': '7:00 AM - 10:30 AM',
+      'type': 'Biodegradable & Household Waste',
+      'truck': 'Truck 02 (Kuya Ronald)',
+    },
     {
       'barangay': 'Barangay Gil Montilla',
       'days': 'Mon, Wed, Fri',
@@ -37,68 +46,106 @@ class ScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Collection Schedules', style: TextStyle(fontWeight: FontWeight.w900)),
+        title: Text(
+          'Collection Schedules',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A), fontSize: 18),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFF1F5F9), height: 1),
+        ),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(20),
         itemCount: _schedules.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           final s = _schedules[index];
           return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
+            padding: const EdgeInsets.all(18),
+            decoration: ClayTheme.card(radius: 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      s['barangay']!,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A)),
+                    Expanded(
+                      child: Text(
+                        s['barangay']!,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14.5,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: ClayTheme.badge(
+                        bgColor: const Color(0xFFECFDF5),
+                        borderColor: const Color(0xFFA7F3D0),
                       ),
                       child: Text(
                         s['days']!,
-                        style: const TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold, fontSize: 11),
+                        style: GoogleFonts.plusJakartaSans(
+                          color: const Color(0xFF065F46),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10.5,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(s['time']!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                    const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF059669)),
+                    const SizedBox(width: 8),
+                    Text(
+                      s['time']!,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF475569), fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.delete_outline, size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(s['type']!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                    const Icon(Icons.recycling_rounded, size: 16, color: Color(0xFF059669)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        s['type']!,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF475569), fontWeight: FontWeight.w500),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Assigned: ${s['truck']}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: ClayTheme.insetBox(radius: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.local_shipping, size: 14, color: Color(0xFF059669)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Assigned: ${s['truck']}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF065F46),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
