@@ -367,6 +367,427 @@ class _WelcomeScenePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// Live GPS Tracking Scene Graphic for Walkthrough Slide 2
+class GpsTrackingSceneGraphic extends StatelessWidget {
+  final double height;
+
+  const GpsTrackingSceneGraphic({super.key, this.height = 190});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x30059669),
+            offset: Offset(0, 10),
+            blurRadius: 20,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(21),
+        child: Stack(
+          children: [
+            // Radar Grid Custom Painter
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _GpsRadarPainter(),
+              ),
+            ),
+
+            // Top Status Pill
+            Positioned(
+              top: 12,
+              left: 14,
+              right: 14,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.6)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'SATELLITE GPS ACTIVE',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF34D399),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40059669),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '~8 MINS ETA',
+                      style: GoogleFonts.outfit(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Truck Graphic navigating the route
+            Positioned(
+              left: 38,
+              bottom: 24,
+              child: Transform.scale(
+                scale: 0.8,
+                child: const SundoTruckGraphic(width: 120, height: 80),
+              ),
+            ),
+
+            // User GPS Location Pin on Route
+            Positioned(
+              right: 48,
+              top: 58,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x662563EB),
+                          blurRadius: 12,
+                          spreadRadius: 3,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.person_pin, color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'You (350m)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GpsRadarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final center = Offset(w * 0.72, h * 0.48);
+
+    // Concentric Radar Rings
+    final ringPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    canvas.drawCircle(center, 35, ringPaint);
+    canvas.drawCircle(center, 65, ringPaint);
+    canvas.drawCircle(center, 95, ringPaint);
+    canvas.drawCircle(center, 130, ringPaint);
+
+    // Glowing Sipalay Highway Polyline
+    final glowPath = Path()
+      ..moveTo(0, h * 0.82)
+      ..cubicTo(w * 0.28, h * 0.85, w * 0.45, h * 0.65, w * 0.65, h * 0.48)
+      ..cubicTo(w * 0.78, h * 0.38, w * 0.88, h * 0.32, w, h * 0.28);
+
+    final glowPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8;
+    canvas.drawPath(glowPath, glowPaint);
+
+    final corePathPaint = Paint()
+      ..color = const Color(0xFF34D399)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5;
+    canvas.drawPath(glowPath, corePathPaint);
+
+    // Waypoint dots
+    final nodePaint = Paint()..color = const Color(0xFF10B981);
+    canvas.drawCircle(Offset(w * 0.35, h * 0.78), 4, nodePaint);
+    canvas.drawCircle(Offset(w * 0.55, h * 0.58), 4, nodePaint);
+    canvas.drawCircle(Offset(w * 0.82, h * 0.35), 4, nodePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Community Report & Zero Waste Scene Graphic for Walkthrough Slide 3
+class ReportCommunitySceneGraphic extends StatelessWidget {
+  final double height;
+
+  const ReportCommunitySceneGraphic({super.key, this.height = 190});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF0FDF4), Color(0xFFEFF6FF), Color(0xFFECFDF5)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        border: Border.all(color: const Color(0xFFA7F3D0).withValues(alpha: 0.8), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18059669),
+            offset: Offset(0, 8),
+            blurRadius: 18,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(21),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Top Achievement & Eco-Points Banner
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x12000000), blurRadius: 6, offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 15),
+                        const SizedBox(width: 5),
+                        Text(
+                          'CENRO Certified Report',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF065F46),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x30D97706), blurRadius: 6, offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '+50 Eco-Points',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // Middle: 3 Segregation Clay Bins
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildBin(
+                    label: 'Biodegradable',
+                    sub: 'Malata',
+                    color: const Color(0xFF10B981),
+                    bgColor: const Color(0xFFD1FAE5),
+                    icon: Icons.eco_rounded,
+                  ),
+                  _buildBin(
+                    label: 'Recyclable',
+                    sub: 'Mabaligya',
+                    color: const Color(0xFF2563EB),
+                    bgColor: const Color(0xFFDBEAFE),
+                    icon: Icons.recycling_rounded,
+                  ),
+                  _buildBin(
+                    label: 'Residual',
+                    sub: 'Di-malata',
+                    color: const Color(0xFFD97706),
+                    bgColor: const Color(0xFFFEF3C7),
+                    icon: Icons.delete_outline_rounded,
+                  ),
+                ],
+              ),
+
+              // Bottom Snap & Report Helper Pill
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.camera_alt_rounded, color: Color(0xFF059669), size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      '1-Tap Photo Report • Real GPS Auto-Tagged',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBin({
+    required String label,
+    required String sub,
+    required Color color,
+    required Color bgColor,
+    required IconData icon,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: 58,
+          height: 64,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.18),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 2),
+              Container(
+                width: 32,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        Text(
+          sub,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 8.5,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Sundo Logo with Official Brand Graphic
 class SundoLogoGraphic extends StatelessWidget {
   final double size;
@@ -436,4 +857,5 @@ class SundoLogoGraphic extends StatelessWidget {
     );
   }
 }
+
 
