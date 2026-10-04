@@ -549,7 +549,7 @@ export default function App() {
                 document.body.removeChild(link);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/40 text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95"
-              title="Download Android APK file (8.4 MB)"
+              title="Download Android APK file"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download APK</span>

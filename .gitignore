@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Android build outputs (APK is published via GitHub Releases)
+*.apk
+*.aab
+.vercel

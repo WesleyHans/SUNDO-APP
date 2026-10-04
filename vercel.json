@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/download-apk", "destination": "https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk", "permanent": false },
+    { "source": "/SUNDO-v1.0.0-release.apk", "destination": "https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk", "permanent": false },
+    { "source": "/sundo-release.apk", "destination": "https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk", "permanent": false },
+    { "source": "/sundo.apk", "destination": "https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk", "permanent": false },
+    { "source": "/app-release.apk", "destination": "https://github.com/wesleyhansplatil123/SUNDO-APP/releases/latest/download/SUNDO.apk", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/((?!assets/|.*\\.).*)", "destination": "/index.html" }
+  ]
+}

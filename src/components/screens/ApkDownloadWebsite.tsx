@@ -171,7 +171,7 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
                 >
                   <Download className="w-5 h-5 stroke-[2.5]" />
                   <span>
-                    {downloadStarted ? 'Downloading SUNDO APK...' : 'Tap to Download SUNDO APK (8.4 MB)'}
+                    {downloadStarted ? 'Downloading SUNDO APK...' : 'Tap to Download SUNDO APK'}
                   </span>
                 </button>
 
@@ -211,7 +211,7 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
                 Version: <strong className="text-white">v1.0.0</strong>
               </span>
               <span className="px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-300 font-medium">
-                Size: <strong className="text-emerald-400">8.4 MB</strong>
+                Size: <strong className="text-emerald-400">Universal APK</strong>
               </span>
               <span className="px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-300 font-medium">
                 Package: <strong className="text-white">com.sundo.sipalay</strong>
@@ -473,7 +473,7 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
             </div>
             <div className="px-5 py-3 flex items-center justify-between">
               <span className="text-slate-400 font-medium">File Size</span>
-              <span className="text-white font-bold">8.4 MB (Universal Release)</span>
+              <span className="text-white font-bold">Universal Release</span>
             </div>
             <div className="px-5 py-3 flex items-center justify-between">
               <span className="text-slate-400 font-medium">Operating System</span>

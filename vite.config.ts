@@ -90,6 +90,7 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          navigateFallbackDenylist: [/\.apk$/i, /^\/download-apk/],
           maximumFileSizeToCacheInBytes: 6000000,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           runtimeCaching: [

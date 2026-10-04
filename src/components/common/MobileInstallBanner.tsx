@@ -140,7 +140,7 @@ export const MobileInstallBanner: React.FC<MobileInstallBannerProps> = ({
                   download="SUNDO-v1.0.0-release.apk"
                   className="text-emerald-400 font-bold hover:underline"
                 >
-                  Download .apk (8.4MB)
+                  Download .apk
                 </a>
               </div>
             </div>

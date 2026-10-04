@@ -138,7 +138,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                         border: Border.all(color: Colors.white, width: 3.5),
                         boxShadow: const [
                           BoxShadow(
-                            color: Colors.emerald,
+                            color: Color(0x66059669),
                             blurRadius: 12,
                             spreadRadius: 2,
                           )

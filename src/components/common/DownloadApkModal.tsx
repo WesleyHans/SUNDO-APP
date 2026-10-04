@@ -178,7 +178,7 @@ export const DownloadApkModal: React.FC<DownloadApkModalProps> = ({
                         className="px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95 no-underline"
                       >
                         <Download className="w-4 h-4 text-emerald-400" />
-                        <span>Download .APK File (8.4 MB)</span>
+                        <span>Download .APK File</span>
                       </a>
                     </div>
                   </div>
