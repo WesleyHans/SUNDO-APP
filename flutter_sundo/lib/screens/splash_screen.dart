@@ -90,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SundoLogoGraphic(size: 110, showSubtitle: true),
+                      SundoLogoGraphic(size: 130, showSubtitle: true),
                     ],
                   ),
                 ),

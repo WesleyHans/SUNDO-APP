@@ -76,17 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Center SUNDO Truck & Title
-                  const SundoTruckGraphic(width: 85, height: 65),
-                  Text(
-                    'SUNDO',
-                    style: GoogleFonts.outfit(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF065F46),
-                      letterSpacing: 1.1,
-                    ),
-                  ),
+                  // Center Official SUNDO Logo
+                  const SundoLogoGraphic(size: 84, showSubtitle: false),
 
                   const SizedBox(height: 14),
 

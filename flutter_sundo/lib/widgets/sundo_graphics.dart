@@ -367,14 +367,14 @@ class _WelcomeScenePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Sundo Logo with Truck & Official Typography
+/// Sundo Logo with Official Brand Graphic
 class SundoLogoGraphic extends StatelessWidget {
   final double size;
   final bool showSubtitle;
 
   const SundoLogoGraphic({
     super.key,
-    this.size = 90,
+    this.size = 110,
     this.showSubtitle = true,
   });
 
@@ -384,19 +384,37 @@ class SundoLogoGraphic extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SundoTruckGraphic(width: size * 1.3, height: size),
-        const SizedBox(height: 4),
-        Text(
-          'SUNDO',
-          style: GoogleFonts.outfit(
-            fontSize: size * 0.36,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFF065F46),
-            letterSpacing: 1.2,
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(size * 0.22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x30059669),
+                offset: Offset(0, 8),
+                blurRadius: 20,
+              ),
+              BoxShadow(
+                color: Colors.white,
+                offset: Offset(-2, -2),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(size * 0.22),
+            child: Image.asset(
+              'assets/images/sundo_logo.png',
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => SundoTruckGraphic(width: size * 1.3, height: size),
+            ),
           ),
         ),
         if (showSubtitle) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 12),
           Text(
             'Smart Urban Navigation',
             style: GoogleFonts.plusJakartaSans(
@@ -418,3 +436,4 @@ class SundoLogoGraphic extends StatelessWidget {
     );
   }
 }
+

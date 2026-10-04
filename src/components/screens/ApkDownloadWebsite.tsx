@@ -94,8 +94,8 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
       <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-md border border-emerald-400/30">
-              <SundoTruckIcon size={24} className="text-white" />
+            <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-md border border-emerald-400/30">
+              <img src="/sundo_logo.png" alt="SUNDO Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -227,8 +227,8 @@ export const ApkDownloadWebsite: React.FC<ApkDownloadWebsiteProps> = ({
 
           {/* Right Card: Mobile Phone Direct Card on Small screens, QR code on desktop */}
           <div className="w-full max-w-sm bg-slate-800/90 border border-slate-700/90 rounded-3xl p-6 shadow-2xl backdrop-blur-md flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg mb-3">
-              <SundoTruckIcon size={36} className="text-white" />
+            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg mb-3 border border-emerald-400/40">
+              <img src="/sundo_logo.png" alt="SUNDO Official Logo" className="w-full h-full object-cover" />
             </div>
 
             {/* Mobile View: Direct Download Action */}
