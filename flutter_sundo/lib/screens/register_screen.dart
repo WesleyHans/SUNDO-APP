@@ -26,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController(text: 'secret123');
 
   bool _showPassword = false;
+  bool _agreeTerms = true;
   bool _useCurrentLocation = true;
   String _selectedBarangay = 'Barangay 1, Sipalay City';
 
@@ -61,115 +62,127 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back Button
+              // Top Back Button
               IconButton(
-                icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Color(0xFF334155)),
+                icon: const Icon(Icons.arrow_back_rounded, size: 24, color: Color(0xFF0F172A)),
                 onPressed: widget.onBack,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              // Header
+              // Mockup Header: Getting Started / Create an account to continue!
               Text(
-                'Create Your Account',
+                'Getting Started',
                 style: GoogleFonts.outfit(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFF0F172A),
+                  letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Join SUNDO and be part of a cleaner and greener Sipalay.',
+                'Create an account to continue!',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: const Color(0xFF64748B),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Form
-              // 1. Full Name
-              _buildFieldLabel('Full Name'),
-              const SizedBox(height: 6),
+              // 1. Full Name Molded Clay Input
               Container(
-                decoration: ClayTheme.input(),
+                decoration: ClayTheme.input(radius: 18),
                 child: TextField(
                   controller: _nameController,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF0F172A)),
-                  decoration: const InputDecoration(
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'Juan Dela Cruz',
-                    prefixIcon: Icon(Icons.person_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    hintText: 'Full Name',
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // 2. Mobile Number
-              _buildFieldLabel('Mobile Number'),
-              const SizedBox(height: 6),
+              // 2. Phone Number Molded Clay Input
               Container(
-                decoration: ClayTheme.input(),
+                decoration: ClayTheme.input(radius: 18),
                 child: TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF0F172A)),
-                  decoration: const InputDecoration(
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: '0912 345 6789',
-                    prefixIcon: Icon(Icons.phone_outlined, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    hintText: 'Phone Number',
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // 3. Email Address
-              _buildFieldLabel('Email Address'),
-              const SizedBox(height: 6),
+              // 3. Email Address Molded Clay Input
               Container(
-                decoration: ClayTheme.input(),
+                decoration: ClayTheme.input(radius: 18),
                 child: TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF0F172A)),
-                  decoration: const InputDecoration(
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'juan@gmail.com',
-                    prefixIcon: Icon(Icons.mail_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    hintText: 'Email Address',
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
+                    prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // 4. Password
-              _buildFieldLabel('Password'),
-              const SizedBox(height: 6),
+              // 4. Password Molded Clay Input with Eye Toggle
               Container(
-                decoration: ClayTheme.input(),
+                decoration: ClayTheme.input(radius: 18),
                 child: TextField(
                   controller: _passwordController,
                   obscureText: !_showPassword,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF0F172A)),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: '••••••••',
+                    hintText: 'Password',
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
                     prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8), size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -183,30 +196,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         });
                       },
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // 5. Barangay / Address Dropdown
-              _buildFieldLabel('Barangay / Address'),
-              const SizedBox(height: 6),
+              // 5. Barangay / Address Molded Clay Dropdown
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: ClayTheme.input(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                decoration: ClayTheme.input(radius: 18),
                 child: Row(
                   children: [
                     const Icon(Icons.location_on_outlined, color: Color(0xFF94A3B8), size: 20),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedBarangay,
                           isExpanded: true,
                           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF0F172A), fontWeight: FontWeight.w600),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.5,
+                            color: const Color(0xFF0F172A),
+                            fontWeight: FontWeight.w600,
+                          ),
                           items: _barangays.map((b) {
                             return DropdownMenuItem<String>(
                               value: b,
@@ -225,54 +240,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 16),
 
-              // "Use my current location" Switch
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.my_location_rounded, color: Color(0xFF059669), size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              // 6. Terms & Conditions Toggle Row (Matching Mockup Right Screen)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 38,
+                    height: 24,
+                    child: Switch(
+                      value: _agreeTerms,
+                      activeTrackColor: const Color(0xFF059669),
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: const Color(0xFFE2E8F0),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (val) {
+                        setState(() => _agreeTerms = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          color: const Color(0xFF64748B),
+                          height: 1.35,
+                        ),
                         children: [
-                          Text(
-                            'Use my current location',
+                          const TextSpan(text: 'By creating an account, you agree to our '),
+                          TextSpan(
+                            text: 'Terms',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1E293B),
+                              color: const Color(0xFF059669),
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          Text(
-                            'Helps us give accurate updates for your area.',
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Conditions',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
-                              color: const Color(0xFF64748B),
+                              color: const Color(0xFF059669),
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Switch(
-                      value: _useCurrentLocation,
-                      activeThumbColor: const Color(0xFF059669),
-                      onChanged: (val) {
-                        setState(() => _useCurrentLocation = val);
-                      },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Location Option Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: ClayTheme.insetBox(radius: 14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.my_location_rounded, color: Color(0xFF059669), size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Accurate GPS location for collection updates',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                      width: 32,
+                      child: Switch(
+                        value: _useCurrentLocation,
+                        activeTrackColor: const Color(0xFF059669),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        onChanged: (val) {
+                          setState(() => _useCurrentLocation = val);
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
 
-              // Create Account Primary Button
+              // 7. Primary Inflated Clay Button: Sign Up
               GestureDetector(
                 onTap: () async {
                   final name = _nameController.text.trim();
@@ -294,6 +351,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return;
                   }
 
+                  if (!_agreeTerms) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please agree to the Terms and Conditions.')),
+                    );
+                    return;
+                  }
+
                   await AppStore.setName(name);
                   await AppStore.setEmail(email);
                   await AppStore.setPhone(phone);
@@ -304,40 +368,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: ClayTheme.buttonPrimary(),
+                  decoration: ClayTheme.buttonPrimary(radius: 20),
                   child: Center(
                     child: Text(
-                      'Create Account',
+                      'Sign Up',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Footer: Already have an account? Log In
+              // 8. Footer: Already have an account? Login
               Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                     GestureDetector(
                       onTap: widget.onGoToLogin,
                       child: Text(
-                        'Log In',
+                        'Login',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF047857),
-                          decoration: TextDecoration.underline,
+                          color: const Color(0xFF059669),
                         ),
                       ),
                     ),
@@ -345,22 +411,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+
+              // 9. "Or continue with" Divider
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      'Or continue with',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 10. Secondary Inflated Clay Button: Continue with Google
+              GestureDetector(
+                onTap: widget.onRegisterSuccess,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  decoration: ClayTheme.buttonSecondary(radius: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomPaint(
+                        size: const Size(20, 20),
+                        painter: _GoogleIconPainter(),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Continue with Google',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: const Color(0xFF1E293B),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildFieldLabel(String label) {
-    return Text(
-      label,
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        color: const Color(0xFF334155),
-      ),
-    );
+class _GoogleIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final center = Offset(w / 2, h / 2);
+    final double radius = w / 2;
+
+    final bluePaint = Paint()..color = const Color(0xFF4285F4)..strokeWidth = 3.0..style = PaintingStyle.stroke;
+    final greenPaint = Paint()..color = const Color(0xFF34A853)..strokeWidth = 3.0..style = PaintingStyle.stroke;
+    final yellowPaint = Paint()..color = const Color(0xFFFBBC05)..strokeWidth = 3.0..style = PaintingStyle.stroke;
+    final redPaint = Paint()..color = const Color(0xFFEA4335)..strokeWidth = 3.0..style = PaintingStyle.stroke;
+
+    final rect = Rect.fromCircle(center: center, radius: radius - 1.5);
+    const pi = 3.141592653589793;
+
+    canvas.drawArc(rect, -pi / 4, pi / 2, false, bluePaint);
+    canvas.drawArc(rect, pi / 4, pi / 2, false, greenPaint);
+    canvas.drawArc(rect, 3 * pi / 4, pi / 2, false, yellowPaint);
+    canvas.drawArc(rect, 5 * pi / 4, pi / 2, false, redPaint);
+
+    final fillBlue = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(w * 0.48, h * 0.42, w * 0.48, 3.0), fillBlue);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

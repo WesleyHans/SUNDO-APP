@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Stack(
           children: [
@@ -112,16 +112,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: ClayTheme.input(radius: 14),
+                        decoration: ClayTheme.input(radius: 18),
                         child: TextField(
                           controller: _emailController,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF0F172A)),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0F172A),
+                          ),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'juan@gmail.com',
                             hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13.5),
                             prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
                         ),
                       ),
@@ -144,11 +148,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: ClayTheme.input(radius: 14),
+                        decoration: ClayTheme.input(radius: 18),
                         child: TextField(
                           controller: _passwordController,
                           obscureText: !_showPassword,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF0F172A)),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0F172A),
+                          ),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: '••••••••',
@@ -166,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 });
                               },
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
                         ),
                       ),
@@ -246,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: ClayTheme.buttonPrimary(radius: 24),
+                      decoration: ClayTheme.buttonPrimary(radius: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -289,8 +297,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: widget.onLoginSuccess,
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: ClayTheme.buttonSecondary(radius: 24),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      decoration: ClayTheme.buttonSecondary(radius: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -319,8 +327,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: widget.onLoginSuccess,
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: ClayTheme.buttonSecondary(radius: 24),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      decoration: ClayTheme.buttonSecondary(radius: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

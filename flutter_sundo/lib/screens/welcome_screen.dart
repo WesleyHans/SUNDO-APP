@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/clay_theme.dart';
 import '../widgets/sundo_graphics.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -26,10 +27,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     {
       'title1': 'A Cleaner Sipalay\nStarts with ',
       'title2': 'You',
-      'accentColor': const Color(0xFF65A30D),
+      'accentColor': const Color(0xFF059669),
       'description':
           'Track garbage trucks, know collection schedules, receive alerts, and help keep our city clean.',
-      'graphic': const WelcomeSceneGraphic(height: 200),
+      'graphic': const WelcomeSceneGraphic(height: 180),
     },
     {
       'title1': 'Live GPS Tracking\nNever Miss a ',
@@ -37,7 +38,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       'accentColor': const Color(0xFF059669),
       'description':
           'Watch collection trucks approach your barangay in real-time with accurate distance meters and proximity sirens.',
-      'graphic': const GpsTrackingSceneGraphic(height: 200),
+      'graphic': const GpsTrackingSceneGraphic(height: 180),
     },
     {
       'title1': 'Report & Keep Track\nZero Waste ',
@@ -45,7 +46,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       'accentColor': const Color(0xFF059669),
       'description':
           'Snap photos of uncollected waste or illegal dumping, earn Eco-Points, and keep our coastlines pristine.',
-      'graphic': const ReportCommunitySceneGraphic(height: 200),
+      'graphic': const ReportCommunitySceneGraphic(height: 180),
     },
   ];
 
@@ -58,18 +59,48 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 10),
+              // Top Brand Header Row with Skip Clay Pill
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Welcome to SUNDO',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onGetStarted,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: ClayTheme.buttonSecondary(radius: 12),
+                      child: Text(
+                        'Skip',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
 
               // Interactive Swipeable Walkthrough Slides
               SizedBox(
-                height: 380,
+                height: 405,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) {
@@ -83,12 +114,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Headline matching Mockup 2
+                        // Headline matching realistic mockup
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: GoogleFonts.outfit(
-                              fontSize: 26,
+                              fontSize: 25,
                               fontWeight: FontWeight.w900,
                               color: const Color(0xFF0F172A),
                               height: 1.25,
@@ -105,7 +136,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
 
                         // Subtitle
                         Padding(
@@ -123,10 +154,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         const SizedBox(height: 18),
 
-                        // Custom Scene Graphic for this slide
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: slide['graphic'] as Widget,
+                        // 3D Elevated Clay Presentation Card holding the Scene Graphic
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.all(16),
+                            decoration: ClayTheme.cardElevated(radius: 28),
+                            child: Center(
+                              child: slide['graphic'] as Widget,
+                            ),
+                          ),
                         ),
                       ],
                     );
@@ -134,9 +172,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
 
-              // Carousel Dots Indicator (Mockup 2: 3 dots)
+              // Carousel Dots Indicator (Mockup matching elongated active pill)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_slides.length, (index) {
@@ -152,12 +190,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 22 : 8,
-                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: isActive ? 24 : 7,
+                      height: 6,
                       decoration: BoxDecoration(
                         color: isActive ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   );
@@ -166,23 +204,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
               const SizedBox(height: 28),
 
-              // 1. Primary Button: Get Started →
+              // 1. Primary Inflated Clay Button: Get Started →
               GestureDetector(
                 onTap: widget.onGetStarted,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF059669),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x35059669),
-                        offset: Offset(0, 4),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
+                  decoration: ClayTheme.buttonPrimary(radius: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -203,24 +231,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
               const SizedBox(height: 12),
 
-              // 2. Secondary Button: Log In
+              // 2. Secondary Inflated Clay Button: Log In
               GestureDetector(
                 onTap: widget.onLogIn,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 15),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x08000000),
-                        offset: Offset(0, 2),
-                        blurRadius: 6,
-                      ),
-                    ],
-                  ),
+                  decoration: ClayTheme.buttonSecondary(radius: 20),
                   child: Center(
                     child: Text(
                       'Log In',
