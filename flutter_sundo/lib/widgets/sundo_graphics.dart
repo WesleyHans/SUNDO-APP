@@ -858,6 +858,121 @@ class SundoLogoGraphic extends StatelessWidget {
   }
 }
 
+/// 3D Isometric User House Marker (represents user's own home/location on the map)
+class IsometricHouseMarker extends StatelessWidget {
+  final String label;
+  final double size;
+  final AnimationController? radarAnimation;
+  final VoidCallback? onTap;
+
+  const IsometricHouseMarker({
+    super.key,
+    this.label = 'My House',
+    this.size = 46,
+    this.radarAnimation,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Pill badge "🏡 My House"
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF38BDF8), width: 1.2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x35000000),
+                    offset: Offset(0, 3),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.home_rounded, color: Color(0xFF38BDF8), size: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 3),
+
+            // 3D Isometric House
+            CustomPaint(
+              size: Size(size, size * 0.8),
+              painter: _IsometricBuildingPainter(),
+            ),
+
+            // Ground Drop Shadow with Optional Pulsing Radar Waves
+            if (radarAnimation != null)
+              AnimatedBuilder(
+                animation: radarAnimation!,
+                builder: (context, _) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Transform.scale(
+                        scale: 1.0 + (radarAnimation!.value * 1.6),
+                        child: Container(
+                          width: size * 0.9,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFF0284C7).withValues(
+                              alpha: (1.0 - radarAnimation!.value) * 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: size * 0.75,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.28),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              )
+            else
+              Container(
+                width: size * 0.75,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// 3D Isometric Eco-Station Building Marker (matching Sipalay City 3D Map)
 class IsometricStationBuilding extends StatelessWidget {
   final String number;

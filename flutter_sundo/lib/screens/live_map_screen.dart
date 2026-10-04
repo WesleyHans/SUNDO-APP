@@ -69,58 +69,9 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
     LatLng(9.7430, 122.4090),
   ];
 
-  // Sipalay 3D Eco-Stations (matching the screenshot markers)
-  final List<Map<String, dynamic>> _stations = const [
-    {
-      'id': '1',
-      'name': 'Poblacion Beach Station',
-      'location': LatLng(9.7540, 122.3995),
-      'time': '8:30 AM',
-      'status': 'Collected Today',
-    },
-    {
-      'id': '2',
-      'name': 'Coastal Estuary Point',
-      'location': LatLng(9.7460, 122.3965),
-      'time': '9:15 AM',
-      'status': 'Collecting Next',
-    },
-    {
-      'id': '3',
-      'name': 'Central Public Market',
-      'location': LatLng(9.7510, 122.4045),
-      'time': '10:00 AM',
-      'status': 'Scheduled',
-    },
-    {
-      'id': '4',
-      'name': 'Nauhang Eco-Drop Hub',
-      'location': LatLng(9.7610, 122.3950),
-      'time': '10:45 AM',
-      'status': 'Scheduled',
-    },
-  ];
-
   int _routeIndex = 2;
   Timer? _truckTimer;
   double _realDistanceKm = 1.2;
-
-  // Map Tile Style (FOSSGIS Clean OSM matching screenshot OSRM/FOSSGIS attribution)
-  int _tileStyleIndex = 0;
-  final List<Map<String, String>> _tileStyles = const [
-    {
-      'name': 'FOSSGIS Clean OSM (3D)',
-      'url': 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
-    },
-    {
-      'name': 'Humanitarian Eco OSM',
-      'url': 'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-    },
-    {
-      'name': 'OpenStreetMap Standard',
-      'url': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    },
-  ];
 
   @override
   void initState() {
@@ -349,21 +300,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
     });
   }
 
-  void _cycleTileStyle() {
-    setState(() {
-      _tileStyleIndex = (_tileStyleIndex + 1) % _tileStyles.length;
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Map Style: ${_tileStyles[_tileStyleIndex]['name']}'),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
 
   void _flyToRealGPS() async {
     if (!_isRealGpsActive) {
@@ -462,7 +398,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
               ),
               children: [
                 TileLayer(
-                  urlTemplate: _tileStyles[_tileStyleIndex]['url']!,
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.sundo.sipalay',
                   maxZoom: 19,
                 ),
@@ -495,211 +431,131 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                   ),
                 MarkerLayer(
                   markers: [
-                    // 3D Isometric Eco-Stations (Authentic 3D Buildings)
-                    ..._stations.map((st) {
-                      return Marker(
-                        point: st['location'] as LatLng,
-                        width: 76,
-                        height: 86,
-                        alignment: Alignment.bottomCenter,
-                        child: IsometricStationBuilding(
-                          number: st['id'] as String,
-                          title: st['name'] as String,
-                          size: 46,
-                          tiltAngle: 0.0,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${st['name']} • Collection: ${st['time']} (${st['status']})',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                duration: const Duration(seconds: 3),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }),
-
-                    // Real User Location Marker with 3D Radar Wave
+                    // 1. User's Own Location 3D House Marker (Only this building shown on the map)
                     Marker(
                       point: _userLocation,
-                      width: 76,
-                      height: 80,
+                      width: 92,
+                      height: 96,
                       alignment: Alignment.bottomCenter,
-                      child: AnimatedBuilder(
-                        animation: _radarController,
-                        builder: (context, _) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E3A8A),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white, width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
-                                  ],
-                                ),
-                                child: Text(
-                                  'You',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Stack(
-                                alignment: Alignment.center,
+                      child: IsometricHouseMarker(
+                        label: 'My House',
+                        size: 46,
+                        radarAnimation: _radarController,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
                                 children: [
-                                  Transform.scale(
-                                    scale: 1.0 + (_radarController.value * 1.5),
-                                    child: Container(
-                                      width: 34,
-                                      height: 34,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: const Color(0xFF2563EB).withValues(
-                                          alpha: (1.0 - _radarController.value) * 0.45,
-                                        ),
+                                  const Icon(Icons.home_rounded, color: Colors.white, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'My House • Real GPS Location (±${_gpsAccuracyMeters > 0 ? _gpsAccuracyMeters.toStringAsFixed(1) : "5"}m)',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2.5),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x551D4ED8),
-                                          offset: Offset(0, 5),
-                                          blurRadius: 8,
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.person_pin_circle_rounded,
-                                      color: Colors.white,
-                                      size: 18,
                                     ),
                                   ),
                                 ],
                               ),
-                              Container(
-                                width: 20,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
+                              duration: const Duration(seconds: 3),
+                              behavior: SnackBarBehavior.floating,
+                            ),
                           );
                         },
                       ),
                     ),
 
-                    // Real-Time Moving Garbage Truck with 3D Elevation & Waves
+                    // 2. Real-Time Moving Garbage Truck with 3D Elevation & Waves
                     Marker(
                       point: _truckCurrentPos,
-                      width: 80,
-                      height: 85,
+                      width: 84,
+                      height: 90,
                       alignment: Alignment.bottomCenter,
-                      child: AnimatedBuilder(
-                        animation: _radarController,
-                        builder: (context, _) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0F172A),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF34D399), width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: AnimatedBuilder(
+                          animation: _radarController,
+                          builder: (context, _) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0F172A),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF34D399), width: 1),
+                                    boxShadow: const [
+                                      BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    '${truck.etaMinutes}m ETA',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Transform.scale(
+                                      scale: 1.0 + (_radarController.value * 1.6),
+                                      child: Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color(0xFF10B981).withValues(
+                                            alpha: (1.0 - _radarController.value) * 0.45,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF34D399), Color(0xFF059669)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 2.5),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Color(0x55059669),
+                                            offset: Offset(0, 6),
+                                            blurRadius: 12,
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.all(3),
+                                      child: const Center(
+                                        child: SundoTruckGraphic(width: 30, height: 22),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                child: Text(
-                                  '${truck.etaMinutes}m ETA',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
+                                Container(
+                                  width: 28,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Transform.scale(
-                                    scale: 1.0 + (_radarController.value * 1.6),
-                                    child: Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: const Color(0xFF10B981).withValues(
-                                          alpha: (1.0 - _radarController.value) * 0.45,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF34D399), Color(0xFF059669)],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2.5),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x55059669),
-                                          offset: Offset(0, 6),
-                                          blurRadius: 12,
-                                        ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.all(3),
-                                    child: const Center(
-                                      child: SundoTruckGraphic(width: 30, height: 22),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                width: 28,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -716,7 +572,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       GestureDetector(
                         onTap: _flyToSipalay,
@@ -757,17 +613,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      // Tile Layers Switcher Button
-                      GestureDetector(
-                        onTap: _cycleTileStyle,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: ClayTheme.buttonSecondary(radius: 16),
-                          child: const Icon(Icons.layers_outlined, color: Color(0xFF059669), size: 20),
                         ),
                       ),
                     ],
