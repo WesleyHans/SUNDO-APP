@@ -4,10 +4,32 @@ import '../theme/clay_theme.dart';
 import 'notifications_screen.dart';
 import 'truck_alert_modal.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final Function(int) onNavigate;
 
   const HomeScreen({super.key, required this.onNavigate});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +185,7 @@ class HomeScreen extends StatelessWidget {
 
               // User Avatar JU
               GestureDetector(
-                onTap: () => onNavigate(4), // Profile
+                onTap: () => widget.onNavigate(4), // Profile
                 child: Container(
                   width: 44,
                   height: 44,
@@ -250,7 +272,7 @@ class HomeScreen extends StatelessWidget {
 
           // Prominent Clay Button Primary (.clay-button-primary)
           GestureDetector(
-            onTap: () => onNavigate(2), // Report Screen
+            onTap: () => widget.onNavigate(2), // Report Screen
             child: Container(
               width: double.infinity,
               height: 54,
@@ -287,19 +309,31 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
+          // Header Row with Animated Pulsing Radar Beacon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                    ),
+                  AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, _) {
+                      return Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.6 * _pulseController.value),
+                              blurRadius: 8 * _pulseController.value,
+                              spreadRadius: 2.5 * _pulseController.value,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -338,7 +372,7 @@ class HomeScreen extends StatelessWidget {
               TruckAlertModal.show(
                 context,
                 etaMinutes: 10,
-                onViewTruck: () => onNavigate(1), // Live Map
+                onViewTruck: () => widget.onNavigate(1), // Live Map
               );
             },
             borderRadius: BorderRadius.circular(18),
@@ -441,7 +475,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () => onNavigate(2),
+                onTap: () => widget.onNavigate(2),
                 child: Row(
                   children: [
                     Text(
@@ -478,7 +512,7 @@ class HomeScreen extends StatelessWidget {
 
           // Recent Report Preview Card (.clay-input / inset box)
           GestureDetector(
-            onTap: () => onNavigate(2),
+            onTap: () => widget.onNavigate(2),
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: ClayTheme.insetBox(radius: 18),
@@ -639,7 +673,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           InkWell(
-            onTap: () => onNavigate(3), // Schedules
+            onTap: () => widget.onNavigate(3), // Schedules
             borderRadius: BorderRadius.circular(18),
             child: Container(
               padding: const EdgeInsets.all(14),
