@@ -25,11 +25,11 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
   bool _isRealGpsActive = false;
   bool _hasInitialCentered = false;
   double _gpsAccuracyMeters = 0.0;
-  String _gpsStatusText = 'Locating Real GPS...';
   StreamSubscription<Position>? _positionStream;
 
   // 3D Perspective Tilt state
   bool _is3DView = true;
+  bool _isTruckCardExpanded = false;
   late AnimationController _tiltController;
   late Animation<double> _tiltAnimation;
 
@@ -126,22 +126,15 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
   void initState() {
     super.initState();
 
-    // 1. Setup 3D Camera Rotation Controller
+    // 1. Setup 3D Perspective Tilt Controller
     _tiltController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 650),
     );
     _tiltAnimation = CurvedAnimation(
       parent: _tiltController,
       curve: Curves.easeInOutCubic,
     );
-    _tiltAnimation.addListener(() {
-      if (mounted) {
-        try {
-          _mapController.rotate(_tiltAnimation.value * 28.0);
-        } catch (_) {}
-      }
-    });
     if (_is3DView) {
       _tiltController.value = 1.0;
     }
@@ -210,7 +203,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
-          _gpsStatusText = 'GPS Disabled (Tap Here)';
           _isRealGpsActive = false;
         });
         return;
@@ -221,7 +213,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           setState(() {
-            _gpsStatusText = 'GPS Permission Denied';
             _isRealGpsActive = false;
           });
           return;
@@ -230,7 +221,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
 
       if (permission == LocationPermission.deniedForever) {
         setState(() {
-          _gpsStatusText = 'GPS Permission Denied (Settings)';
           _isRealGpsActive = false;
         });
         return;
@@ -262,7 +252,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       });
     } catch (e) {
       setState(() {
-        _gpsStatusText = 'Using Sipalay Satellite GPS';
         _isRealGpsActive = false;
       });
     }
@@ -275,7 +264,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       _userLocation = newLoc;
       _gpsAccuracyMeters = pos.accuracy;
       _isRealGpsActive = true;
-      _gpsStatusText = 'REAL GPS: ACTIVE (±${pos.accuracy.toStringAsFixed(1)}m)';
       _updateRealDistance();
     });
 
@@ -453,390 +441,326 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       backgroundColor: const Color(0xFFE2E8F0),
       body: Stack(
         children: [
-          // 1. FULL-BLEED EDGE-TO-EDGE 3D MAP VIEWPORT (NO V-SHAPE / ZERO TRAPEZOID DISTORTION)
+          // 1. FULL-BLEED 3D PERSPECTIVE TILTED MAP VIEWPORT (NO V-SHAPE / ZERO TRAPEZOID DISTORTION)
           Positioned.fill(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _userLocation,
-                initialZoom: 15.8,
-                initialRotation: _is3DView ? 28.0 : 0.0,
-                maxZoom: 18.5,
-                minZoom: 10.0,
-              ),
-              children: [
-                // High-resolution Map Tiles with clean pastel styling (matching screenshot)
-                TileLayer(
-                  urlTemplate: _tileStyles[_tileStyleIndex]['url']!,
-                  userAgentPackageName: 'com.sundo.sipalay',
-                  maxZoom: 19,
-                ),
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _tiltAnimation,
+                builder: (context, child) {
+                  final double tiltVal = _tiltAnimation.value; // 0.0 in 2D, 1.0 in 3D
+                  final double tiltAngle = tiltVal * 0.78;     // ~45° 3D perspective pitch tilt
+                  // Map scale factor: scales up to 1.62 in 3D so that the receding top edge of the map
+                  // remains wider than the screen width (1.62 * 0.65 = 1.05x screen width)
+                  final double mapScale = 1.0 + (tiltVal * 0.62);
+                  final double yShift = tiltVal * 50.0;
 
-                // Collection Route Polyline with 3D glowing emerald shadow
-                PolylineLayer(
-                  polylines: [
-                    // Glow background polyline
-                    Polyline(
-                      points: _collectionRoute,
-                      strokeWidth: 9.0,
-                      color: const Color(0x5510B981),
-                    ),
-                    // Core route polyline
-                    Polyline(
-                      points: _collectionRoute,
-                      strokeWidth: 5.0,
-                      color: const Color(0xFF059669),
-                    ),
-                  ],
-                ),
-
-                // Real GPS Accuracy Circle
-                if (_isRealGpsActive && _gpsAccuracyMeters > 0)
-                  CircleLayer(
-                    circles: [
-                      CircleMarker(
-                        point: _userLocation,
-                        radius: _gpsAccuracyMeters.clamp(8, 60),
-                        useRadiusInMeter: true,
-                        color: const Color(0x223B82F6),
-                        borderColor: const Color(0xFF3B82F6),
-                        borderStrokeWidth: 1.5,
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.0016) // 3D Perspective vanishing point
+                      ..rotateX(tiltAngle),
+                    child: Transform.scale(
+                      scale: mapScale,
+                      child: Transform.translate(
+                        offset: Offset(0.0, yShift),
+                        child: child,
                       ),
-                    ],
+                    ),
+                  );
+                },
+                child: FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _userLocation,
+                    initialZoom: 15.6,
+                    maxZoom: 18.5,
+                    minZoom: 10.0,
                   ),
-
-                // Interactive 3D Animated Markers (Stations, Truck, and User Location)
-                MarkerLayer(
-                  markers: [
-                    // 3D Isometric Eco-Stations (Matching the screenshot buildings with badges #1, #2...)
-                    ..._stations.map((st) {
-                      return Marker(
-                        point: st['location'] as LatLng,
-                        width: 80,
-                        height: 94,
-                        alignment: Alignment.bottomCenter,
-                        child: IsometricStationBuilding(
-                          number: st['id'] as String,
-                          title: st['name'] as String,
-                          size: 52,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${st['name']} • Collection: ${st['time']} (${st['status']})',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                duration: const Duration(seconds: 3),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                  children: [
+                    TileLayer(
+                      urlTemplate: _tileStyles[_tileStyleIndex]['url']!,
+                      userAgentPackageName: 'com.sundo.sipalay',
+                      maxZoom: 19,
+                    ),
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: _collectionRoute,
+                          strokeWidth: 9.0,
+                          color: const Color(0x5510B981),
                         ),
-                      );
-                    }),
-
-                    // REAL User Location Marker (Pulsing 3D Pin)
-                    Marker(
-                      point: _userLocation,
-                      width: 80,
-                      height: 85,
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedBuilder(
-                        animation: _radarController,
-                        builder: (context, _) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // You are here badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E3A8A),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white, width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
-                                  ],
-                                ),
-                                child: Text(
-                                  'You (Real GPS)',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              // Beacon Head with pulse
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Transform.scale(
-                                    scale: 1.0 + (_radarController.value * 1.5),
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: const Color(0xFF2563EB).withValues(
-                                          alpha: (1.0 - _radarController.value) * 0.45,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2.5),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x551D4ED8),
-                                          offset: Offset(0, 6),
-                                          blurRadius: 10,
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.person_pin_circle_rounded,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              // Ground shadow
-                              Container(
-                                width: 22,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                        Polyline(
+                          points: _collectionRoute,
+                          strokeWidth: 5.0,
+                          color: const Color(0xFF059669),
+                        ),
+                      ],
                     ),
-
-                    // Real-Time Moving Garbage Truck 3D Marker
-                    Marker(
-                      point: _truckCurrentPos,
-                      width: 85,
-                      height: 90,
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedBuilder(
-                        animation: _radarController,
-                        builder: (context, _) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Mini Badge: ETA overlay
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0F172A),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF34D399), width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
-                                  ],
-                                ),
-                                child: Text(
-                                  '${truck.etaMinutes}m ETA',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-
-                              // Elevated 3D Truck Base Card
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Transform.scale(
-                                    scale: 1.0 + (_radarController.value * 1.6),
-                                    child: Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: const Color(0xFF10B981).withValues(
-                                          alpha: (1.0 - _radarController.value) * 0.45,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF34D399), Color(0xFF059669)],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 3),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x55059669),
-                                          offset: Offset(0, 8),
-                                          blurRadius: 14,
-                                        ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.all(4),
-                                    child: const Center(
-                                      child: SundoTruckGraphic(width: 34, height: 26),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              // Ground shadow
-                              Container(
-                                width: 32,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 2. TOP FLOATING BAR: Sipalay / My Location Switcher + Real GPS Status Badge
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Location Viewport Switcher Pills (Matching "SIPALAY CITY" in screenshot)
-                      Row(
-                        children: [
-                          // "SIPALAY CITY" Pill Button
-                          GestureDetector(
-                            onTap: _flyToSipalay,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x18000000),
-                                    offset: Offset(0, 3),
-                                    blurRadius: 8,
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                'SIPALAY CITY',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 11,
-                                  color: const Color(0xFF0F172A),
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-
-                          // "MY LOCATION" Pill Button (Flies to real GPS)
-                          GestureDetector(
-                            onTap: _flyToRealGPS,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: _isRealGpsActive ? const Color(0xFF059669) : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x20059669),
-                                    offset: Offset(0, 3),
-                                    blurRadius: 8,
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.my_location_rounded,
-                                    size: 13,
-                                    color: _isRealGpsActive ? Colors.white : const Color(0xFF64748B),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'MY LOCATION',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 11,
-                                      color: _isRealGpsActive ? Colors.white : const Color(0xFF64748B),
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    if (_isRealGpsActive && _gpsAccuracyMeters > 0)
+                      CircleLayer(
+                        circles: [
+                          CircleMarker(
+                            point: _userLocation,
+                            radius: _gpsAccuracyMeters.clamp(8, 60),
+                            useRadiusInMeter: true,
+                            color: const Color(0x223B82F6),
+                            borderColor: const Color(0xFF3B82F6),
+                            borderStrokeWidth: 1.5,
                           ),
                         ],
                       ),
+                    AnimatedBuilder(
+                      animation: _tiltAnimation,
+                      builder: (context, _) {
+                        final double currentTilt = _tiltAnimation.value * 0.78;
+                        return MarkerLayer(
+                          markers: [
+                            // 3D Isometric Eco-Stations (counter-tilted vertically so they stand upright on the 3D ground)
+                            ..._stations.map((st) {
+                              return Marker(
+                                point: st['location'] as LatLng,
+                                width: 76,
+                                height: 86,
+                                alignment: Alignment.bottomCenter,
+                                child: IsometricStationBuilding(
+                                  number: st['id'] as String,
+                                  title: st['name'] as String,
+                                  size: 46,
+                                  tiltAngle: currentTilt,
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '${st['name']} • Collection: ${st['time']} (${st['status']})',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        duration: const Duration(seconds: 3),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            }),
 
-                      // Tile Layers Switcher Button
-                      GestureDetector(
-                        onTap: _cycleTileStyle,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: ClayTheme.buttonSecondary(radius: 16),
-                          child: const Icon(Icons.layers_outlined, color: Color(0xFF059669), size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
+                            // Real User Location Marker (counter-tilted upright)
+                            Marker(
+                              point: _userLocation,
+                              width: 76,
+                              height: 80,
+                              alignment: Alignment.bottomCenter,
+                              child: Transform(
+                                alignment: Alignment.bottomCenter,
+                                transform: Matrix4.identity()..rotateX(-currentTilt),
+                                child: AnimatedBuilder(
+                                  animation: _radarController,
+                                  builder: (context, _) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF1E3A8A),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.white, width: 1),
+                                            boxShadow: const [
+                                              BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            'You',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Transform.scale(
+                                              scale: 1.0 + (_radarController.value * 1.5),
+                                              child: Container(
+                                                width: 34,
+                                                height: 34,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: const Color(0xFF2563EB).withValues(
+                                                    alpha: (1.0 - _radarController.value) * 0.45,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 30,
+                                              height: 30,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: Colors.white, width: 2.5),
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                    color: Color(0x551D4ED8),
+                                                    offset: Offset(0, 5),
+                                                    blurRadius: 8,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Icon(
+                                                Icons.person_pin_circle_rounded,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          width: 20,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.25),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
 
-                  const SizedBox(height: 6),
+                            // Real-Time Moving Garbage Truck (counter-tilted upright)
+                            Marker(
+                              point: _truckCurrentPos,
+                              width: 80,
+                              height: 85,
+                              alignment: Alignment.bottomCenter,
+                              child: Transform(
+                                alignment: Alignment.bottomCenter,
+                                transform: Matrix4.identity()..rotateX(-currentTilt),
+                                child: AnimatedBuilder(
+                                  animation: _radarController,
+                                  builder: (context, _) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0F172A),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: const Color(0xFF34D399), width: 1),
+                                            boxShadow: const [
+                                              BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            '${truck.etaMinutes}m ETA',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Transform.scale(
+                                              scale: 1.0 + (_radarController.value * 1.6),
+                                              child: Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: const Color(0xFF10B981).withValues(
+                                                    alpha: (1.0 - _radarController.value) * 0.45,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 44,
+                                              height: 44,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF34D399), Color(0xFF059669)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: Colors.white, width: 2.5),
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                    color: Color(0x55059669),
+                                                    offset: Offset(0, 6),
+                                                    blurRadius: 12,
+                                                  ),
+                                                ],
+                                              ),
+                                              padding: const EdgeInsets.all(3),
+                                              child: const Center(
+                                                child: SundoTruckGraphic(width: 30, height: 22),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          width: 28,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.25),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-                  // Real GPS Status Chip (Tappable to enable GPS)
+          // 2. TOP FLOATING BAR: Clean "SIPALAY CITY" Pill (Matching Reference Screenshot)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   GestureDetector(
-                    onTap: _handleGpsBadgeTap,
+                    onTap: _flyToSipalay,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                         boxShadow: const [
-                          BoxShadow(color: Color(0x10000000), blurRadius: 6, offset: Offset(0, 2)),
+                          BoxShadow(
+                            color: Color(0x15000000),
+                            offset: Offset(0, 3),
+                            blurRadius: 8,
+                          ),
                         ],
                       ),
                       child: Row(
@@ -845,22 +769,34 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: BoxDecoration(
-                              color: _isRealGpsActive ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
-                            _gpsStatusText,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: _isRealGpsActive ? const Color(0xFF065F46) : const Color(0xFFD97706),
+                            'SIPALAY CITY',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ],
                       ),
+                    ),
+                  ),
+
+                  // Tile Layers Switcher Button
+                  GestureDetector(
+                    onTap: _cycleTileStyle,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: ClayTheme.buttonSecondary(radius: 16),
+                      child: const Icon(Icons.layers_outlined, color: Color(0xFF059669), size: 20),
                     ),
                   ),
                 ],
@@ -871,7 +807,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
           // 3. TOP-RIGHT MAP CONTROLS (+, -, Compass matching screenshot)
           Positioned(
             right: 14,
-            top: 130,
+            top: 110,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -887,7 +823,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
               ),
               child: Column(
                 children: [
-                  // Zoom In
                   IconButton(
                     onPressed: _zoomIn,
                     icon: const Icon(Icons.add, color: Color(0xFF334155), size: 20),
@@ -895,7 +830,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                     constraints: const BoxConstraints(),
                   ),
                   Container(width: 24, height: 1, color: const Color(0xFFE2E8F0)),
-                  // Zoom Out
                   IconButton(
                     onPressed: _zoomOut,
                     icon: const Icon(Icons.remove, color: Color(0xFF334155), size: 20),
@@ -903,7 +837,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                     constraints: const BoxConstraints(),
                   ),
                   Container(width: 24, height: 1, color: const Color(0xFFE2E8F0)),
-                  // Compass / North
                   IconButton(
                     onPressed: _resetNorth,
                     icon: const Icon(Icons.explore_outlined, color: Color(0xFF059669), size: 18),
@@ -915,13 +848,40 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
             ),
           ),
 
-          // 4. BOTTOM-RIGHT FLOATING CONTROLS (Target Recenter & "2D View" Button matching screenshot)
-          Positioned(
+          // 4. BOTTOM-LEFT SCALE BAR (matching ss-rose reference)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 280),
+            left: 14,
+            bottom: _isTruckCardExpanded ? 245 : 82,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x12000000), offset: Offset(0, 2), blurRadius: 6),
+                ],
+              ),
+              child: Text(
+                '300 m',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF334155),
+                ),
+              ),
+            ),
+          ),
+
+          // 5. BOTTOM-RIGHT CONTROLS: Target Recenter & 2D/3D Toggle (Zero overlap)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 280),
             right: 14,
-            bottom: 185,
+            bottom: _isTruckCardExpanded ? 245 : 82,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Target / Focus on User GPS Button (matching screenshot target icon)
                 GestureDetector(
                   onTap: _flyToRealGPS,
                   child: Container(
@@ -933,7 +893,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20000000),
+                          color: Color(0x18000000),
                           offset: Offset(0, 3),
                           blurRadius: 8,
                         ),
@@ -943,8 +903,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                   ),
                 ),
                 const SizedBox(width: 8),
-
-                // "2D view" / "3D view" Toggle Button (matching screenshot button)
                 GestureDetector(
                   onTap: _toggle3DView,
                   child: Container(
@@ -955,7 +913,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20000000),
+                          color: Color(0x18000000),
                           offset: Offset(0, 3),
                           blurRadius: 8,
                         ),
@@ -975,191 +933,205 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
             ),
           ),
 
-          // 5. BOTTOM ELEVATED 3D TELEMETRY CLAY CARD
+          // 6. BOTTOM NON-OVERLAPPING COLLAPSIBLE TRUCK CLAY CARD
           Positioned(
             left: 12,
             right: 12,
             bottom: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: ClayTheme.card(radius: 22),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Truck Header & Status Pill
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isTruckCardExpanded = !_isTruckCardExpanded;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: ClayTheme.card(radius: 22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header Bar (always visible)
+                    Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
                           ),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                          padding: const EdgeInsets.all(3),
+                          child: const Center(
+                            child: SundoTruckGraphic(width: 30, height: 22),
+                          ),
                         ),
-                        padding: const EdgeInsets.all(3),
-                        child: const Center(
-                          child: SundoTruckGraphic(width: 32, height: 24),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    'Truck #02 (Kuya Ronald)',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13.5,
-                                      color: const Color(0xFF0F172A),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      'Truck #02 (Kuya Ronald)',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        color: const Color(0xFF0F172A),
+                                      ),
                                     ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                    decoration: ClayTheme.badge(
+                                      bgColor: const Color(0xFFECFDF5),
+                                      borderColor: const Color(0xFFA7F3D0),
+                                      radius: 8,
+                                    ),
+                                    child: Text(
+                                      'Collecting',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF065F46),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${truck.etaMinutes}m ETA • ${_realDistanceKm < 1.0 ? "${(_realDistanceKm * 1000).round()}m" : "${_realDistanceKm.toStringAsFixed(1)}km"} away • ${truck.speedKmh} km/h',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Expand/Collapse Chevron Indicator
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isTruckCardExpanded
+                                ? Icons.keyboard_arrow_down_rounded
+                                : Icons.keyboard_arrow_up_rounded,
+                            color: const Color(0xFF475569),
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Expandable Telemetry Details & Action Buttons
+                    if (_isTruckCardExpanded) ...[
+                      const SizedBox(height: 10),
+                      // Stats Row
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: ClayTheme.insetBox(radius: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${truck.speedKmh} km/h',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFF059669),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                                  decoration: ClayTheme.badge(
-                                    bgColor: const Color(0xFFECFDF5),
-                                    borderColor: const Color(0xFFA7F3D0),
-                                    radius: 10,
-                                  ),
-                                  child: Text(
-                                    'Collecting Now',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF065F46),
-                                    ),
+                                Text(
+                                  'GPS Speed',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              truck.routeName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF64748B),
-                              ),
+                            Container(height: 18, width: 1, color: const Color(0xFFE2E8F0)),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _realDistanceKm < 1.0
+                                      ? '${(_realDistanceKm * 1000).round()} m'
+                                      : '${_realDistanceKm.toStringAsFixed(2)} km',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFF2563EB),
+                                  ),
+                                ),
+                                Text(
+                                  'Real GPS Dist',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(height: 18, width: 1, color: const Color(0xFFE2E8F0)),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '~${truck.etaMinutes} mins',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFFD97706),
+                                  ),
+                                ),
+                                Text(
+                                  'Arrival ETA',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                      const SizedBox(height: 8),
 
-                  const SizedBox(height: 8),
-
-                  // Real GPS Distance & Dynamic ETA Row
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: ClayTheme.insetBox(radius: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        // Live Speed
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${truck.speedKmh} km/h',
-                              style: GoogleFonts.outfit(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF059669),
-                              ),
-                            ),
-                            Text(
-                              'GPS Speed',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9.5,
-                                color: const Color(0xFF64748B),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(height: 20, width: 1, color: const Color(0xFFE2E8F0)),
-
-                        // Real GPS Distance
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _realDistanceKm < 1.0
-                                  ? '${(_realDistanceKm * 1000).round()} meters'
-                                  : '${_realDistanceKm.toStringAsFixed(2)} km',
-                              style: GoogleFonts.outfit(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF2563EB),
-                              ),
-                            ),
-                            Text(
-                              'Real GPS Dist',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9.5,
-                                color: const Color(0xFF64748B),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(height: 20, width: 1, color: const Color(0xFFE2E8F0)),
-
-                        // Dynamic ETA
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '~${truck.etaMinutes} mins',
-                              style: GoogleFonts.outfit(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFFD97706),
-                              ),
-                            ),
-                            Text(
-                              'Arrival ETA',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9.5,
-                                color: const Color(0xFF64748B),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 7),
-
-                  // Animated Waste Capacity Progress Bar
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                      // Capacity Progress Bar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Truck Capacity Loaded',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF334155),
                             ),
@@ -1167,94 +1139,90 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
                           Text(
                             '${truck.capacityPercent}% Full',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: FontWeight.w800,
                               color: truck.capacityPercent > 80 ? const Color(0xFFEF4444) : const Color(0xFF059669),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(5),
                         child: LinearProgressIndicator(
                           value: truck.capacityPercent / 100.0,
-                          minHeight: 6,
+                          minHeight: 5,
                           backgroundColor: const Color(0xFFE2E8F0),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             truck.capacityPercent > 80 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                      const SizedBox(height: 8),
 
-                  const SizedBox(height: 8),
-
-                  // Proximity Alert & Dispatch Actions
-                  Row(
-                    children: [
-                      // Trigger Proximity Siren/Alert Modal
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            TruckAlertModal.show(
-                              context,
-                              etaMinutes: truck.etaMinutes,
-                              onViewTruck: _flyToTruck,
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9.5),
-                            decoration: ClayTheme.amberBadge(radius: 14),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.notifications_active_rounded, color: Color(0xFF78350F), size: 15),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Test 3D Alert',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF78350F),
-                                  ),
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                TruckAlertModal.show(
+                                  context,
+                                  etaMinutes: truck.etaMinutes,
+                                  onViewTruck: _flyToTruck,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: ClayTheme.amberBadge(radius: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.notifications_active_rounded, color: Color(0xFF78350F), size: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Test 3D Alert',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF78350F),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Re-center on Truck
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _flyToTruck,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9.5),
-                            decoration: ClayTheme.buttonPrimary(radius: 14),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.navigation_rounded, color: Colors.white, size: 15),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Follow Truck',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _flyToTruck,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: ClayTheme.buttonPrimary(radius: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.navigation_rounded, color: Colors.white, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Follow Truck',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
