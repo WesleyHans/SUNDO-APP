@@ -126,7 +126,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
   void initState() {
     super.initState();
 
-    // 1. Setup 3D Tilt Controller
+    // 1. Setup 3D Camera Rotation Controller
     _tiltController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -135,6 +135,13 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       parent: _tiltController,
       curve: Curves.easeInOutCubic,
     );
+    _tiltAnimation.addListener(() {
+      if (mounted) {
+        try {
+          _mapController.rotate(_tiltAnimation.value * 28.0);
+        } catch (_) {}
+      }
+    });
     if (_is3DView) {
       _tiltController.value = 1.0;
     }
@@ -417,7 +424,13 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
   }
 
   void _resetNorth() {
-    _mapController.rotate(0.0);
+    setState(() {
+      _is3DView = false;
+    });
+    _tiltController.reverse();
+    try {
+      _mapController.rotate(0.0);
+    } catch (_) {}
   }
 
   void _flyToTruck() {
@@ -440,303 +453,277 @@ class _LiveMapScreenState extends State<LiveMapScreen> with TickerProviderStateM
       backgroundColor: const Color(0xFFE2E8F0),
       body: Stack(
         children: [
-          // 1. 3D PERSPECTIVE MAP VIEWPORT WITH COUNTER-TILTED ISOMETRIC 3D MARKERS
-          AnimatedBuilder(
-            animation: _tiltAnimation,
-            builder: (context, child) {
-              // 3D perspective projection matrix (rotates map plane backward ~48 degrees)
-              final tiltAngle = _tiltAnimation.value * 0.84;
-              return Transform(
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.0018) // Perspective vanishing point
-                  ..rotateX(tiltAngle),
-                alignment: Alignment.center,
-                child: child,
-              );
-            },
-            child: AnimatedBuilder(
-              animation: _tiltAnimation,
-              builder: (context, _) {
-                final double currentTilt = _tiltAnimation.value * 0.84;
-                return FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _userLocation,
-                    initialZoom: 15.6,
-                    maxZoom: 18.5,
-                    minZoom: 10.0,
-                  ),
-                  children: [
-                    // High-resolution Map Tiles with clean pastel styling (matching screenshot)
-                    TileLayer(
-                      urlTemplate: _tileStyles[_tileStyleIndex]['url']!,
-                      userAgentPackageName: 'com.sundo.sipalay',
-                      maxZoom: 19,
+          // 1. FULL-BLEED EDGE-TO-EDGE 3D MAP VIEWPORT (NO V-SHAPE / ZERO TRAPEZOID DISTORTION)
+          Positioned.fill(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _userLocation,
+                initialZoom: 15.8,
+                initialRotation: _is3DView ? 28.0 : 0.0,
+                maxZoom: 18.5,
+                minZoom: 10.0,
+              ),
+              children: [
+                // High-resolution Map Tiles with clean pastel styling (matching screenshot)
+                TileLayer(
+                  urlTemplate: _tileStyles[_tileStyleIndex]['url']!,
+                  userAgentPackageName: 'com.sundo.sipalay',
+                  maxZoom: 19,
+                ),
+
+                // Collection Route Polyline with 3D glowing emerald shadow
+                PolylineLayer(
+                  polylines: [
+                    // Glow background polyline
+                    Polyline(
+                      points: _collectionRoute,
+                      strokeWidth: 9.0,
+                      color: const Color(0x5510B981),
                     ),
-
-                    // Collection Route Polyline with 3D glowing emerald shadow
-                    PolylineLayer(
-                      polylines: [
-                        // Glow background polyline
-                        Polyline(
-                          points: _collectionRoute,
-                          strokeWidth: 9.0,
-                          color: const Color(0x5510B981),
-                        ),
-                        // Core route polyline
-                        Polyline(
-                          points: _collectionRoute,
-                          strokeWidth: 5.0,
-                          color: const Color(0xFF059669),
-                        ),
-                      ],
-                    ),
-
-                    // Real GPS Accuracy Circle
-                    if (_isRealGpsActive && _gpsAccuracyMeters > 0)
-                      CircleLayer(
-                        circles: [
-                          CircleMarker(
-                            point: _userLocation,
-                            radius: _gpsAccuracyMeters.clamp(8, 60),
-                            useRadiusInMeter: true,
-                            color: const Color(0x223B82F6),
-                            borderColor: const Color(0xFF3B82F6),
-                            borderStrokeWidth: 1.5,
-                          ),
-                        ],
-                      ),
-
-                    // Interactive 3D Animated Markers (Stations, Truck, and User Location)
-                    MarkerLayer(
-                      markers: [
-                        // 3D Isometric Eco-Stations (Matching the screenshot buildings with badges #1, #2...)
-                        ..._stations.map((st) {
-                          return Marker(
-                            point: st['location'] as LatLng,
-                            width: 80,
-                            height: 94,
-                            alignment: Alignment.bottomCenter,
-                            child: IsometricStationBuilding(
-                              number: st['id'] as String,
-                              title: st['name'] as String,
-                              size: 52,
-                              tiltAngle: currentTilt,
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '${st['name']} • Collection: ${st['time']} (${st['status']})',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    duration: const Duration(seconds: 3),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        }),
-
-                        // REAL User Location Marker (Pulsing 3D Pin with Counter-Tilt)
-                        Marker(
-                          point: _userLocation,
-                          width: 80,
-                          height: 85,
-                          alignment: Alignment.bottomCenter,
-                          child: Transform(
-                            transform: Matrix4.identity()..rotateX(-currentTilt),
-                            alignment: Alignment.bottomCenter,
-                            child: AnimatedBuilder(
-                              animation: _radarController,
-                              builder: (context, _) {
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // You are here badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1E3A8A),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.white, width: 1),
-                                        boxShadow: const [
-                                          BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        'You (Real GPS)',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 8.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    // Beacon Head with pulse
-                                    Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Transform.scale(
-                                          scale: 1.0 + (_radarController.value * 1.5),
-                                          child: Container(
-                                            width: 36,
-                                            height: 36,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: const Color(0xFF2563EB).withValues(
-                                                alpha: (1.0 - _radarController.value) * 0.45,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2.5),
-                                            boxShadow: const [
-                                              BoxShadow(
-                                                color: Color(0x551D4ED8),
-                                                offset: Offset(0, 6),
-                                                blurRadius: 10,
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Icon(
-                                            Icons.person_pin_circle_rounded,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    // Ground shadow
-                                    Container(
-                                      width: 22,
-                                      height: 4,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.25),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-
-                        // Real-Time Moving Garbage Truck 3D Marker with Counter-Tilt
-                        Marker(
-                          point: _truckCurrentPos,
-                          width: 85,
-                          height: 90,
-                          alignment: Alignment.bottomCenter,
-                          child: Transform(
-                            transform: Matrix4.identity()..rotateX(-currentTilt),
-                            alignment: Alignment.bottomCenter,
-                            child: AnimatedBuilder(
-                              animation: _radarController,
-                              builder: (context, _) {
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Mini Badge: ETA overlay
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF0F172A),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: const Color(0xFF34D399), width: 1),
-                                        boxShadow: const [
-                                          BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        '${truck.etaMinutes}m ETA',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-
-                                    // Elevated 3D Truck Base Card
-                                    Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Transform.scale(
-                                          scale: 1.0 + (_radarController.value * 1.6),
-                                          child: Container(
-                                            width: 42,
-                                            height: 42,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: const Color(0xFF10B981).withValues(
-                                                alpha: (1.0 - _radarController.value) * 0.45,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 48,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              colors: [Color(0xFF34D399), Color(0xFF059669)],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 3),
-                                            boxShadow: const [
-                                              BoxShadow(
-                                                color: Color(0x55059669),
-                                                offset: Offset(0, 8),
-                                                blurRadius: 14,
-                                              ),
-                                            ],
-                                          ),
-                                          padding: const EdgeInsets.all(4),
-                                          child: const Center(
-                                            child: SundoTruckGraphic(width: 34, height: 26),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    // Ground shadow
-                                    Container(
-                                      width: 32,
-                                      height: 5,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.25),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
+                    // Core route polyline
+                    Polyline(
+                      points: _collectionRoute,
+                      strokeWidth: 5.0,
+                      color: const Color(0xFF059669),
                     ),
                   ],
-                );
-              },
+                ),
+
+                // Real GPS Accuracy Circle
+                if (_isRealGpsActive && _gpsAccuracyMeters > 0)
+                  CircleLayer(
+                    circles: [
+                      CircleMarker(
+                        point: _userLocation,
+                        radius: _gpsAccuracyMeters.clamp(8, 60),
+                        useRadiusInMeter: true,
+                        color: const Color(0x223B82F6),
+                        borderColor: const Color(0xFF3B82F6),
+                        borderStrokeWidth: 1.5,
+                      ),
+                    ],
+                  ),
+
+                // Interactive 3D Animated Markers (Stations, Truck, and User Location)
+                MarkerLayer(
+                  markers: [
+                    // 3D Isometric Eco-Stations (Matching the screenshot buildings with badges #1, #2...)
+                    ..._stations.map((st) {
+                      return Marker(
+                        point: st['location'] as LatLng,
+                        width: 80,
+                        height: 94,
+                        alignment: Alignment.bottomCenter,
+                        child: IsometricStationBuilding(
+                          number: st['id'] as String,
+                          title: st['name'] as String,
+                          size: 52,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${st['name']} • Collection: ${st['time']} (${st['status']})',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                duration: const Duration(seconds: 3),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+
+                    // REAL User Location Marker (Pulsing 3D Pin)
+                    Marker(
+                      point: _userLocation,
+                      width: 80,
+                      height: 85,
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedBuilder(
+                        animation: _radarController,
+                        builder: (context, _) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // You are here badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E3A8A),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white, width: 1),
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                                  ],
+                                ),
+                                child: Text(
+                                  'You (Real GPS)',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              // Beacon Head with pulse
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.0 + (_radarController.value * 1.5),
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: const Color(0xFF2563EB).withValues(
+                                          alpha: (1.0 - _radarController.value) * 0.45,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2.5),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x551D4ED8),
+                                          offset: Offset(0, 6),
+                                          blurRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.person_pin_circle_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Ground shadow
+                              Container(
+                                width: 22,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Real-Time Moving Garbage Truck 3D Marker
+                    Marker(
+                      point: _truckCurrentPos,
+                      width: 85,
+                      height: 90,
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedBuilder(
+                        animation: _radarController,
+                        builder: (context, _) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Mini Badge: ETA overlay
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0F172A),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF34D399), width: 1),
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0x30000000), blurRadius: 4, offset: Offset(0, 2)),
+                                  ],
+                                ),
+                                child: Text(
+                                  '${truck.etaMinutes}m ETA',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+
+                              // Elevated 3D Truck Base Card
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.0 + (_radarController.value * 1.6),
+                                    child: Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: const Color(0xFF10B981).withValues(
+                                          alpha: (1.0 - _radarController.value) * 0.45,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF34D399), Color(0xFF059669)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 3),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x55059669),
+                                          offset: Offset(0, 8),
+                                          blurRadius: 14,
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Center(
+                                      child: SundoTruckGraphic(width: 34, height: 26),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Ground shadow
+                              Container(
+                                width: 32,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 

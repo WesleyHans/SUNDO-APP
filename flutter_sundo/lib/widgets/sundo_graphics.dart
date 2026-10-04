@@ -877,14 +877,9 @@ class IsometricStationBuilding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Transform(
-        transform: Matrix4.identity()..rotateX(-tiltAngle),
-        alignment: Alignment.bottomCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+    final Widget card = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
             // Number badge pill #1, #2...
             Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
@@ -970,8 +965,19 @@ class IsometricStationBuilding extends StatelessWidget {
             ),
           ),
         ],
-      ),
-      ),
+      );
+
+    final Widget display = (tiltAngle != 0.0)
+        ? Transform(
+            transform: Matrix4.identity()..rotateX(-tiltAngle),
+            alignment: Alignment.bottomCenter,
+            child: card,
+          )
+        : card;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: display,
     );
   }
 }
