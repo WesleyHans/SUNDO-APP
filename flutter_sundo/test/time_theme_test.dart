@@ -85,6 +85,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(container.read(sundoDayNightThemeProvider).environment,
         SundoEnvironment.noon);
+    container.dispose();
   });
   test('theme provider ignores stale rainy current conditions', () {
     final now = DateTime.utc(2026, 10, 5, 8);

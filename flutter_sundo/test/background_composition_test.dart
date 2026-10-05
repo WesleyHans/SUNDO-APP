@@ -115,7 +115,7 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
     await tester.pumpWidget(surface(moods.first, reduceMotion: true));
     await _waitForScene(tester, moods.first.environment);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.byType(Image), findsOneWidget);
     expect(tester.getRect(find.text('Fixed branding control')), original);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -173,7 +173,14 @@ void main() {
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _waitForScene(tester, SundoEnvironment.morning);
     await tester.pumpWidget(_surface(moods.last, bundle: bundle));
-    bundle.fail(rainyAsset);
+    await tester.runAsync(() async {
+      bundle.fail(rainyAsset);
+      // Wait for the failing decoder before requesting the retry.
+      await precacheImage(AssetImage(rainyAsset, bundle: bundle),
+          tester.element(find.byType(SundoTimeBasedBackground)),
+          onError: (error, stack) {});
+      await AssetImage(rainyAsset, bundle: bundle).evict();
+    });
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(_displayedScenes(tester), [SundoEnvironment.morning]);

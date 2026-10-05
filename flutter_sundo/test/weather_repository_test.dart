@@ -226,6 +226,7 @@ void main() {
     expect(container.read(sundoWeatherProvider), isNull);
     expect(container.read(sundoDayNightThemeProvider).environment,
         SundoEnvironment.morning);
+    container.dispose();
   });
 
   testWidgets('response arriving after backgrounding is ignored',
@@ -252,6 +253,7 @@ void main() {
     controller.setForeground(true);
     await tester.pump();
     expect(container.read(sundoWeatherProvider)?.isRaining, isFalse);
+    container.dispose();
   });
 
   testWidgets('pending response after disposal cannot restore weather',

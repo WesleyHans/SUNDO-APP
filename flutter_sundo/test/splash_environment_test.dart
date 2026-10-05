@@ -273,7 +273,6 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       final originalShadows = debugDisableShadows;
       debugDisableShadows = false;
-      addTearDown(() => debugDisableShadows = originalShadows);
       await _loadFonts(tester);
       await _pumpSplash(tester, environment.value, const Size(390, 844));
       if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
@@ -281,6 +280,7 @@ void main() {
             matchesGoldenFile('goldens/splash_${environment.key}.png'));
       }
       await tester.pumpWidget(const SizedBox.shrink());
+      debugDisableShadows = originalShadows;
     });
   }
 }

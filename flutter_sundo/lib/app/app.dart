@@ -15,9 +15,11 @@ class SundoApp extends ConsumerStatefulWidget {
 
 class _SundoAppState extends ConsumerState<SundoApp>
     with WidgetsBindingObserver {
+  late final SundoWeatherController _weatherController;
   @override
   void initState() {
     super.initState();
+    _weatherController = ref.read(sundoWeatherProvider.notifier);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -31,7 +33,7 @@ class _SundoAppState extends ConsumerState<SundoApp>
 
   @override
   void dispose() {
-    ref.read(sundoWeatherProvider.notifier).setForeground(false);
+    _weatherController.setForeground(false);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

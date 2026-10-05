@@ -58,14 +58,14 @@ jobs:
           path: flutter_sundo/build/SUNDO.apk
           retention-days: 14
 
-      - name: Publish GitHub Release
-        if: github.event_name == 'push' || inputs.publish
-        uses: softprops/action-gh-release@v2
+      # Hosted runners use a different debug certificate. Release artifacts
+      # must be signed with the existing local key before publication so
+      # residents can upgrade without uninstalling the app.
+      - name: Render splash previews
+        run: flutter test test/splash_environment_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
+
+      - name: Save splash previews
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: build-${{ github.run_number }}
-          name: SUNDO Android (build ${{ github.run_number }})
-          body: |
-            Android APK for SUNDO – Sipalay Smart Waste Navigation.
-            Download **SUNDO.apk** below and open it on your Android phone to install.
-          make_latest: "true"
-          files: flutter_sundo/build/SUNDO.apk
+          name: SUNDO-splash-${{ github.run_number }}
+          path: flutter_sundo/test/goldens/splash_*.png
