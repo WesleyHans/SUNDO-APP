@@ -1,14 +1,14 @@
 import { ArrowDownToLine, ArrowRight, Check, Leaf, Smartphone, Truck } from 'lucide-react';
 import { SundoTruckIcon } from './components/common/SundoLogo';
 
-const downloadUrl = '/download-apk';
+const downloadUrl = '/download-apk?v=1.3.0';
 export default function App() {
   return <div className="installer">
     <header className="site-header"><a className="brand" href="#" aria-label="SUNDO home"><SundoTruckIcon size={62} /><span>SUNDO<small>Sipalay City</small></span></a><a className="header-download" href={downloadUrl}><ArrowDownToLine size={17}/> Download APK</a></header>
     <main>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy"><span className="eyebrow"><Leaf size={15}/> A cleaner Sipalay starts with you</span><h1 id="hero-title">Clean city.<br/>One little <span>download.</span></h1><p className="intro">Meet SUNDO, your companion for waste collection in Sipalay. Get the Android app and help keep your neighborhood clean.</p>
-        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.2.1 · Free</small></span><ArrowRight size={22}/></a>
+        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.3.0 · Free</small></span><ArrowRight size={22}/></a>
         <p className="download-note"><Smartphone size={15}/> Android only. Open the downloaded APK to install.</p>
         <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Explore the new clay design. Live accounts, reports and truck tracking require the city’s Supabase service to be activated.</p></div>
         </div>
