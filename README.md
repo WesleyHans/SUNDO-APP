@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Published APK: **1.2.1+5**. The environment-update source is prepared as **1.3.0+6**, pending a verified build and publication.
+The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Current APK: **1.3.0+6**, with time/weather scenery and fixed splash branding.
 
 ## Run the mobile app
 
@@ -54,7 +54,7 @@ Rain selection uses [Open-Meteo current model conditions](https://open-meteo.com
 
 Weather data by [Open-Meteo](https://open-meteo.com/), under [CC BY 4.0](https://open-meteo.com/en/licence); SUNDO interprets the data into a rainy/clear artwork choice. The keyless endpoint follows Open-Meteo's [noncommercial API terms](https://open-meteo.com/en/terms). Commercial distribution or higher request volume requires appropriate API service configuration.
 
-This environment update is **unreleased working source** on top of the 1.2.1 installer. Current Flutter analysis passes, but native tests, rendered previews and a new APK remain pending: Windows Application Control still blocks Flutter's compiler after the normal retry. The previous release's 90 passing tests do not validate these new changes. See [mobile status](MOBILE_STATUS.md) and [artwork provenance](DESIGN_NOTES.md).
+The 1.3.0 cloud build passed Flutter analysis, all **132 tests**, APK compilation and nine additional splash preview tests. Five native scene previews were reviewed. The APK signature and 1.3.0+6 package metadata were verified after signing locally with the existing app key. Local Windows compilation remains blocked by Application Control; GitHub's Linux runner produced this build. See [mobile status](MOBILE_STATUS.md) and [artwork provenance](DESIGN_NOTES.md).
 
 ## Activate the shared backend
 
@@ -83,7 +83,7 @@ npm run dev
 
 Vercel builds `dist`. `/download-apk` redirects to the latest GitHub Release asset named `SUNDO.apk`, so binaries are kept outside Git and the web bundle. The previous PWA worker is retired to remove the browser simulation. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). A successful local build does not itself confirm a new production deployment.
 
-The [Android workflow](.github/workflows/build-apk.yml) runs analysis/tests, builds and publishes on mobile changes to `main`. Its public Supabase values come from Actions variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`. GitHub Actions was blocked by the account's billing lock during this work; use a locally verified APK and manual GitHub Release until that is resolved.
+The [Android workflow](.github/workflows/build-apk.yml) runs analysis/tests and retains APK/preview artifacts on mobile changes to `main`. Its public Supabase values come from Actions variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Builds now run under WesleyHans after the repository transfer. Before release publication, sign the artifact with the existing local app key and verify its signature, version and checksum; runner-signed builds are never automatically published.
 
 ## Project layout
 
