@@ -2,7 +2,7 @@
 
 This directory is the Flutter project. It includes the illustrated claymorphism resident interface and connected resident, driver and city staff workflows.
 
-The current source is the **1.4.0 candidate**. It adds optional local weather before sign-in, weather/time combinations including rainy night, a compact Home weather banner, softer secondary-screen scenery and the resident's supplied truck icons. APK publication and candidate validation are tracked in `../MOBILE_STATUS.md`; the released 1.3.0 APK does not include these candidate changes.
+The current release is **1.4.0+7**. It adds optional local weather before sign-in, weather/time combinations including rainy night, a compact Home weather banner, softer secondary-screen scenery and the resident's supplied truck icons. Its locally compiled APK is published on GitHub with the same signing certificate as 1.3.0. Exact validation and metadata are in `../MOBILE_STATUS.md`.
 
 The perspective street map introduced in 1.2.1 retains raised clay collection symbols, animated route indicators, smooth truck turns, Watch follow mode and a 2D view. These symbols provide visual depth rather than surveyed terrain/building meshes. Reduced-motion settings and a Layers switch can suppress visual animation. Only viewed OpenStreetMap tiles are cached; unvisited areas and live truck updates still require connectivity.
 
@@ -36,13 +36,13 @@ flutter build apk --release
 
 Output: `build/app/outputs/flutter-apk/app-release.apk`.
 
-Generate the candidate's native truck review sheet, where the compiler is available:
+Generate the native truck review sheet:
 
 ```powershell
 flutter test --dart-define=GENERATE_PREVIEWS=true --update-goldens test/supplied_truck_graphics_test.dart
 ```
 
-This writes `test/goldens/supplied_truck_rims.png`. The candidate also includes tests for weather permission/fallback, stale data, combined themes, weather-banner readability and unchanged splash branding. Read the actual test/build results before treating the candidate as released. Local Windows Flutter compilation is currently blocked by Application Control; Linux CI can run the native checks.
+This writes `test/goldens/supplied_truck_rims.png`. Flutter analysis, all 190 tests and 49 native preview tests passed locally. These cover weather permission/fallback, stale data, combined themes, weather-banner readability, map movement and unchanged splash branding. The native previews were reviewed, and the APK signature/version/checksum verified before publication. Physical-device validation remains pending.
 
 The default build opens a local demo. To activate real accounts, shared reports, private photos, schedules and driver GPS, follow `../supabase/README.md` and run `../supabase/schema.sql` in your own project. Build with `SUPABASE_URL` and `SUPABASE_ANON_KEY` as described there.
 
