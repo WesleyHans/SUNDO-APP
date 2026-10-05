@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/splash/splash_screen.dart';
+import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
@@ -22,6 +23,10 @@ final _environments = <String, SundoTimeMood>{
   'sunset': SundoTimeMood(DateTime(2026, 10, 5, 17)),
   'night': SundoTimeMood(DateTime(2026, 10, 5, 20)),
   'rainy': SundoTimeMood(DateTime(2026, 10, 5, 14), raining: true),
+  'rainy-night': SundoTimeMood(DateTime(2026, 10, 5, 19, 10),
+      weatherCondition: WeatherCondition.rain),
+  'cloudy': SundoTimeMood(DateTime(2026, 10, 5, 12),
+      weatherCondition: WeatherCondition.cloudy),
 };
 
 Future<void> _loadFonts(WidgetTester tester) async {
@@ -161,7 +166,7 @@ void main() {
 
   for (final size in [const Size(390, 844), const Size(320, 640)]) {
     testWidgets(
-        'branding, corner leaves and card stay fixed in all five environments at $size',
+        'branding, corner leaves and card stay fixed across local weather at $size',
         (tester) async {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -249,9 +254,10 @@ void main() {
       (tester) async {
     final dimensions = await tester.runAsync(() async {
       final result = <Size>[];
-      for (final environment in SundoEnvironment.values) {
-        final bytes =
-            await rootBundle.load(sundoEnvironmentArtwork(environment));
+      final uniqueAssets =
+          SundoEnvironment.values.map(sundoEnvironmentArtwork).toSet();
+      for (final asset in uniqueAssets) {
+        final bytes = await rootBundle.load(asset);
         final codec = await ui.instantiateImageCodec(
             bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
         final frame = await codec.getNextFrame();

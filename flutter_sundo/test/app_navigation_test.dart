@@ -13,13 +13,14 @@ import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/mock_auth_repository.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
+import 'package:sundo_sipalay/services/weather_consent.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({weatherLocationConsentKey: false});
     FlutterSecureStorage.setMockInitialValues({});
     MockAuthRepository.resetMemory();
     AppStore.setIdentity(null);

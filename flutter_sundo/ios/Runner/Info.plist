@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SUNDO uses your location to show your position on the collection map and attach a location to waste reports.</string>
+	<string>SUNDO uses your location for the collection map, waste reports and optional local weather. When you enable weather, approximate coordinates are sent to Open-Meteo while the app is open.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>SUNDO uses the camera when you choose to photograph a waste collection concern.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

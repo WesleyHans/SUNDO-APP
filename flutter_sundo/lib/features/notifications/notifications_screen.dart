@@ -89,7 +89,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22)),
               title: Row(children: [
-                Icon(icon, color: accent),
+                IconTheme.merge(
+                    data: IconThemeData(color: accent), child: icon),
                 const SizedBox(width: 10),
                 Expanded(
                     child: Text(item.title,

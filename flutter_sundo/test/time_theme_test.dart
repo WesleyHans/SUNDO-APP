@@ -32,18 +32,52 @@ void main() {
           });
     }
   });
-  test('rain overrides only environment and preserves all time colors', () {
+  test('rain retains local time and uses dark rainy scenery after 18:00', () {
     for (final hour in [4, 8, 12, 17, 20]) {
       final clear = SundoTimeMood(DateTime(2026, 10, 5, hour));
       final rain = SundoTimeMood(clear.now, raining: true);
-      expect(rain.environment, SundoEnvironment.rainy);
+      expect(rain.environment,
+          clear.isNight ? SundoEnvironment.rainyNight : SundoEnvironment.rainy);
       expect(rain.period, clear.period);
       expect(rain.isNight, clear.isNight);
       expect(rain.greeting, clear.greeting);
       expect(rain.surface, clear.surface);
-      expect(rain.background, clear.background);
       expect(rain.textColor, clear.textColor);
       expect(rain.accent, clear.accent);
+    }
+  });
+  test('rain, drizzle and thunderstorm all respect the four time periods', () {
+    for (final condition in [
+      WeatherCondition.rain,
+      WeatherCondition.drizzle,
+      WeatherCondition.thunderstorm,
+    ]) {
+      for (final hour in [4, 5, 11, 15, 18]) {
+        final mood = SundoTimeMood(DateTime(2026, 10, 5, hour),
+            weatherCondition: condition);
+        expect(mood.raining, isTrue);
+        expect(
+            mood.environment,
+            hour < 5 || hour >= 18
+                ? SundoEnvironment.rainyNight
+                : SundoEnvironment.rainy);
+      }
+    }
+  });
+  test('cloudy and unknown conditions keep their appropriate time artwork', () {
+    for (final condition in [
+      WeatherCondition.clear,
+      WeatherCondition.cloudy,
+      WeatherCondition.unknown,
+    ]) {
+      for (final hour in [8, 12, 17, 20]) {
+        final mood = SundoTimeMood(DateTime(2026, 10, 5, hour),
+            weatherCondition: condition);
+        final timeOnly = SundoTimeMood(mood.now);
+        expect(mood.environment, timeOnly.environment);
+        expect(mood.greeting, timeOnly.greeting);
+        expect(mood.raining, isFalse);
+      }
     }
   });
   test(
@@ -68,6 +102,10 @@ void main() {
         child: const SizedBox.shrink());
     expect(rain.updateShouldNotify(clear), isTrue);
     expect(clear.updateShouldNotify(clear), isFalse);
+    final cloudy = SundoTimeScope(
+        mood: SundoTimeMood(now, weatherCondition: WeatherCondition.cloudy),
+        child: const SizedBox.shrink());
+    expect(cloudy.updateShouldNotify(clear), isTrue);
   });
   testWidgets('minute ticker changes at 11:00 even when started at 10:59:55',
       (tester) async {
@@ -126,6 +164,30 @@ void main() {
     container.read(sundoDayNightThemeProvider.notifier).refresh();
     expect(container.read(sundoDayNightThemeProvider).environment,
         SundoEnvironment.noon);
+    expect(container.read(sundoDayNightThemeProvider).weather, isNull);
+    expect(container.read(sundoDayNightThemeProvider).weatherCondition,
+        WeatherCondition.unknown);
+  });
+  test('fresh local rain snapshot remains available in the evening theme', () {
+    final now = DateTime(2026, 10, 5, 19, 10);
+    final weather = SipalayWeather(
+      validAt: now,
+      fetchedAt: now,
+      weatherCode: 63,
+      precipitationMm: 1,
+      rainMm: 1,
+      showersMm: 0,
+    );
+    final container = ProviderContainer(overrides: [
+      sundoClockProvider.overrideWithValue(() => now),
+      sundoWeatherProvider.overrideWith(() => _FixedWeatherController(weather)),
+    ]);
+    addTearDown(container.dispose);
+    final mood = container.read(sundoDayNightThemeProvider);
+    expect(mood.weather, same(weather));
+    expect(mood.weatherCondition, WeatherCondition.rain);
+    expect(mood.environment, SundoEnvironment.rainyNight);
+    expect(mood.greeting, 'Good Evening');
   });
 }
 

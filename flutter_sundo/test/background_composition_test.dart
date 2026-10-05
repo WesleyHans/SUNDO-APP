@@ -10,6 +10,7 @@ import 'package:sundo_sipalay/app/resident_shell.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
+import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 
@@ -27,6 +28,8 @@ void main() {
     SundoTimeMood(DateTime(2026, 10, 5, 17)),
     SundoTimeMood(DateTime(2026, 10, 5, 20)),
     SundoTimeMood(DateTime(2026, 10, 5, 14), raining: true),
+    SundoTimeMood(DateTime(2026, 10, 5, 19, 10),
+        weatherCondition: WeatherCondition.rain),
   ];
   for (final mood in moods) {
     testWidgets(
@@ -100,8 +103,8 @@ void main() {
     await tester.pumpWidget(surface(moods.first));
     await _waitForScene(tester, moods.first.environment);
     final original = tester.getRect(find.text('Fixed branding control'));
-    await tester.pumpWidget(surface(moods.last));
-    await _waitForScene(tester, moods.last.environment);
+    await tester.pumpWidget(surface(moods[4]));
+    await _waitForScene(tester, moods[4].environment);
     await tester.pump(const Duration(milliseconds: 450));
     final images = tester.widgetList<Image>(find.byType(Image)).toList();
     expect(images, hasLength(2));
@@ -121,6 +124,66 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('clear to cloudy fades even when the time artwork is unchanged',
+      (tester) async {
+    final now = DateTime(2026, 10, 5, 12);
+    final clear = SundoTimeMood(now, weatherCondition: WeatherCondition.clear);
+    final cloudy =
+        SundoTimeMood(now, weatherCondition: WeatherCondition.cloudy);
+    await tester.pumpWidget(_surface(clear));
+    await _waitForScene(tester, clear.environment);
+    await tester.pumpWidget(_surface(cloudy));
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(_displayedScenes(tester),
+        [SundoEnvironment.noon, SundoEnvironment.noon]);
+    expect(find.byType(ColorFiltered), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_displayedScenes(tester), [SundoEnvironment.noon]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('wet night is darker while retaining the exact wet-day image',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final boundary = GlobalKey();
+    final day = SundoTimeMood(DateTime(2026, 10, 5, 12),
+        weatherCondition: WeatherCondition.rain);
+    final night = SundoTimeMood(DateTime(2026, 10, 5, 19, 10),
+        weatherCondition: WeatherCondition.rain);
+    await tester.pumpWidget(_surface(day, boundary: boundary));
+    await _waitForScene(tester, day.environment);
+    final dayImage = tester.widget<Image>(find.byType(Image));
+    final dayRect = tester.getRect(find.byType(Image));
+    final dayPixels = await _capturePixels(tester, boundary);
+    await tester.pumpWidget(_surface(night, boundary: boundary));
+    await _waitForScene(tester, night.environment);
+    await tester.pump(const Duration(milliseconds: 950));
+    final nightImage = tester.widget<Image>(find.byType(Image));
+    final nightPixels = await _capturePixels(tester, boundary);
+    expect(nightImage.image, dayImage.image);
+    expect(nightImage.fit, dayImage.fit);
+    expect(nightImage.alignment, dayImage.alignment);
+    expect(tester.getRect(find.byType(Image)), dayRect);
+    double luminance(List<int> pixels) {
+      var total = 0.0;
+      for (var offset = 0; offset < pixels.length; offset += 4) {
+        total += pixels[offset] * .2126 +
+            pixels[offset + 1] * .7152 +
+            pixels[offset + 2] * .0722;
+      }
+      return total / (pixels.length / 4);
+    }
+
+    expect(luminance(nightPixels), lessThan(luminance(dayPixels) * .7));
+    expect(_displayedScenes(tester), [SundoEnvironment.rainyNight]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('slow next decode retains the ready scene until fade can start',
       (tester) async {
     final bundle = _DeferredSceneBundle();
@@ -128,7 +191,7 @@ void main() {
     bundle.defer(rainyAsset);
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _waitForScene(tester, SundoEnvironment.morning);
-    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(_surface(moods[4], bundle: bundle));
     await tester.pump(const Duration(seconds: 2));
     expect(_displayedScenes(tester), [SundoEnvironment.morning]);
     expect(bundle.sceneRequests.toSet(), {
@@ -155,7 +218,7 @@ void main() {
     bundle.defer(rainyAsset);
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _waitForScene(tester, SundoEnvironment.morning);
-    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(_surface(moods[4], bundle: bundle));
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _releaseScene(tester, bundle, rainyAsset);
     await _waitForScene(tester, SundoEnvironment.rainy);
@@ -172,7 +235,7 @@ void main() {
     bundle.defer(rainyAsset);
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _waitForScene(tester, SundoEnvironment.morning);
-    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(_surface(moods[4], bundle: bundle));
     await tester.runAsync(() async {
       bundle.fail(rainyAsset);
       // Wait for the failing decoder before requesting the retry.
@@ -203,7 +266,7 @@ void main() {
     bundle.defer(rainyAsset);
     await tester.pumpWidget(_surface(moods.first, bundle: bundle));
     await _waitForScene(tester, SundoEnvironment.morning);
-    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(_surface(moods[4], bundle: bundle));
     await tester.pumpWidget(const SizedBox.shrink());
     await _releaseScene(tester, bundle, rainyAsset);
     await tester.runAsync(() async {
@@ -214,7 +277,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final mood in [moods.first, moods[3], moods.last]) {
+  for (final mood in [moods.first, moods[3], moods[4], moods.last]) {
     testWidgets(
         '${mood.environment.name} full truck scene feathers into tall-phone bottom',
         (tester) async {
@@ -327,12 +390,8 @@ Future<void> _waitForScene(
 
 List<SundoEnvironment> _displayedScenes(WidgetTester tester) => tester
     .widgetList<Image>(find.byType(Image))
-    .map((image) => image.image)
-    .whereType<AssetImage>()
-    .where((provider) =>
-        provider.assetName.startsWith('assets/images/environment-'))
-    .map((provider) => SundoEnvironment.values.firstWhere((environment) =>
-        sundoEnvironmentArtwork(environment) == provider.assetName))
+    .where((image) => image.key is ValueKey<SundoEnvironment>)
+    .map((image) => (image.key! as ValueKey<SundoEnvironment>).value)
     .toList();
 
 Future<List<int>> _capturePixels(WidgetTester tester, GlobalKey key) async =>

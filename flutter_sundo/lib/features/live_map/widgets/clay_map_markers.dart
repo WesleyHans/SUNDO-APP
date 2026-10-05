@@ -2,50 +2,86 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// A map vehicle with a single cab at the north end of its footprint.
-///
-/// Both angles are clockwise: pass the map's clockwise canvas rotation when
-/// the marker layer keeps its children upright. A layer that already rotates
-/// its children with the map should leave [mapRotationDegrees] at zero.
-/// [pulse] is an externally supplied animation phase in the range 0–1.
+import '../../../shared/widgets/sundo_graphics.dart';
+
+/// The supplied truck artwork faces southeast in its unrotated image.
+/// Actual telemetry headings are clockwise from north; account for the asset's
+/// intrinsic bearing before applying the map canvas rotation.
+const sundoMapTruckIntrinsicHeading = 136.0;
+
+/// A missing heading leaves the illustration upright, rather than inventing a
+/// north-facing fix. The marker's semantics explicitly mark that heading unknown.
+double sundoMapTruckRotationRadians(double? headingDegrees,
+    {double mapRotationDegrees = 0}) {
+  if (headingDegrees == null || !headingDegrees.isFinite) return 0;
+  return (_finiteAngle(headingDegrees) +
+          _finiteAngle(mapRotationDegrees) -
+          sundoMapTruckIntrinsicHeading) *
+      math.pi /
+      180;
+}
+
+/// The resident's supplied isometric truck, anchored at the same GPS point and
+/// controlled by the existing map animation phase. No autonomous timers or
+/// position changes are introduced by this graphic.
 class SundoMapTruckMarker extends StatelessWidget {
   const SundoMapTruckMarker({
     super.key,
-    this.headingDegrees = 0,
+    this.headingDegrees,
     this.mapRotationDegrees = 0,
     this.fresh = true,
-    this.moving = true,
+    this.moving = false,
     this.pulse = 0,
   });
 
-  final double headingDegrees;
+  final double? headingDegrees;
   final double mapRotationDegrees;
   final bool fresh;
   final bool moving;
   final double pulse;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        image: true,
-        label: fresh
-            ? 'Collection truck, ${moving ? 'moving' : 'stopped'}'
-            : 'Collection truck, last known position',
-        child: RepaintBoundary(
-          child: SizedBox(
-            width: 100,
-            height: 100,
-            child: CustomPaint(
-              painter: _ClayTruckPainter(
-                heading: _finiteAngle(headingDegrees) +
-                    _finiteAngle(mapRotationDegrees),
-                fresh: fresh,
-                moving: moving,
-                phase: _phase(pulse),
+  Widget build(BuildContext context) {
+    final headingKnown = headingDegrees?.isFinite == true;
+    final rolling = fresh && moving && !MediaQuery.disableAnimationsOf(context);
+    return Semantics(
+      image: true,
+      label: (fresh
+              ? 'Collection truck, ${rolling ? 'moving' : 'stopped'}'
+              : 'Collection truck, last known position') +
+          (headingKnown ? '' : ', heading unavailable'),
+      child: RepaintBoundary(
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: Stack(fit: StackFit.expand, children: [
+            CustomPaint(
+              painter: _TruckGroundPainter(
+                  fresh: fresh, phase: fresh ? _phase(pulse) : 0),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: Transform.rotate(
+                key: const ValueKey('supplied-truck-bearing'),
+                angle: sundoMapTruckRotationRadians(headingDegrees,
+                    mapRotationDegrees: mapRotationDegrees),
+                child: Opacity(
+                  opacity: fresh ? 1 : .58,
+                  child: SundoVehicleGraphic(
+                    mapView: true,
+                    width: 100,
+                    height: 100,
+                    moving: rolling,
+                    wheelPhase: rolling ? _phase(pulse) : 0,
+                  ),
+                ),
               ),
             ),
-          ),
+          ]),
         ),
-      );
+      ),
+    );
+  }
 }
 
 /// An elevated collection pavilion. Its ground contact is at (36, 80) in a
@@ -112,33 +148,20 @@ class SundoResidentBeacon extends StatelessWidget {
 double _finiteAngle(double value) => value.isFinite ? value % 360 : 0;
 double _phase(double value) => value.isFinite ? value.clamp(0, 1) : 0;
 
-class _ClayTruckPainter extends CustomPainter {
-  const _ClayTruckPainter({
-    required this.heading,
-    required this.fresh,
-    required this.moving,
-    required this.phase,
-  });
+class _TruckGroundPainter extends CustomPainter {
+  const _TruckGroundPainter({required this.fresh, required this.phase});
 
-  final double heading;
   final bool fresh;
-  final bool moving;
   final double phase;
-
-  static const _green = Color(0xFF119447);
-  static const _darkGreen = Color(0xFF075634);
-  static const _lime = Color(0xFF9DDE49);
-  static const _ink = Color(0xFF143B30);
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 100, size.height / 100);
-    final status = fresh ? _green : const Color(0xFF708678);
+    final status = fresh ? const Color(0xFF119447) : const Color(0xFF708678);
     final wave = math.sin(phase * math.pi);
     final ground = Rect.fromCenter(
         center: const Offset(50, 61), width: 70 + wave * 5, height: 48);
-
     canvas.drawOval(
         ground.inflate(5 + phase * 8),
         Paint()
@@ -154,209 +177,12 @@ class _ClayTruckPainter extends CustomPainter {
         Paint()
           ..color = const Color(0xFF183A24).withValues(alpha: .25)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
-
-    canvas.translate(50, 50);
-    canvas.rotate(heading * math.pi / 180);
-    canvas.translate(-50, -50);
-
-    // A soft contact shadow follows the wheelbase, below the vehicle's mass.
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(27, 18, 48, 62), const Radius.circular(12)),
-        Paint()
-          ..color = _ink.withValues(alpha: .20)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
-
-    if (fresh && moving) {
-      // Small moving chevrons indicate travel, without inventing GPS samples.
-      for (var i = 0; i < 2; i++) {
-        final y = 85.0 + i * 6 + phase * 3;
-        canvas.drawPath(
-            Path()
-              ..moveTo(43, y + 3)
-              ..lineTo(50, y)
-              ..lineTo(57, y + 3),
-            Paint()
-              ..color = _green.withValues(alpha: .35 * (1 - phase))
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 2.4
-              ..strokeCap = StrokeCap.round
-              ..strokeJoin = StrokeJoin.round);
-      }
-    }
-
-    _wheel(canvas, 25, 31);
-    _wheel(canvas, 72, 31);
-    _wheel(canvas, 25, 68);
-    _wheel(canvas, 72, 68);
-
-    // The frame and a distinct rear wall ground the raised waste container.
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(28, 23, 41, 56), const Radius.circular(7)),
-        Paint()..color = _ink);
-    _facet(
-        canvas,
-        const [Offset(29, 35), Offset(65, 35), Offset(70, 77), Offset(34, 80)],
-        const [Color(0xFF077C39), _darkGreen]);
-    _facet(
-        canvas,
-        const [Offset(62, 27), Offset(70, 36), Offset(70, 77), Offset(62, 68)],
-        const [Color(0xFF0C713B), Color(0xFF043E29)]);
-    _facet(
-        canvas,
-        const [Offset(29, 66), Offset(62, 68), Offset(70, 77), Offset(34, 80)],
-        const [Color(0xFF159344), Color(0xFF076139)]);
-
-    final bodyRoof = Path()
-      ..moveTo(32, 26)
-      ..lineTo(58, 26)
-      ..quadraticBezierTo(63, 26, 64, 31)
-      ..lineTo(63, 65)
-      ..quadraticBezierTo(63, 69, 59, 69)
-      ..lineTo(31, 66)
-      ..quadraticBezierTo(27, 66, 27, 62)
-      ..lineTo(28, 31)
-      ..quadraticBezierTo(28, 26, 32, 26);
-    canvas.drawPath(
-        bodyRoof,
-        Paint()
-          ..shader = const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF7CCC42), _green, Color(0xFF0A7639)])
-              .createShader(const Rect.fromLTWH(27, 26, 37, 44)));
-    canvas.drawPath(
-        bodyRoof,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
-          ..color = const Color(0xFFD9FCA9).withValues(alpha: .70));
-
-    // Raised rails and a lid hinge make the rear body read as a container.
-    _line(canvas, const Offset(31, 30), const Offset(30, 62),
-        const Color(0xFFA4DF62), 2.4);
-    _line(canvas, const Offset(59, 31), const Offset(59, 65),
-        const Color(0xFF075F34), 2.2);
-    _line(canvas, const Offset(31, 65), const Offset(60, 68),
-        const Color(0xFF79C84B), 2.2);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(37, 28, 14, 3), const Radius.circular(1.4)),
-        Paint()..color = const Color(0xFFC5EB89));
-    _recyclingMark(canvas, const Offset(45, 49), 10);
-
-    // Only this front section is a cab: a roof, windshield, nose and mirrors.
-    _facet(
-        canvas,
-        const [Offset(60, 15), Offset(69, 24), Offset(69, 40), Offset(60, 34)],
-        const [Color(0xFF218F45), _darkGreen]);
-    _facet(
-        canvas,
-        const [Offset(28, 29), Offset(60, 32), Offset(69, 40), Offset(36, 39)],
-        const [_green, _darkGreen]);
-    final cab = Path()
-      ..moveTo(35, 10)
-      ..lineTo(53, 10)
-      ..quadraticBezierTo(59, 10, 61, 17)
-      ..lineTo(61, 30)
-      ..quadraticBezierTo(61, 34, 57, 34)
-      ..lineTo(31, 32)
-      ..quadraticBezierTo(27, 32, 28, 27)
-      ..lineTo(29, 17)
-      ..quadraticBezierTo(30, 10, 35, 10);
-    canvas.drawPath(
-        cab,
-        Paint()
-          ..shader = const LinearGradient(
-                  colors: [Color(0xFFC3EB76), Color(0xFF44B54B), _green],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight)
-              .createShader(const Rect.fromLTWH(27, 10, 35, 24)));
-
-    final windshield = Path()
-      ..moveTo(34, 17)
-      ..lineTo(54, 17)
-      ..quadraticBezierTo(57, 17, 57, 21)
-      ..lineTo(57, 27)
-      ..lineTo(32, 25)
-      ..lineTo(33, 20)
-      ..quadraticBezierTo(33, 17, 34, 17);
-    canvas.drawPath(
-        windshield,
-        Paint()
-          ..shader = const LinearGradient(
-                  colors: [Color(0xFF428B83), Color(0xFF103F3C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight)
-              .createShader(const Rect.fromLTWH(32, 17, 25, 10)));
-    _line(canvas, const Offset(36, 19), const Offset(47, 19),
-        const Color(0xFFBAEEDE).withValues(alpha: .7), 1.2);
-    _line(canvas, const Offset(45, 18), const Offset(44, 26),
-        const Color(0xFF39735D), 1.1);
-    _line(canvas, const Offset(33, 13), const Offset(54, 13), _lime, 2.3);
-    _line(canvas, const Offset(30, 29), const Offset(59, 31),
-        const Color(0xFFB9E982), 1.4);
-
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(31, 8, 27, 5), const Radius.circular(2.3)),
-        Paint()..color = const Color(0xFF246E3E));
-    _line(canvas, const Offset(38, 10), const Offset(50, 10),
-        const Color(0xFF526C55), 1.7);
-    for (final x in [31.0, 54.0]) {
-      canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(x, 9, 5, 3), const Radius.circular(1)),
-          Paint()..color = const Color(0xFFFFE89A));
-    }
-    for (final x in [24.0, 63.0]) {
-      _line(canvas, Offset(x + 2, 21), Offset(x + 2, 25), _ink, 2);
-      canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(x, 20, 5, 4), const Radius.circular(1.4)),
-          Paint()..color = _darkGreen);
-    }
-
-    // Amber collection light has a parent-controlled glint during travel.
-    canvas.drawOval(const Rect.fromLTWH(40, 28, 11, 3.5),
-        Paint()..color = const Color(0xFF704E14));
-    canvas.drawOval(
-        const Rect.fromLTWH(41, 27, 9, 3),
-        Paint()
-          ..color = Color.lerp(const Color(0xFFE7AB22), const Color(0xFFFFE9A5),
-              fresh && moving ? wave : .2)!);
-
-    if (!fresh) {
-      canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              const Rect.fromLTWH(28, 10, 42, 70), const Radius.circular(10)),
-          Paint()..color = const Color(0xFFBCC9BD).withValues(alpha: .20));
-    }
     canvas.restore();
   }
 
-  void _wheel(Canvas canvas, double x, double y) {
-    final tire = Rect.fromCenter(center: Offset(x, y), width: 8, height: 15);
-    canvas.drawRRect(RRect.fromRectAndRadius(tire, const Radius.circular(3.7)),
-        Paint()..color = const Color(0xFF1D3029));
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(tire.deflate(1.7), const Radius.circular(2.3)),
-        Paint()..color = const Color(0xFF465C50));
-    for (var i = 0; i < 3; i++) {
-      final offset =
-          moving && fresh ? ((phase * 4 + i * 4) % 12) - 6 : i * 4 - 4.0;
-      _line(canvas, Offset(x - 1.8, y + offset), Offset(x + 1.8, y + offset),
-          const Color(0xFF172920), 1);
-    }
-  }
-
   @override
-  bool shouldRepaint(covariant _ClayTruckPainter oldDelegate) =>
-      heading != oldDelegate.heading ||
-      fresh != oldDelegate.fresh ||
-      moving != oldDelegate.moving ||
-      phase != oldDelegate.phase;
+  bool shouldRepaint(covariant _TruckGroundPainter oldDelegate) =>
+      fresh != oldDelegate.fresh || phase != oldDelegate.phase;
 }
 
 class _CollectionPavilionPainter extends CustomPainter {
@@ -574,24 +400,3 @@ void _line(Canvas canvas, Offset from, Offset to, Color color, double width) =>
           ..color = color
           ..strokeWidth = width
           ..strokeCap = StrokeCap.round);
-
-void _recyclingMark(Canvas canvas, Offset center, double radius) {
-  canvas.save();
-  canvas.translate(center.dx, center.dy);
-  for (var i = 0; i < 3; i++) {
-    canvas.save();
-    canvas.rotate(i * 2 * math.pi / 3);
-    final arrow = Path()
-      ..moveTo(-radius * .13, -radius)
-      ..lineTo(radius * .52, -radius * .07)
-      ..lineTo(radius * .78, -radius * .22)
-      ..lineTo(radius * .75, radius * .49)
-      ..lineTo(radius * .04, radius * .27)
-      ..lineTo(radius * .25, radius * .13)
-      ..lineTo(-radius * .32, -radius * .73)
-      ..close();
-    canvas.drawPath(arrow, Paint()..color = const Color(0xFFF4FFE9));
-    canvas.restore();
-  }
-  canvas.restore();
-}

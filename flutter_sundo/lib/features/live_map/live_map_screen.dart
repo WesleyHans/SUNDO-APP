@@ -59,7 +59,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   LatLng _areaCenter = _sipalay;
   double? _residentAccuracy;
   DateTime? _residentUpdatedAt;
-  double _headingStart = 0, _headingTarget = 0;
+  double? _headingStart, _headingTarget;
   double _sheetFraction = .30;
   int? _selectedStop;
   bool _motionEnabled = true;
@@ -80,8 +80,15 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       ? interpolateMapPosition(_truckStart!, _truckTarget!, _truckMotion.value)
       : _truck?.position;
   bool get _truckFresh => _truck?.freshAt(DateTime.now()) == true;
-  double get _displayHeading =>
-      interpolateMapHeading(_headingStart, _headingTarget, _truckMotion.value);
+  double? get _displayHeading => _headingTarget == null
+      ? null
+      : interpolateMapHeading(_headingStart ?? _headingTarget!, _headingTarget!,
+          _truckMotion.value);
+  bool get _truckMoving =>
+      _truckFresh &&
+      _truck?.active == true &&
+      _truckMotion.isAnimating &&
+      _visualMotion;
   bool get _visualMotion =>
       widget.isActive && _foreground && _motionEnabled && !_reduceMotion;
   NotificationRepository get _notifications => _demo
@@ -187,7 +194,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _foreground = true;
-    } else if (state == AppLifecycleState.paused ||
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.hidden) {
       _foreground = false;
@@ -259,6 +267,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       next ??= trucks.first;
     }
     final previous = _truck;
+    final sameTruck = next != null && previous?.id == next.id;
+    final priorSourcePosition = previous?.position;
     final priorPosition = _displayTruck;
     final target = next?.position;
     final priorHeading = _displayHeading;
@@ -271,23 +281,28 @@ class _LiveMapScreenState extends State<LiveMapScreen>
         _followTruck = false;
       }
       if (previous?.route.id != next?.route.id) _selectedStop = null;
-      _truckStart = priorPosition ?? target;
+      _truckStart = sameTruck ? priorPosition ?? target : target;
       _truckTarget = target;
-      _headingStart = priorHeading;
-      if (next?.heading != null) {
+      _headingStart = sameTruck ? priorHeading : null;
+      if (next?.heading?.isFinite == true) {
         _headingTarget = next!.heading!;
-      } else if (priorPosition != null &&
+      } else if (sameTruck &&
+          priorSourcePosition != null &&
           target != null &&
-          priorPosition != target) {
-        _headingTarget = mapBearing(priorPosition, target);
+          priorSourcePosition != target) {
+        _headingTarget = mapBearing(priorSourcePosition, target);
+      } else {
+        _headingTarget = sameTruck ? priorHeading : null;
       }
     });
     if (_visualMotion &&
+        sameTruck &&
+        next.freshAt(DateTime.now()) &&
         priorPosition != null &&
         target != null &&
         priorPosition != target) {
       _truckMotion.duration =
-          Duration(milliseconds: next!.simulated ? 5400 : 1400);
+          Duration(milliseconds: next.simulated ? 5400 : 1400);
       _truckMotion.forward(from: 0);
     } else {
       _truckMotion.value = 1;
@@ -737,8 +752,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                       for (final point in route.collectionPoints)
                         Marker(
                             point: point.position,
-                                width: _angled ? 72 : 54,
-                                height: _angled ? 90 : 67.5,
+                            width: _angled ? 72 : 54,
+                            height: _angled ? 90 : 67.5,
                             alignment: const Alignment(0, -7 / 9),
                             child: _MapBillboard(
                                 alignment: const Alignment(0, 7 / 9),
@@ -766,8 +781,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     if (_displayTruck != null)
                       Marker(
                           point: _displayTruck!,
-                              width: _angled ? 84 : 68,
-                              height: _angled ? 84 : 68,
+                          width: _angled ? 84 : 68,
+                          height: _angled ? 84 : 68,
                           child: _MapBillboard(
                               child: Semantics(
                                   label: (_truck?.id ?? 'Truck') +
@@ -778,8 +793,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                       headingDegrees: _displayHeading,
                                       mapRotationDegrees: _mapRotation.value,
                                       fresh: _truckFresh,
-                                      moving:
-                                          _truckFresh && _truck?.active == true,
+                                      moving: _truckMoving,
                                       pulse: pulse)))),
                   ]),
                 ]));

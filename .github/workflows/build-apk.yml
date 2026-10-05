@@ -61,11 +61,11 @@ jobs:
       # Hosted runners use a different debug certificate. Release artifacts
       # must be signed with the existing local key before publication so
       # residents can upgrade without uninstalling the app.
-      - name: Render splash previews
-        run: flutter test test/splash_environment_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
+      - name: Render native scene and truck previews
+        run: flutter test test/splash_environment_test.dart test/map_scene_preview_test.dart test/supplied_truck_graphics_test.dart test/weather_status_banner_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
 
-      - name: Save splash previews
+      - name: Save native previews
         uses: actions/upload-artifact@v4
         with:
-          name: SUNDO-splash-${{ github.run_number }}
-          path: flutter_sundo/test/goldens/splash_*.png
+          name: SUNDO-previews-${{ github.run_number }}
+          path: flutter_sundo/test/goldens/*.png

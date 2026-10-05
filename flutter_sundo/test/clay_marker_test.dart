@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sundo_sipalay/features/live_map/widgets/clay_map_markers.dart';
+import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 
 void main() {
   testWidgets('collection markers announce their number and selection',
@@ -25,30 +26,48 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('truck headings and external phase repaint the native vehicle',
+  testWidgets(
+      'telemetry turns the supplied truck and externally drives its rims',
       (tester) async {
-    Future<CustomPainter> painter(double heading, double phase) async {
+    Future<SundoVehicleGraphic> vehicle(double heading, double phase,
+        {bool moving = true}) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: Center(
-            child: SundoMapTruckMarker(headingDegrees: heading, pulse: phase),
+            child: SundoMapTruckMarker(
+                headingDegrees: heading, pulse: phase, moving: moving),
           ),
         ),
       ));
       return tester
-          .widget<CustomPaint>(find.descendant(
-              of: find.byType(SundoMapTruckMarker),
-              matching: find.byType(CustomPaint)))
-          .painter!;
+          .widget<SundoVehicleGraphic>(find.byType(SundoVehicleGraphic));
     }
 
-    final north = await painter(0, 0);
-    final same = await painter(0, 0);
-    final east = await painter(90, 0);
-    final nextFrame = await painter(90, .5);
-    expect(same.shouldRepaint(north), isFalse);
-    expect(east.shouldRepaint(north), isTrue);
-    expect(nextFrame.shouldRepaint(east), isTrue);
+    List<double> bearingMatrix() => tester
+        .widget<Transform>(find.byKey(const ValueKey('supplied-truck-bearing')))
+        .transform
+        .storage
+        .toList();
+    await vehicle(0, 0);
+    final north = bearingMatrix();
+    await vehicle(0, 0);
+    expect(bearingMatrix(), orderedEquals(north));
+    await vehicle(90, 0);
+    final east = bearingMatrix();
+    expect(east, isNot(orderedEquals(north)));
+    final nextFrame = await vehicle(90, .5);
+    expect(bearingMatrix(), orderedEquals(east));
+    expect(nextFrame.moving, isTrue);
+    expect(nextFrame.wheelPhase, .5);
+    final body =
+        tester.widget<Image>(find.byKey(const ValueKey('sundo-truck-body')));
+    expect((body.image as AssetImage).assetName, sundoMapTruckAsset);
+    expect(find.byKey(const ValueKey('sundo-truck-rim-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('sundo-truck-rim-1')), findsOneWidget);
+    final stationary = await vehicle(90, .75, moving: false);
+    expect(stationary.moving, isFalse);
+    expect(stationary.wheelPhase, 0);
+    expect(find.byKey(const ValueKey('sundo-truck-rim-0')), findsNothing);
     expect(
         tester.getSize(find.byType(SundoMapTruckMarker)), const Size(100, 100));
     expect(tester.takeException(), isNull);

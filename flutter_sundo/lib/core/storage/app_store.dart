@@ -120,6 +120,32 @@ class AppStore {
     await p.setString(_scope(_keyProfileBarangay), barangay);
   }
 
+  /// A weather fallback must come from an explicitly saved area, never the
+  /// development profile's default barangay. Capture the account before I/O.
+  static Future<String?> getSavedWeatherArea() async {
+    final identity = _identity;
+    final barangayKey = _scope(_keyProfileBarangay);
+    final addressesKey = _scope(_keySavedAddresses);
+    final p = await _getPrefs();
+    if (_identity != identity) return null;
+    final barangay = p.getString(barangayKey)?.trim();
+    if (barangay?.isNotEmpty == true) return barangay;
+    for (final raw in p.getStringList(addressesKey) ?? <String>[]) {
+      try {
+        final saved = jsonDecode(raw);
+        final address = saved is Map ? saved['address'] : null;
+        if (address is String &&
+            RegExp(r'(^|[^a-z])sipalay city(?=$|[^a-z])', caseSensitive: false)
+                .hasMatch(address)) {
+          return 'Sipalay City';
+        }
+      } catch (_) {
+        // An unreadable saved address cannot be used as a reliable fallback.
+      }
+    }
+    return null;
+  }
+
   static Future<String> getStreet() async {
     final p = await _getPrefs();
     return p.getString(_scope(_keyProfileStreet)) ?? '';

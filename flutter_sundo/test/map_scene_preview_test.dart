@@ -11,6 +11,7 @@ import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/live_map/live_map_screen.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
+import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 
 import 'fixtures/map_tile_fixture.dart';
 
@@ -113,6 +114,8 @@ void main() {
       await tester.runAsync(() async {
         final context =
             tester.element(find.byKey(const ValueKey('map-scene-preview')));
+        await precacheImage(const AssetImage(sundoMapTruckAsset), context);
+        await precacheImage(const AssetImage(sundoSideTruckAsset), context);
         await Future.wait([
           for (final image in tiles.requestedImages.toSet())
             precacheImage(image, context),
