@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Release configuration: **1.2.1+5**.
+The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Published APK: **1.2.1+5**. The environment-update source is prepared as **1.3.0+6**, pending a verified build and publication.
 
 ## Run the mobile app
 

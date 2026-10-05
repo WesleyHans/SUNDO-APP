@@ -1,6 +1,6 @@
 # SUNDO mobile status
 
-Open `flutter_sundo` as the Flutter project. The released baseline is **1.2.1+5**. The new time/weather environment update is working source on top of that release; no new APK or installer version is published for it yet. Source validation, APK publication and production deployment are separate steps.
+Open `flutter_sundo` as the Flutter project. The released baseline is **1.2.1+5**. The new time/weather environment update is prepared as **1.3.0+6**; no new APK or installer version is published for it yet. Source validation, APK publication and production deployment are separate steps.
 
 ## Resident functionality
 
