@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import '../../models/map_tracking.dart';
 import '../../repositories/map_truck_repository.dart';
@@ -14,29 +13,43 @@ import '../../core/theme/time_theme.dart';
 import '../../core/utils/resident_area.dart';
 import '../../core/utils/resident_location.dart';
 import './widgets/map_tracking_widgets.dart';
-import '../../shared/widgets/sundo_graphics.dart';
 import './truck_alert_modal.dart';
+import './map_presentation.dart';
+import './osm_tile_provider.dart';
+import './widgets/clay_map_markers.dart';
+import './widgets/map_scene_controls.dart';
 
 class LiveMapScreen extends StatefulWidget {
   final bool isActive;
   final MapTruckRepository? repository;
   final bool enableTiles;
   final bool enableGps;
+  final TileProvider? tileProvider;
   const LiveMapScreen(
       {super.key,
       this.isActive = true,
       this.repository,
       this.enableTiles = true,
-      this.enableGps = true});
+      this.enableGps = true,
+      this.tileProvider});
   @override
   State<LiveMapScreen> createState() => _LiveMapScreenState();
 }
 
 class _LiveMapScreenState extends State<LiveMapScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   static const _sipalay = LatLng(9.7525, 122.4038);
   final _mapController = MapController();
   late final AnimationController _truckMotion;
+  late final AnimationController _flowMotion;
+  late final AnimationController _cameraMotion;
+  final _mapRotation = ValueNotifier<double>(-18);
+  late final TileProvider _tileProvider;
+  StreamSubscription<MapEvent>? _cameraEvents;
+  LatLng? _cameraStart, _cameraTarget;
+  double _cameraZoomStart = 16, _cameraZoomTarget = 16;
+  double _cameraAngleStart = -18, _cameraAngleTarget = -18;
+  DateTime? _lastFollowFrame;
   StreamSubscription<List<MapTruckSnapshot>>? _trucksSubscription;
   StreamSubscription<Position>? _residentSubscription;
   Timer? _freshnessTimer;
@@ -46,8 +59,11 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   LatLng _areaCenter = _sipalay;
   double? _residentAccuracy;
   DateTime? _residentUpdatedAt;
-  double _heading = 0;
-  double _sheetFraction = .32;
+  double _headingStart = 0, _headingTarget = 0;
+  double _sheetFraction = .30;
+  int? _selectedStop;
+  bool _motionEnabled = true;
+  bool _reduceMotion = false;
   String _barangay = 'Sipalay City';
   String _locationMessage = 'Use location to see your private GPS marker';
   String? _trackingError;
@@ -64,6 +80,10 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       ? interpolateMapPosition(_truckStart!, _truckTarget!, _truckMotion.value)
       : _truck?.position;
   bool get _truckFresh => _truck?.freshAt(DateTime.now()) == true;
+  double get _displayHeading =>
+      interpolateMapHeading(_headingStart, _headingTarget, _truckMotion.value);
+  bool get _visualMotion =>
+      widget.isActive && _foreground && _motionEnabled && !_reduceMotion;
   NotificationRepository get _notifications => _demo
       ? MockNotificationRepository.shared
       : LocalNotificationRepository.shared;
@@ -72,6 +92,17 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _tileProvider = widget.tileProvider ?? CachedOsmTileProvider();
+    _flowMotion =
+        AnimationController(vsync: this, duration: const Duration(seconds: 14));
+    _cameraMotion = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 850))
+      ..addListener(_animateCameraFrame);
+    _cameraEvents = _mapController.mapEventStream.listen((event) {
+      if ((_mapRotation.value - event.camera.rotation).abs() > .02) {
+        _mapRotation.value = event.camera.rotation;
+      }
+    });
     _truckMotion = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 5400))
       ..value = 1;
@@ -79,7 +110,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       if (_followTruck &&
           _mapReady &&
           _displayTruck != null &&
-          widget.isActive) {
+          _visualMotion &&
+          !_cameraMotion.isAnimating) {
+        final now = DateTime.now();
+        if (_lastFollowFrame != null &&
+            now.difference(_lastFollowFrame!).inMilliseconds < 42) {
+          return;
+        }
+        _lastFollowFrame = now;
         _mapController.move(_displayTruck!, _mapController.camera.zoom);
       }
     });
@@ -97,7 +135,12 @@ class _LiveMapScreenState extends State<LiveMapScreen>
           unawaited(_readResidentLocation(requestPermission: false));
         }
       } else {
-        setState(() {});
+        setState(() {
+          if (!_truckFresh) {
+            _followTruck = false;
+            _cameraMotion.stop();
+          }
+        });
       }
     });
     if (widget.enableGps && widget.isActive) {
@@ -106,10 +149,29 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _syncVisualMotion();
+  }
+
+  void _syncVisualMotion() {
+    if (_visualMotion) {
+      if (!_flowMotion.isAnimating) _flowMotion.repeat();
+    } else {
+      _flowMotion.stop();
+      _cameraMotion.stop();
+      _truckMotion.stop();
+      _truckMotion.value = 1;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant LiveMapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
       _loadArea();
+      _truckMotion.value = 1;
       if (widget.enableGps) {
         _readResidentLocation(requestPermission: false);
       }
@@ -118,6 +180,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       _residentSubscription = null;
       _followTruck = false;
     }
+    _syncVisualMotion();
   }
 
   @override
@@ -137,6 +200,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       _residentSubscription?.cancel();
       _residentSubscription = null;
     }
+    _syncVisualMotion();
   }
 
   Future<void> _loadArea() async {
@@ -197,27 +261,39 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     final previous = _truck;
     final priorPosition = _displayTruck;
     final target = next?.position;
+    final priorHeading = _displayHeading;
     _truckMotion.stop();
     setState(() {
       _truck = next;
       _loading = false;
       _trackingError = null;
+      if (next == null || !next.freshAt(DateTime.now())) {
+        _followTruck = false;
+      }
+      if (previous?.route.id != next?.route.id) _selectedStop = null;
       _truckStart = priorPosition ?? target;
       _truckTarget = target;
+      _headingStart = priorHeading;
       if (next?.heading != null) {
-        _heading = next!.heading!;
+        _headingTarget = next!.heading!;
       } else if (priorPosition != null &&
           target != null &&
           priorPosition != target) {
-        _heading = mapBearing(priorPosition, target);
+        _headingTarget = mapBearing(priorPosition, target);
       }
     });
-    if (priorPosition != null && target != null && priorPosition != target) {
+    if (_visualMotion &&
+        priorPosition != null &&
+        target != null &&
+        priorPosition != target) {
       _truckMotion.duration =
           Duration(milliseconds: next!.simulated ? 5400 : 1400);
       _truckMotion.forward(from: 0);
     } else {
       _truckMotion.value = 1;
+      if (_followTruck && _mapReady && target != null) {
+        _mapController.move(target, _mapController.camera.zoom);
+      }
     }
     if (next == null) return;
     if (previous != null &&
@@ -324,7 +400,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       if (!mounted || !widget.isActive || !_foreground) return;
       _receiveResidentPosition(position);
       if (recenter && _mapReady && _residentPosition != null) {
-        _mapController.move(_residentPosition!, 16);
+        _flyTo(_residentPosition!, 16);
       }
       await _residentSubscription?.cancel();
       if (!mounted || !widget.isActive || !_foreground) return;
@@ -388,29 +464,80 @@ class _LiveMapScreenState extends State<LiveMapScreen>
 
   void _recenter() {
     if (!_mapReady) return;
-    _followTruck = false;
+    setState(() {
+      _followTruck = false;
+      _selectedStop = null;
+    });
     final route = _truck?.route.waypoints ?? [];
     if (route.length > 1) {
-      _mapController.fitCamera(CameraFit.coordinates(
-          coordinates: route,
-          padding: const EdgeInsets.fromLTRB(45, 115, 65, 230),
-          maxZoom: 16));
+      final height = _mapController.camera.nonRotatedSize.y;
+      final fitted = CameraFit.coordinates(
+              coordinates: route,
+              padding: EdgeInsets.fromLTRB(
+                  45, 160, 70, height * _sheetFraction + 45),
+              maxZoom: 16.4)
+          .fit(_mapController.camera);
+      _flyTo(fitted.center, fitted.zoom);
     } else {
-      _mapController.move(_areaCenter, 15.3);
+      _flyTo(_areaCenter, 16.1);
     }
   }
 
   void _follow() {
     if (!_mapReady || _displayTruck == null) return;
     setState(() {
-      _followTruck = true;
+      _followTruck = !_followTruck && _truckFresh;
+      _selectedStop = null;
     });
-    _mapController.move(_displayTruck!, 16.2);
+    if (_followTruck) _flyTo(_displayTruck!, 16.5);
+  }
+
+  void _flyTo(LatLng target, double zoom, {double? rotation}) {
+    if (!_mapReady) return;
+    _cameraStart = _mapController.camera.center;
+    _cameraTarget = target;
+    _cameraZoomStart = _mapController.camera.zoom;
+    _cameraZoomTarget = zoom;
+    _cameraAngleStart = _mapController.camera.rotation;
+    _cameraAngleTarget = rotation ?? _cameraAngleStart;
+    if (!_visualMotion) {
+      _mapController.moveAndRotate(target, zoom, _cameraAngleTarget);
+    } else {
+      _cameraMotion.forward(from: 0);
+    }
+  }
+
+  void _animateCameraFrame() {
+    if (!_mapReady || _cameraStart == null || _cameraTarget == null) return;
+    final progress = Curves.easeInOutCubic.transform(_cameraMotion.value);
+    final target =
+        _followTruck ? _displayTruck ?? _cameraTarget! : _cameraTarget!;
+    _mapController.moveAndRotate(
+        interpolateMapPosition(_cameraStart!, target, progress),
+        _cameraZoomStart + (_cameraZoomTarget - _cameraZoomStart) * progress,
+        interpolateMapHeading(_cameraAngleStart, _cameraAngleTarget, progress));
+  }
+
+  void _setView(bool angled) {
+    if (_angled == angled) return;
+    setState(() => _angled = angled);
+    if (_mapReady) {
+      _flyTo(_mapController.camera.center, _mapController.camera.zoom,
+          rotation: angled ? -18 : 0);
+    }
+  }
+
+  void _selectStop(MapCollectionPoint point) {
+    setState(() {
+      _selectedStop = point.number;
+      _followTruck = false;
+    });
+    _flyTo(point.position, 16.8);
   }
 
   void _zoom(double change) {
     if (!_mapReady) return;
-    _mapController.move(_mapController.camera.center,
+    _flyTo(_mapController.camera.center,
         (_mapController.camera.zoom + change).clamp(11, 19));
   }
 
@@ -440,13 +567,24 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     updateSheet(() {});
                   }),
               SwitchListTile(
-                  title: const Text('Angled map with elevated markers'),
+                  title: const Text('3D city perspective'),
                   value: _angled,
                   onChanged: (value) {
-                    setState(() => _angled = value);
+                    _setView(value);
                     updateSheet(() {});
-                    if (_mapReady) _mapController.rotate(value ? -18 : 0);
                   }),
+              SwitchListTile(
+                  title: const Text('Animate route and beacons'),
+                  subtitle: const Text(
+                      'Pause the visual effects while inspecting the map.'),
+                  value: _motionEnabled && !_reduceMotion,
+                  onChanged: _reduceMotion
+                      ? null
+                      : (value) {
+                          setState(() => _motionEnabled = value);
+                          _syncVisualMotion();
+                          updateSheet(() {});
+                        }),
               const Padding(
                   padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: Text(
@@ -461,187 +599,241 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     _trucksSubscription?.cancel();
     _residentSubscription?.cancel();
     _freshnessTimer?.cancel();
+    _cameraEvents?.cancel();
+    _mapRotation.dispose();
     _truckMotion.dispose();
+    _flowMotion.dispose();
+    _cameraMotion.dispose();
+    if (!widget.enableTiles) _tileProvider.dispose();
     _mapController.dispose();
     super.dispose();
+  }
+
+  LatLng? get _visibleResident => _residentUpdatedAt != null &&
+          residentFixIsFresh(_residentUpdatedAt!, DateTime.now())
+      ? _residentPosition
+      : null;
+
+  Widget _mapPlane(SundoTimeMood mood) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1, end: _angled ? 1 : 0),
+        duration:
+            _reduceMotion ? Duration.zero : const Duration(milliseconds: 750),
+        curve: Curves.easeInOutCubic,
+        child: _buildMap(mood),
+        builder: (context, tilt, child) => LayoutBuilder(
+            builder: (context, size) => Transform(
+                key: const ValueKey('map-perspective'),
+                alignment: Alignment.center,
+                transformHitTests: true,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, tilt * .9 / size.maxHeight)
+                  ..rotateX(-.58 * tilt)
+                  ..scaleByDouble(1 + .32 * tilt, 1 + .55 * tilt, 1, 1),
+                child: _MapPitchScope(pitch: .58 * tilt, child: child!))),
+      );
+
+  Widget _buildMap(SundoTimeMood mood) {
+    final route = _truck?.route;
+    final resident = _visibleResident;
+    final routeColor =
+        _truckFresh ? const Color(0xFF0B8F3E) : const Color(0xFF758579);
+    final tiles = ColorFiltered(
+        // Keep TileLayer mounted across automatic day/night changes.
+        colorFilter: ColorFilter.mode(
+            mood.isNight ? const Color(0x9913262C) : Colors.white,
+            BlendMode.multiply),
+        child: TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            tileProvider: _tileProvider,
+            userAgentPackageName: 'com.sundo.sipalay',
+            maxNativeZoom: 19));
+    return FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          backgroundColor:
+              mood.isNight ? const Color(0xFF1B3533) : const Color(0xFFE3EEE3),
+          initialCenter: _areaCenter,
+          initialZoom: 16.1,
+          initialRotation: -18,
+          minZoom: 11,
+          maxZoom: 19,
+          onMapReady: () {
+            _mapReady = true;
+          },
+          onPositionChanged: (_, gesture) {
+            if (!gesture) return;
+            _cameraMotion.stop();
+            if (_followTruck || _selectedStop != null) {
+              setState(() {
+                _followTruck = false;
+                _selectedStop = null;
+              });
+            }
+          },
+        ),
+        children: [
+          if (widget.enableTiles) tiles,
+          if (_showRoute && route != null && route.waypoints.length > 1)
+            PolylineLayer(polylines: [
+              Polyline(
+                  points: route.waypoints,
+                  strokeWidth: 17,
+                  color: const Color(0x33052F1C)),
+              Polyline(
+                  points: route.waypoints,
+                  strokeWidth: 13,
+                  color: Colors.white.withValues(alpha: .92)),
+              Polyline(
+                  points: route.waypoints,
+                  strokeWidth: 8,
+                  gradientColors: _truckFresh
+                      ? const [
+                          Color(0xFF087C3B),
+                          Color(0xFF59BE39),
+                          Color(0xFF008D54)
+                        ]
+                      : [routeColor, routeColor],
+                  colorsStop: const [0, .5, 1]),
+            ]),
+          if (resident != null && _residentAccuracy != null)
+            CircleLayer(circles: [
+              CircleMarker(
+                  point: resident,
+                  radius: _residentAccuracy!,
+                  useRadiusInMeter: true,
+                  color: const Color(0x222F80ED),
+                  borderColor: const Color(0x882F80ED),
+                  borderStrokeWidth: 1),
+            ]),
+          AnimatedBuilder(
+              animation:
+                  Listenable.merge([_truckMotion, _flowMotion, _mapRotation]),
+              builder: (context, _) {
+                final pulse = (_flowMotion.value * 4) % 1;
+                final arrows = _showRoute &&
+                        _truckFresh &&
+                        _truck?.active == true &&
+                        route != null
+                    ? movingRouteIndicators(route.waypoints, _flowMotion.value)
+                    : <RouteFlowPoint>[];
+                return RepaintBoundary(
+                    child: Stack(children: [
+                  MarkerLayer(rotate: false, markers: [
+                    for (final arrow in arrows)
+                      Marker(
+                          point: arrow.position,
+                          width: 20,
+                          height: 20,
+                          child: ExcludeSemantics(
+                              child: Transform.rotate(
+                                  angle: arrow.headingDegrees * math.pi / 180,
+                                  child: const Icon(
+                                      Icons.keyboard_arrow_up_rounded,
+                                      size: 21,
+                                      color: Color(0xFFE6FFE2))))),
+                  ]),
+                  MarkerLayer(rotate: true, markers: [
+                    if (_showStops && route != null)
+                      for (final point in route.collectionPoints)
+                        Marker(
+                            point: point.position,
+                                width: _angled ? 72 : 54,
+                                height: _angled ? 90 : 67.5,
+                            alignment: const Alignment(0, -7 / 9),
+                            child: _MapBillboard(
+                                alignment: const Alignment(0, 7 / 9),
+                                child: Tooltip(
+                                    message: point.name,
+                                    child: GestureDetector(
+                                        key: ValueKey(
+                                            'collection-stop-${point.number}'),
+                                        onTap: () => _selectStop(point),
+                                        child: SundoClayCollectionMarker(
+                                            number: point.number,
+                                            name: point.name,
+                                            selected:
+                                                _selectedStop == point.number,
+                                            pulse: pulse))))),
+                    if (resident != null)
+                      Marker(
+                          point: resident,
+                          width: 64,
+                          height: 64,
+                          child: _MapBillboard(
+                              child: Semantics(
+                                  label: 'Your private GPS location',
+                                  child: SundoResidentBeacon(pulse: pulse)))),
+                    if (_displayTruck != null)
+                      Marker(
+                          point: _displayTruck!,
+                              width: _angled ? 84 : 68,
+                              height: _angled ? 84 : 68,
+                          child: _MapBillboard(
+                              child: Semantics(
+                                  label: (_truck?.id ?? 'Truck') +
+                                      (_truckFresh
+                                          ? ' position'
+                                          : ' last known position'),
+                                  child: SundoMapTruckMarker(
+                                      headingDegrees: _displayHeading,
+                                      mapRotationDegrees: _mapRotation.value,
+                                      fresh: _truckFresh,
+                                      moving:
+                                          _truckFresh && _truck?.active == true,
+                                      pulse: pulse)))),
+                  ]),
+                ]));
+              }),
+        ]);
   }
 
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    final route = _truck?.route;
-    final resident = _residentUpdatedAt != null &&
-            residentFixIsFresh(_residentUpdatedAt!, DateTime.now())
-        ? _residentPosition
-        : null;
+    final resident = _visibleResident;
     return Scaffold(
         backgroundColor: mood.background,
         body: SafeArea(
           child: LayoutBuilder(
-              builder: (context, constraints) => Stack(children: [
-                    FlutterMap(
-                        mapController: _mapController,
-                        options: MapOptions(
-                          initialCenter: _areaCenter,
-                          initialZoom: 15.3,
-                          initialRotation: -18,
-                          minZoom: 11,
-                          maxZoom: 19,
-                          onMapReady: () {
-                            _mapReady = true;
-                          },
-                          onPositionChanged: (_, gesture) {
-                            if (gesture) _followTruck = false;
-                          },
-                        ),
-                        children: [
-                          if (widget.enableTiles)
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.sundo.sipalay',
-                              maxNativeZoom: 19,
-                            ),
-                          if (_showRoute &&
-                              route != null &&
-                              route.waypoints.length > 1)
-                            PolylineLayer(polylines: [
-                              Polyline(
-                                  points: route.waypoints,
-                                  strokeWidth: 11,
-                                  color: Colors.white.withValues(alpha: .9)),
-                              Polyline(
-                                  points: route.waypoints,
-                                  strokeWidth: 6,
-                                  color: const Color(0xFF0B8F3E)),
-                            ]),
-                          if (resident != null && _residentAccuracy != null)
-                            CircleLayer(circles: [
-                              CircleMarker(
-                                  point: resident,
-                                  radius: _residentAccuracy!,
-                                  useRadiusInMeter: true,
-                                  color: const Color(0x222F80ED),
-                                  borderColor: const Color(0x882F80ED),
-                                  borderStrokeWidth: 1),
-                            ]),
-                          MarkerLayer(rotate: true, markers: [
-                            if (_showStops && route != null)
-                              for (final point in route.collectionPoints)
-                                Marker(
-                                    point: point.position,
-                                    width: 54,
-                                    height: 57,
-                                    alignment: Alignment.topCenter,
-                                    child: Tooltip(
-                                        message: point.name,
-                                        child: SundoCollectionPointMarker(
-                                            point: point))),
-                            if (resident != null)
-                              Marker(
-                                  point: resident,
-                                  width: 34,
-                                  height: 34,
-                                  child: Semantics(
-                                      label: 'Your private GPS location',
-                                      child: Container(
-                                          decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: const Color(0xFF2F80ED)
-                                                  .withValues(alpha: .2)),
-                                          padding: const EdgeInsets.all(8),
-                                          child: Container(
-                                              decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color:
-                                                      const Color(0xFF2F80ED),
-                                                  border: Border.all(
-                                                      color: Colors.white,
-                                                      width: 3),
-                                                  boxShadow: const [
-                                                BoxShadow(
-                                                    color: Color(0x442F80ED),
-                                                    blurRadius: 8)
-                                              ]))))),
-                          ]),
-                          AnimatedBuilder(
-                              animation: _truckMotion,
-                              builder: (context, _) => MarkerLayer(markers: [
-                                    if (_displayTruck != null)
-                                      Marker(
-                                          point: _displayTruck!,
-                                          width: 66,
-                                          height: 66,
-                                          rotate: false,
-                                          child: Semantics(
-                                              label:
-                                                  '${_truck?.id ?? "Truck"} ${_truckFresh ? "position" : "last known position"}',
-                                              child: Transform.rotate(
-                                                  angle: (_heading + 90) *
-                                                      math.pi /
-                                                      180,
-                                                  child: Container(
-                                                      alignment:
-                                                          Alignment.center,
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                  alpha: _truckFresh
-                                                                      ? .95
-                                                                      : .65),
-                                                          shape: BoxShape.circle,
-                                                          border: Border.all(color: const Color(0xFF0B8F3E), width: 2),
-                                                          boxShadow: const [
-                                                            BoxShadow(
-                                                                color: Color(
-                                                                    0x4407652E),
-                                                                blurRadius: 12,
-                                                                offset: Offset(
-                                                                    0, 6))
-                                                          ]),
-                                                      child:
-                                                          const SundoTruckGraphic(
-                                                              width: 58,
-                                                              height: 44))))),
-                                  ])),
-                        ]),
+              builder: (context, constraints) => ClipRect(
+                      child: Stack(fit: StackFit.expand, children: [
+                    _mapPlane(mood),
+                    IgnorePointer(
+                        child: DecoratedBox(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    stops: const [
+                          0,
+                          .25,
+                          .72,
+                          1
+                        ],
+                                    colors: [
+                          mood.sky.withValues(alpha: .3),
+                          Colors.transparent,
+                          Colors.transparent,
+                          mood.background.withValues(alpha: .25),
+                        ])))),
                     Positioned(
                         top: 12,
                         left: 16,
                         right: 16,
-                        child: Container(
-                            padding: const EdgeInsets.fromLTRB(14, 5, 4, 5),
-                            decoration: mapSurfaceDecoration(mood),
-                            child: Row(children: [
-                              Icon(Icons.search,
-                                  color: mood.textColor, size: 21),
-                              const SizedBox(width: 9),
-                              Expanded(
-                                  child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                    Text('Live Truck Tracking',
-                                        style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                            color: mood.textColor)),
-                                    Text(
-                                        _demo
-                                            ? 'DEMO · simulated truck and route'
-                                            : 'Sipalay City · city tracking',
-                                        style: TextStyle(
-                                            fontSize: 9,
-                                            color: mood.mutedTextColor)),
-                                  ])),
-                              IconButton(
-                                  tooltip: 'Fit active route',
-                                  onPressed: _recenter,
-                                  icon: Icon(Icons.chevron_right,
-                                      color: mood.accent)),
-                            ]))),
+                        child: SundoMapSceneHeader(
+                            demo: _demo,
+                            rotation: _mapRotation,
+                            onNorth: () {
+                              setState(() => _followTruck = false);
+                              if (_mapReady) {
+                                _flyTo(_mapController.camera.center,
+                                    _mapController.camera.zoom,
+                                    rotation: 0);
+                              }
+                            },
+                            onFit: _recenter)),
                     Positioned(
-                        top: 78,
+                        top: 82,
                         left: 16,
                         right: 72,
                         child: Container(
@@ -661,12 +853,23 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                               Expanded(
                                   child: Text(_locationMessage,
                                       style: TextStyle(
-                                          fontSize: 9, color: mood.textColor)))
+                                          fontSize: 9, color: mood.textColor))),
                             ]))),
                     Positioned(
-                        top: 78,
+                        top: 129,
+                        left: 16,
+                        right: 72,
+                        child: SundoMapViewBar(
+                            angled: _angled,
+                            following: _followTruck,
+                            canFollow: _truckFresh && _displayTruck != null,
+                            onViewChanged: _setView,
+                            onWatch: _follow)),
+                    Positioned(
+                        top: 82,
                         right: 16,
-                        child: Column(children: [
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
                           SundoMapControlButton(
                               icon: Icons.center_focus_strong,
                               tooltip: 'Re-center active route',
@@ -687,7 +890,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                               tooltip: 'Use my current location',
                               selected: resident != null,
                               onPressed: () {
-                                _followTruck = false;
+                                setState(() => _followTruck = false);
                                 _readResidentLocation(
                                     requestPermission: true, recenter: true);
                               }),
@@ -707,7 +910,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                             child: Text('© OpenStreetMap contributors',
                                 style: TextStyle(
                                     fontSize: 9, color: mood.textColor)))),
-                    if (resident != null && _residentUpdatedAt != null)
+                    if (resident != null)
                       Positioned(
                           left: 16,
                           bottom: constraints.maxHeight * _sheetFraction + 29,
@@ -732,11 +935,11 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                           return false;
                         },
                         child: DraggableScrollableSheet(
-                            initialChildSize: .32,
-                            minChildSize: .24,
+                            initialChildSize: .30,
+                            minChildSize: .22,
                             maxChildSize: .72,
                             snap: true,
-                            snapSizes: const [.32, .55],
+                            snapSizes: const [.30, .55],
                             builder: (context, scrollController) =>
                                 SundoTrackingBottomSheet(
                                   truck: _truck,
@@ -753,7 +956,34 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                       ? () => _showAlert(_truck!)
                                       : null,
                                 ))),
-                  ])),
+                  ]))),
         ));
+  }
+}
+
+/// Keeps raised markers facing the viewer while the map ground plane tilts.
+class _MapPitchScope extends InheritedWidget {
+  final double pitch;
+  const _MapPitchScope({required this.pitch, required super.child});
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_MapPitchScope>()?.pitch ?? 0;
+  @override
+  bool updateShouldNotify(_MapPitchScope oldWidget) => oldWidget.pitch != pitch;
+}
+
+class _MapBillboard extends StatelessWidget {
+  final Widget child;
+  final Alignment alignment;
+  const _MapBillboard({required this.child, this.alignment = Alignment.center});
+  @override
+  Widget build(BuildContext context) {
+    final pitch = _MapPitchScope.of(context);
+    final tilt = pitch / .58;
+    return Transform(
+        alignment: alignment,
+        transform: Matrix4.identity()
+          ..scaleByDouble(1 / (1 + .32 * tilt), 1 / (1 + .55 * tilt), 1, 1)
+          ..rotateX(pitch),
+        child: child);
   }
 }

@@ -19,12 +19,22 @@ Splash, welcome, account screens and installer branding use that asset. Android 
 - `flutter_sundo/lib/shared/widgets/` holds reusable controls, brand graphics, scenery, time-based backgrounds, schedule/notification components and bottom navigation.
 - `flutter_sundo/lib/core/theme/` contains the clay palette and local-time theme controller. The app refreshes its greeting and mood each minute and on resume.
 - Morning uses cool blue daylight; afternoon adds a warmer sky tint; evening uses dark surfaces, a moon, stars and city-window glow. Inputs, cards and text remain interactive native elements across themes.
-- The live map uses OpenStreetMap tiles rather than a static map image. An optional angled presentation and elevated markers are visual effects around the actual map. Demo routes are sample paths; live routes come from operational data.
+- The live map uses OpenStreetMap tiles rather than a static map image. The default perspective presentation and raised clay markers are visual effects around the actual map. Demo routes are sample paths; live routes come from operational data.
 - Outfit and Plus Jakarta Sans fonts are bundled with their OFL licenses, so interface text does not require font downloads.
 
 The city illustration is stored at `flutter_sundo/assets/images/clay-city-hero.png` and `public/clay-city-hero.png`. It was created with the built-in image generation tool using this prompt:
 
 > Production portrait background for SUNDO, inspired by the supplied reference: a green municipal recycling truck on a clean Sipalay road, rounded clay foliage, lime and emerald trees, pale cyan city buildings, warm sunshine, cream clouds and spacious pale blue sky for headings. Matte sculpted materials, soft bevels and ambient shadows. Truck and city in the lower half, foliage at the bottom corners. No phone frame, UI, written words or watermark.
+
+## Map presentation in 1.2.1
+
+The 3D control projects the real street map into an angled plane. Collection stops use sculpted clay landmark symbols, number badges and depth shadows; their positions come from route data. This provides depth without claiming real terrain elevation, surveyed building footprints or building meshes. The 2D control restores a flat view for street inspection. The supplied SUNDO logo is unchanged; map landmarks and truck graphics are separate operational symbols.
+
+Route chevrons move at evenly spaced distances along the supplied waypoint path. Sampling uses great-circle segments to avoid long-way longitude crossings and skips repeated zero-length legs. These are decorative route indicators, not GPS fixes. Truck heading interpolation follows the shortest arc, so a turn from 359 degrees to 1 degree crosses north smoothly.
+
+Watch follows a fresh truck location with eased camera movement. A north-reset control, route-fit control, tappable collection landmarks and the tracking sheet let residents explore the scene. The Layers panel can pause route/beacon effects. Device reduced-motion settings disable decorative animation and animated camera transitions, and map animations pause outside the active foreground map.
+
+The native OpenStreetMap cache requests tiles only for map viewing, keeps a bounded local cache and honors HTTP cache instructions. It does not prefetch a city or zoom archive. Previously viewed tiles may be reused after a failed connection when the server allows it, but this does not make the truck position fresh or provide offline tracking. OSM attribution remains visible.
 
 ## Rendered previews
 
@@ -37,6 +47,8 @@ flutter test --dart-define=GENERATE_PREVIEWS=true --update-goldens test/design_p
 ```
 
 The resulting images are under `flutter_sundo/test/goldens/`, with `_night` variants. Run `node scripts/render-design-preview.mjs` from the repository root to create [daylight](resident-design-day.png), [evening](resident-design-night.png) and [day/evening comparison](design-preview.png) contact sheets. Layout tests also exercise smaller phone dimensions to catch clipped controls and overflow.
+
+Map previews use a synthetic canvas basemap only in test fixtures, with a visible disclaimer; the installed app continues to use OpenStreetMap. Tests require decoded, fully visible tiles before capturing the preview and verify that day/night changes preserve the mounted tile provider. Generate the three map scenes from `flutter_sundo` with `flutter test --dart-define=GENERATE_PREVIEWS=true --update-goldens test/map_scene_preview_test.dart`, then run `node scripts/render-map-preview.mjs` from the repository root for the [map preview](map-preview.png).
 
 ## Installer website
 

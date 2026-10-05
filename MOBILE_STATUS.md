@@ -1,6 +1,6 @@
 # SUNDO mobile status
 
-Open `flutter_sundo` as the Flutter project. The resident redesign is prepared for version **1.2.0+4**. Source/build/release publication and production deployment are separate steps; this document does not certify their completion.
+Open `flutter_sundo` as the Flutter project. The resident redesign and map enhancements are prepared for version **1.2.1+5**. Source/build/release publication and production deployment are separate steps; this document does not certify their completion.
 
 ## Resident functionality
 
@@ -8,8 +8,10 @@ Open `flutter_sundo` as the Flutter project. The resident redesign is prepared f
 - Clay cards, green controls, supplied logo and illustrated backgrounds. Local morning (06:00–11:59), afternoon (12:00–17:59) and evening/night (18:00–05:59) themes and greetings refresh every minute and when the app resumes.
 - Local demo registration/login with email or Philippine mobile number, duplicate-account validation, confirmed passwords and remembered sessions. Credentials use Flutter Secure Storage; account data uses scoped local storage. This does not authenticate a city account.
 - Home shows the selected resident area's next published/sample pickup, the shared truck state, unread alerts and working shortcuts.
-- Real OpenStreetMap tiles centered on Sipalay, attribution, zoom/recenter/follow/layer controls, read-only route display, elevated numbered collection stops and a draggable tracking sheet.
-- One simulated truck moves smoothly through sample A/B/C routes and changes heading. Simulated ETA, route and status are labeled as demo data. Live mode uses actual fleet data and keeps unknown ETA/route information unavailable.
+- Real OpenStreetMap tiles centered on Sipalay, attribution, zoom/recenter/route-fit controls, north reset, read-only route display, raised clay collection landmarks and a draggable tracking sheet. The default 3D view projects the map into perspective; the 2D control returns to a flat view. Raised symbols do not represent actual building heights or terrain meshes.
+- Watch follows a fresh truck position. One simulated truck moves smoothly through sample A/B/C routes and turns using the shortest arc across north. Animated chevrons show direction along supplied route geometry; collection beacons add motion. Simulated ETA, route and status are labeled as demo data. Live mode uses actual fleet data and keeps unknown ETA/route information unavailable.
+- The Layers panel pauses decorative route/beacon effects; system reduced-motion settings also suppress those effects and animated camera transitions. Animations pause when the map tab is inactive or the app is backgrounded. Operational updates remain independent of animation settings.
+- A bounded native cache stores requested OpenStreetMap tiles without bulk downloads. It follows HTTP cache freshness and conditional validation, and may reuse previously viewed tiles during a failed connection when permitted by the server. Unvisited areas still need a connection; the OS can reclaim the cache. Base-map caching never extends truck/GPS freshness or caches live tracking updates.
 - The private resident marker and accuracy circle require an actual GPS fix. A denied or unavailable fix leaves a selected-area/address view. Resident map tracking stops when that tab is inactive or the app is paused; resident map coordinates are not published to the fleet table.
 - Approaching-truck dialog, route-change events, alert categories, read state and preference controls. Live alert history contains observed events rather than seeded mock announcements.
 - Today/This Week/Calendar schedule views, month navigation, date markers and collection details.
@@ -28,7 +30,7 @@ Optional Firebase initialization, device-token registration and addressed **data
 
 ## Validation and remaining release work
 
-The test suite covers demo authentication, scoped resident storage, schedule/report behavior, map controls/interpolation, push recipient checks, time boundaries and day/night layouts at regular and small phone sizes. Preview rendering uses local fonts/assets and test-controlled data. It does not verify live map tile delivery, physical GPS/camera, remote RLS or notification delivery.
+The test suite covers demo authentication, scoped resident storage, schedule/report behavior, map controls/interpolation, shortest-arc headings, route-flow spacing, tile-cache behavior, push recipient checks, time boundaries and day/night layouts at regular and small phone sizes. Preview rendering uses local fonts/assets and test-controlled data. It does not verify live map tile delivery, physical GPS/camera, remote RLS or notification delivery.
 
 Before public city use:
 
@@ -56,6 +58,10 @@ Use Flutter 3.47.6 / Dart 3.13.5, Java 17 and the Android SDK. The APK is produc
 
 The configured GitHub Android workflow performs the same analysis/tests before publishing. Its runs were blocked by the account's billing lock during this work; local verification and manual release publication are the available route until Actions is restored.
 
-## Version 1.2.0 verification
+## Local verification for 1.2.1
 
-Flutter analysis reports no issues and all 55 mobile tests pass, including startup retry, account scope, GPS freshness, map area changes, schedules and responsive day/night layouts. The APK installer passes TypeScript checks and production compilation. Native previews are [daylight](resident-design-day.png), [evening](resident-design-night.png) and [day/evening comparison](design-preview.png).
+Flutter analysis reported no issues and all **90 mobile tests passed**, including startup retry, account scope, GPS freshness, perspective controls, transformed map gestures, smooth heading/route interpolation, HTTP and decoded tile caching, day/night provider retention, visual pause with continuing truck updates, lifecycle resume, schedules and responsive layouts. The APK installer passed TypeScript checks and production compilation.
+
+The Android release build completed as `com.sundo.sipalay`, version 1.2.1 (code 5), minimum Android 7.0/API 24. Its APK signature verifies with the Android development certificate. The 62,676,423-byte APK has SHA-256 `f3180c7824ef418da21868dba1b6e48d8c92b23e1039bd5dee86718a2f00e0db`.
+
+Native previews are [the map](map-preview.png), [daylight resident screens](resident-design-day.png), [evening screens](resident-design-night.png) and [day/evening comparison](design-preview.png). Map previews use clearly labeled synthetic test tiles; they validate native rendering and interaction without claiming real map-server or physical GPS verification. The installed app uses OpenStreetMap. No remote backend or physical-device test is certified by these local checks.
