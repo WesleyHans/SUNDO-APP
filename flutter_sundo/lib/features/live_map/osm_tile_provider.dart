@@ -50,7 +50,7 @@ class TileCacheStore {
         _now = now ?? DateTime.now;
 
   static const userAgent =
-      'SUNDO/1.2.1 (+https://github.com/wesleyhansplatil123/SUNDO-APP)';
+      'SUNDO/1.3.0 (+https://github.com/WesleyHans/SUNDO-APP)';
   static const _fallbackLifetime = Duration(days: 7);
   static const _maxTileBytes = 2 * 1024 * 1024;
   static final _cacheName = RegExp(r'^osm_[A-Za-z0-9_-]+\.tile$');
