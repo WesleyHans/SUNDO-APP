@@ -1,0 +1,9 @@
+flutter_sundo/
+artifacts/
+node_modules/
+dist/
+.git/
+.vercel/
+.env*
+supabase/
+scripts/
