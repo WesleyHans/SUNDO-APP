@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sundo_sipalay/app/app.dart';
 import 'package:sundo_sipalay/app/bootstrap.dart';
@@ -10,6 +12,7 @@ import 'package:sundo_sipalay/app/router.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/mock_auth_repository.dart';
+import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 
 void main() {
@@ -29,14 +32,26 @@ void main() {
         await GoogleFonts.pendingFonts();
       });
 
+  SipalayWeatherRepository unavailableWeather() {
+    final client = MockClient((_) async => http.Response('', 503));
+    addTearDown(client.close);
+    return SipalayWeatherRepository(
+        client: client, clock: () => DateTime(2026, 10, 5, 9));
+  }
+
   testWidgets('startup failure offers a working retry before navigation',
       (tester) async {
     await loadFonts(tester);
     var attempts = 0;
-    await tester
-        .pumpWidget(ProviderScope(child: SundoBootstrap(initialize: () async {
-      if (++attempts == 1) throw StateError('test storage error');
-    })));
+    await tester.pumpWidget(ProviderScope(
+        overrides: [
+          sundoWeatherRepositoryProvider
+              .overrideWithValue(unavailableWeather()),
+          sundoClockProvider.overrideWithValue(() => DateTime(2026, 10, 5, 9)),
+        ],
+        child: SundoBootstrap(initialize: () async {
+          if (++attempts == 1) throw StateError('test storage error');
+        })));
     await tester.pumpAndSettle();
     expect(find.text('SUNDO could not start.'), findsOneWidget);
     await tester.tap(find.text('Retry'));
@@ -62,9 +77,17 @@ void main() {
         password: 'secure-demo');
     await AppStore.setName('Private Resident');
     final container = ProviderContainer(overrides: [
-      sundoClockProvider.overrideWithValue(() => DateTime(2026, 10, 5, 9))
+      sundoClockProvider.overrideWithValue(() => DateTime(2026, 10, 5, 9)),
+      sundoWeatherRepositoryProvider.overrideWithValue(unavailableWeather()),
     ]);
-    addTearDown(container.dispose);
+    var containerDisposed = false;
+    void disposeContainer() {
+      if (containerDisposed) return;
+      containerDisposed = true;
+      container.dispose();
+    }
+
+    addTearDown(disposeContainer);
     await tester.pumpWidget(UncontrolledProviderScope(
         container: container, child: const SundoApp()));
     await tester.pump(const Duration(milliseconds: 2900));
@@ -102,6 +125,6 @@ void main() {
     expect(find.text('Get Started'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
-    container.dispose();
+    disposeContainer();
   });
 }

@@ -1,89 +1,217 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/theme/time_theme.dart';
 
-const sundoCityArtwork = 'assets/images/clay-city-hero.png';
+/// All five illustrations use the same camera, truck and city composition.
+String sundoEnvironmentArtwork(SundoEnvironment environment) =>
+    'assets/images/environment-${environment.name}.webp';
 
-/// Uses the illustrated city as scenery while all controls remain Flutter widgets.
-class SundoTimeBasedBackground extends StatelessWidget {
+/// Scenery fills the available surface; branding and controls are separate.
+class SundoTimeBasedBackground extends StatefulWidget {
   final Widget? child;
   final bool fullScene;
   final Alignment alignment;
+  final BoxFit fit;
   const SundoTimeBasedBackground({
     super.key,
     this.child,
     this.fullScene = false,
     this.alignment = Alignment.bottomCenter,
+    this.fit = BoxFit.cover,
   });
+
+  static const sceneryFeather = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: [0, .28, .58, .86, 1],
+    colors: [
+      Colors.transparent,
+      Color(0x0FFFFFFF),
+      Color(0x38FFFFFF),
+      Color(0x66FFFFFF),
+      Color(0x58FFFFFF),
+    ],
+  );
+
   @override
-  Widget build(BuildContext context) {
-    final mood = SundoTimeScope.of(context);
-    return Stack(fit: StackFit.expand, children: [
-      DecoratedBox(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [mood.sky, mood.background],
-      ))),
-      Opacity(
-          opacity: fullScene ? 1 : (mood.isNight ? .22 : .18),
-          child: ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              mood.isNight
-                  ? const Color(0xFF294363)
-                  : mood.period == SundoDayPeriod.afternoon
-                      ? const Color(0xFFFFEBC5)
-                      : Colors.white,
-              BlendMode.modulate,
-            ),
-            child: Image.asset(sundoCityArtwork,
-                fit: BoxFit.cover, alignment: alignment),
-          )),
-      if (mood.isNight) ...[
-        const DecoratedBox(
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: [0, .46, 1],
-          colors: [Color(0xDD132C47), Color(0x44152B35), Color(0x55122425)],
-        ))),
-        const IgnorePointer(
-            child: CustomPaint(painter: _EveningSceneryPainter())),
-      ],
-      if (child != null) child!,
-    ]);
-  }
+  State<SundoTimeBasedBackground> createState() =>
+      _SundoTimeBasedBackgroundState();
 }
 
-class _EveningSceneryPainter extends CustomPainter {
-  const _EveningSceneryPainter();
+class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
+  SundoEnvironment? _displayedEnvironment;
+  SundoTimeMood? _displayedMood;
+  bool _displayedReady = false;
+  SundoEnvironment? _pendingEnvironment;
+  SundoTimeMood? _requestedMood;
+  ImageStream? _pendingStream;
+  ImageStreamListener? _pendingListener;
+  final _frameHandoffs = <ImageStream, ImageStreamListener>{};
+  int _requestGeneration = 0;
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final stars = Paint()..color = const Color(0xBBD4E4EC);
-    for (var i = 0; i < 24; i++) {
-      final x = ((i * 97 + 31) % 347) / 347 * size.width;
-      final y = ((i * 43 + 17) % 127) / 127 * size.height * .37;
-      canvas.drawCircle(Offset(x, y), i % 3 == 0 ? 1.1 : .65, stars);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final mood = SundoTimeScope.of(context);
+    // The first scene is mounted immediately, without fading from an empty
+    // previous image. Further scenes must decode before replacing this one.
+    _displayedEnvironment ??= mood.environment;
+    _displayedMood ??= mood;
+    _requestScene(mood);
+  }
+
+  void _requestScene(SundoTimeMood mood) {
+    final environment = mood.environment;
+    if (_pendingEnvironment == environment) {
+      _requestedMood = mood;
+      return;
     }
-    final center = Offset(size.width * .8, size.height * .13);
-    canvas.drawCircle(center, 16, Paint()..color = const Color(0xFFF5F0CE));
-    canvas.drawCircle(center + const Offset(7, -4), 14,
-        Paint()..color = const Color(0xFF193650));
-    // Warm windows on the city band, independent of the interactive content.
-    final windows = Paint()..color = const Color(0x99FFD78A);
-    for (var i = 0; i < 18; i++) {
-      final x = size.width * (.16 + (i % 6) * .125);
-      final y = size.height * (.63 + (i ~/ 6) * .025);
-      canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(x, y, math.max(2.0, size.width * .009), 5),
-              const Radius.circular(1)),
-          windows);
+    if (_displayedEnvironment == environment && _displayedReady) {
+      // Returning to the current scene invalidates an in-flight other scene.
+      _cancelPending();
+      _displayedMood = mood;
+      return;
     }
+    _cancelPending();
+    final generation = _requestGeneration;
+    _pendingEnvironment = environment;
+    _requestedMood = mood;
+    final stream = AssetImage(sundoEnvironmentArtwork(environment))
+        .resolve(createLocalImageConfiguration(context));
+    final listener = ImageStreamListener((info, _) {
+      info.dispose();
+      if (!mounted || generation != _requestGeneration) return;
+      final readyMood = _requestedMood!;
+      _handoffReadyScene();
+      if (_displayedEnvironment == environment) {
+        _displayedReady = true;
+        _displayedMood = readyMood;
+        return;
+      }
+      setState(() {
+        _displayedEnvironment = environment;
+        _displayedMood = readyMood;
+        _displayedReady = true;
+      });
+    }, onError: (error, stack) {
+      if (!mounted || generation != _requestGeneration) return;
+      // Keep the last available scene. A later mood/dependency refresh can
+      // retry this requested asset instead of displaying an empty transition.
+      _cancelPending();
+    });
+    _pendingStream = stream;
+    _pendingListener = listener;
+    stream.addListener(listener);
+  }
+
+  void _cancelPending() {
+    _requestGeneration++;
+    if (_pendingStream != null && _pendingListener != null) {
+      _pendingStream!.removeListener(_pendingListener!);
+    }
+    _pendingStream = null;
+    _pendingListener = null;
+    _pendingEnvironment = null;
+    _requestedMood = null;
+  }
+
+  void _handoffReadyScene() {
+    final stream = _pendingStream!;
+    final listener = _pendingListener!;
+    _requestGeneration++;
+    _pendingStream = null;
+    _pendingListener = null;
+    _pendingEnvironment = null;
+    _requestedMood = null;
+    // Hold this decoded frame until Image attaches in the following build.
+    // Otherwise a small/disabled image cache could discard it before the fade.
+    _frameHandoffs[stream] = listener;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final heldListener = _frameHandoffs.remove(stream);
+      if (heldListener != null) stream.removeListener(heldListener);
+    });
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  void dispose() {
+    _cancelPending();
+    for (final entry in _frameHandoffs.entries) {
+      entry.key.removeListener(entry.value);
+    }
+    _frameHandoffs.clear();
+    super.dispose();
+  }
+
+  /// fitWidth preserves the whole truck. If a tall phone leaves space below
+  /// the illustration, soften its last 48px into the surrounding surface.
+  Shader _fullSceneMask(Rect bounds) {
+    final fitted = applyBoxFit(widget.fit, const Size(1024, 1536), bounds.size);
+    final imageRect = widget.alignment.inscribe(fitted.destination, bounds);
+    if (imageRect.bottom >= bounds.bottom) {
+      return const LinearGradient(colors: [Colors.white, Colors.white])
+          .createShader(bounds);
+    }
+    final end =
+        ((imageRect.bottom - bounds.top) / bounds.height).clamp(0.0, 1.0);
+    final start = (end - 48 / bounds.height).clamp(0.0, end);
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0, start, end, 1],
+      colors: const [
+        Colors.white,
+        Colors.white,
+        Colors.transparent,
+        Colors.transparent
+      ],
+    ).createShader(bounds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mood = _displayedMood!;
+    final environment = _displayedEnvironment!;
+    final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final scene = Image.asset(
+      sundoEnvironmentArtwork(environment),
+      key: ValueKey(environment),
+      fit: widget.fit,
+      alignment: widget.alignment,
+      excludeFromSemantics: true,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (context, error, stack) => const SizedBox.expand(),
+    );
+    return Stack(fit: StackFit.expand, children: [
+      AnimatedContainer(
+          duration:
+              reducedMotion ? Duration.zero : const Duration(milliseconds: 900),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: widget.fullScene
+                ? [mood.background, mood.background, mood.background]
+                : [mood.background, mood.background, mood.sky],
+            stops: const [0, .72, 1],
+          ))),
+      IgnorePointer(
+          child: AnimatedSwitcher(
+        duration:
+            reducedMotion ? Duration.zero : const Duration(milliseconds: 900),
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        layoutBuilder: (current, previous) => Stack(
+            fit: StackFit.expand,
+            children: [...previous, if (current != null) current]),
+        child: ShaderMask(
+            key: ValueKey(environment),
+            blendMode: BlendMode.dstIn,
+            shaderCallback: widget.fullScene
+                ? _fullSceneMask
+                : SundoTimeBasedBackground.sceneryFeather.createShader,
+            child: scene),
+      )),
+      if (widget.child != null) widget.child!,
+    ]);
+  }
 }
