@@ -258,7 +258,7 @@ class SundoTrackingBottomSheet extends StatelessWidget {
               const SizedBox(height: 6),
               FilledButton.icon(
                   onPressed: snapshot.position == null ? null : onFollow,
-                  icon: const Icon(Icons.local_shipping_outlined),
+                  icon: const SundoTruckGraphic(width: 24, height: 20),
                   label: const Text('Follow Truck')),
               if (onAlertPreview != null)
                 TextButton.icon(

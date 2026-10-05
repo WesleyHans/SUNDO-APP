@@ -6,6 +6,7 @@ import '../shared/widgets/scenic_backdrop.dart';
 import '../core/theme/app_theme.dart';
 import './router.dart';
 import '../repositories/weather_repository.dart';
+import '../services/weather_consent.dart';
 
 class SundoApp extends ConsumerStatefulWidget {
   const SundoApp({super.key});
@@ -27,8 +28,102 @@ class _SundoAppState extends ConsumerState<SundoApp>
             WidgetsBinding.instance.lifecycleState == null ||
                 WidgetsBinding.instance.lifecycleState ==
                     AppLifecycleState.resumed);
+        _initializeWeatherAccess();
       }
     });
+  }
+
+  Future<void> _initializeWeatherAccess() async {
+    final store = ref.read(weatherConsentStoreProvider);
+    bool? enabled;
+    try {
+      enabled = await store.read();
+    } catch (_) {
+      enabled = null;
+    }
+    if (!mounted) return;
+    final firstChoice = enabled == null;
+    final navigatorContext = sundoNavigatorKey.currentContext;
+    if (firstChoice && navigatorContext != null && navigatorContext.mounted) {
+      enabled = await showDialog<bool>(
+          context: navigatorContext,
+          barrierDismissible: false,
+          builder: (context) => PopScope(
+              canPop: false,
+              child: AlertDialog(
+                icon: const Icon(Icons.wb_cloudy_outlined),
+                title: const Text('Weather for your area'),
+                content: const Text(
+                    'SUNDO can use your location for local weather before you sign in. Your approximate coordinates are sent to Open-Meteo while the app is open. Weather is model-based; no background tracking is needed.\n\nYou can continue with time-based backgrounds and change this in Profile → Location Permission.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Use time only')),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Enable local weather')),
+                ],
+              )));
+      if (!mounted) return;
+      // Only a button choice is consent. Route removal is not an opt-out.
+      if (enabled == null) return;
+      try {
+        await store.write(enabled);
+      } catch (_) {
+        // A storage failure does not prevent this explicit session choice.
+      }
+    }
+    if (!mounted) return;
+    if (enabled != true) {
+      ref.read(weatherStartupChoiceGateProvider).complete();
+      _weatherController.useTimeOnly();
+      return;
+    }
+    final locationService = ref.read(environmentLocationServiceProvider);
+    // Keep splash navigation from removing the GPS-off settings offer, but
+    // don't hold a normal startup for a weather network response.
+    if (!firstChoice || await locationService.isLocationServiceEnabled()) {
+      if (!mounted) return;
+      ref.read(weatherStartupChoiceGateProvider).complete();
+    }
+    await _weatherController.initializeLocation(requestPermission: firstChoice);
+    if (!mounted) return;
+    if (firstChoice) {
+      bool servicesDisabled = false;
+      try {
+        servicesDisabled = await locationService.deviceAccessStatus() ==
+            EnvironmentLocationStatus.disabled;
+      } catch (_) {
+        // Location resolution will handle an unavailable platform.
+      }
+      if (!mounted) return;
+      final activeContext = sundoNavigatorKey.currentContext;
+      if (servicesDisabled && activeContext != null && activeContext.mounted) {
+        final open = await showDialog<bool>(
+            context: activeContext,
+            builder: (context) => AlertDialog(
+                  title: const Text('Turn on phone Location?'),
+                  content: const Text(
+                      'Location services are off. Turn them on for weather in your current area. Without a location, SUNDO uses a saved area when available or the current time.'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Continue')),
+                    FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Open Location settings')),
+                  ],
+                ));
+        if (open == true) {
+          try {
+            await locationService.openLocationSettings();
+          } catch (_) {
+            // Continue safely if the platform cannot open its settings.
+          }
+        }
+      }
+    }
+    if (mounted) ref.read(weatherStartupChoiceGateProvider).complete();
   }
 
   @override

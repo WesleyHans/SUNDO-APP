@@ -166,31 +166,31 @@ class SundoNotificationCard extends StatelessWidget {
       required this.timeLabel,
       required this.onTap});
 
-  static (Color, Color, IconData) palette(String type) => switch (type) {
+  static (Color, Color, Widget) palette(String type) => switch (type) {
         'alert' => (
             const Color(0xFFFFE9E7),
             const Color(0xFFE44942),
-            Icons.notifications_active_rounded
+            const Icon(Icons.notifications_active_rounded)
           ),
         'update' => (
             const Color(0xFFE5F7E9),
             const Color(0xFF17A846),
-            Icons.local_shipping_rounded
+            const SundoTruckGraphic(width: 24, height: 24)
           ),
         'route' => (
             const Color(0xFFFFF2D6),
             const Color(0xFFF4A623),
-            Icons.warning_amber_rounded
+            const Icon(Icons.warning_amber_rounded)
           ),
         'completed' => (
             const Color(0xFFE6F8ED),
             const Color(0xFF0B9F47),
-            Icons.check_rounded
+            const Icon(Icons.check_rounded)
           ),
         _ => (
             const Color(0xFFE7F3FC),
             const Color(0xFF2F80ED),
-            Icons.campaign_rounded
+            const Icon(Icons.campaign_rounded)
           ),
       };
 
@@ -238,7 +238,10 @@ class SundoNotificationCard extends StatelessWidget {
                                       blurRadius: 8,
                                       offset: const Offset(0, 3))
                                 ]),
-                            child: Icon(icon, size: 24, color: Colors.white)),
+                            child: IconTheme(
+                                data: const IconThemeData(
+                                    size: 24, color: Colors.white),
+                                child: icon)),
                         const SizedBox(width: 12),
                         Expanded(
                             child: Column(

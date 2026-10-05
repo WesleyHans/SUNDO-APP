@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,24 +12,35 @@ import '../features/operations/operations_screen.dart';
 import '../repositories/mock_auth_repository.dart';
 import '../services/backend_service.dart';
 import './resident_shell.dart';
+import '../repositories/weather_repository.dart';
+import '../services/weather_consent.dart';
+
+final sundoNavigatorKey = GlobalKey<NavigatorState>();
 
 final sundoRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
+      navigatorKey: sundoNavigatorKey,
       initialLocation: '/',
       routes: [
         GoRoute(
             path: '/',
-            builder: (context, state) => SplashScreen(
-                onContinue: () => context.go(
-                    BackendService.live || MockAuthRepository.hasSession
-                        ? '/app'
-                        : '/welcome'))),
+            builder: (context, state) => SplashScreen(onContinue: () async {
+                  await ref.read(weatherStartupChoiceGateProvider).ready;
+                  if (!context.mounted) return;
+                  context.go(
+                      BackendService.live || MockAuthRepository.hasSession
+                          ? '/app'
+                          : '/welcome');
+                })),
         GoRoute(
             path: '/welcome',
             builder: (context, state) => WelcomeScreen(
                 onGetStarted: () async {
                   await BackendService.logout();
                   await MockAuthRepository.logout();
+                  await ref
+                      .read(sundoWeatherProvider.notifier)
+                      .refreshSavedArea();
                   if (context.mounted) context.go('/app');
                 },
                 onLogIn: () => context.go('/login'),
@@ -35,14 +48,20 @@ final sundoRouterProvider = Provider<GoRouter>((ref) {
         GoRoute(
             path: '/login',
             builder: (context, state) => LoginScreen(
-                onLoginSuccess: () => context.go('/app'),
+                onLoginSuccess: () {
+                  ref.read(sundoWeatherProvider.notifier).refreshSavedArea();
+                  context.go('/app');
+                },
                 onCreateAccount: () => context.go('/register'),
                 onBack: () => context.go('/welcome'))),
         GoRoute(
             path: '/register',
             builder: (context, state) => RegisterScreen(
                 onBack: () => context.go('/welcome'),
-                onRegisterSuccess: () => context.go('/app'),
+                onRegisterSuccess: () {
+                  ref.read(sundoWeatherProvider.notifier).refreshSavedArea();
+                  context.go('/app');
+                },
                 onGoToLogin: () => context.go('/login'))),
         GoRoute(
             path: '/app', builder: (context, state) => const _AccountShell()),
@@ -71,10 +90,29 @@ class _AccountShellState extends State<_AccountShell> {
   @override
   void initState() {
     super.initState();
-    if (BackendService.live) _profile = BackendService.loadProfile();
+    if (BackendService.live) _profile = _loadProfile();
   }
 
-  void _logout() => context.go('/welcome');
+  Future<Map<String, dynamic>> _loadProfile() async {
+    final profile = await BackendService.loadProfile();
+    if (mounted) {
+      // Restored sessions establish their local identity here, after startup.
+      // Clear guest-area weather immediately without delaying the account UI
+      // while the authenticated resident's new location request completes.
+      unawaited(ProviderScope.containerOf(context, listen: false)
+          .read(sundoWeatherProvider.notifier)
+          .refreshSavedArea());
+    }
+    return profile;
+  }
+
+  void _logout() {
+    ProviderScope.containerOf(context, listen: false)
+        .read(sundoWeatherProvider.notifier)
+        .refreshSavedArea();
+    context.go('/welcome');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!BackendService.live) return MainNavigationShell(onLogout: _logout);
@@ -88,7 +126,7 @@ class _AccountShellState extends State<_AccountShell> {
               const Text('Could not load your city account.'),
               TextButton(
                   onPressed: () {
-                    final retry = BackendService.loadProfile();
+                    final retry = _loadProfile();
                     setState(() {
                       _profile = retry;
                     });
@@ -97,7 +135,7 @@ class _AccountShellState extends State<_AccountShell> {
               TextButton(
                   onPressed: () async {
                     await BackendService.logout();
-                    if (context.mounted) context.go('/welcome');
+                    if (mounted) _logout();
                   },
                   child: const Text('Log out'))
             ])));

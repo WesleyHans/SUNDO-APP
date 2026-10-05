@@ -18,7 +18,7 @@ Splash, welcome, account screens and installer branding use that asset. Android 
 - `flutter_sundo/lib/features/` contains splash, onboarding, auth, home, live_map, schedule, notifications, report_concern and profile screens; operations retains the connected staff/driver workflows.
 - `flutter_sundo/lib/shared/widgets/` holds reusable controls, brand graphics, scenery, time-based backgrounds, schedule/notification components and bottom navigation.
 - `flutter_sundo/lib/core/theme/` contains the clay palette and local-time theme controller. The app refreshes its greeting and mood each minute and on resume.
-- The environment scene follows morning, noon, sunset and night boundaries, with fresh rainy conditions overriding the time scene. Inputs, cards and text remain interactive native elements across themes. Splash branding uses a constant daytime scope so logo text and subtitle colors do not change at night.
+- The environment scene combines morning, noon, sunset and night with fresh clear, cloudy, rain, drizzle and thunderstorm conditions. Wet scenes retain the current time's lighting, including a distinct rainy-night mood. Inputs, cards and text remain interactive native elements across themes. Splash branding uses a constant daytime scope so logo text and subtitle colors do not change at night.
 - The live map uses OpenStreetMap tiles rather than a static map image. The default perspective presentation and raised clay markers are visual effects around the actual map. Demo routes are sample paths; live routes come from operational data.
 - Outfit and Plus Jakarta Sans fonts are bundled with their OFL licenses, so interface text does not require font downloads.
 
@@ -42,11 +42,23 @@ The user supplied five matching 1024 × 1536 PNG scenes. They are converted to l
 
 Every variant uses the same fit and alignment. Splash uses `BoxFit.fitWidth` to retain the supplied truck's full cab and tail. On taller phones, the last 48 pixels of the illustration blend into the surrounding surface so the image cannot end in a hard horizontal cut beside the card. The fixed branding plate follows the existing text layout, including accessibility text scaling. A small night-only moon is drawn in the supplied sky coordinates beneath that plate; the truck image is not edited. The branding plate can cover that sky position on compact phones.
 
-Other resident screens receive an edge-to-edge scene through a continuous alpha mask; the previous 220 px illustration band and duplicated Home header/footer image strips are removed. Home's header is content-driven and the demo banner's status inset is not applied a second time. System-bar icon colors follow the time theme, with a fixed dark-icon override on the splash's light branding plate.
+Other resident screens receive an edge-to-edge scene through a continuous alpha mask; the previous 220 px illustration band and duplicated Home header/footer image strips are removed. In the 1.4.0 release, this shared backdrop is softer, reaching approximately 22% illustration opacity at its strongest point, so forms, schedules, notifications, reports and profile content remain readable. Splash and welcome retain their stronger illustration treatment. Home's header is content-driven and the demo banner's status inset is not applied a second time. System-bar icon colors follow the time theme, with a fixed dark-icon override on the splash's light branding plate.
 
-Time selection uses device-local hours: **05:00–10:59 morning; 11:00–14:59 noon; 15:00–17:59 sunset; 18:00–04:59 night**. The clock refreshes each minute and on resume. The current scene stays visible until the requested next asset decodes successfully, then both scenery and underlay use a 900 ms fade; reduced-motion settings switch immediately. Failed image loads retain the current scene, and superseded image requests cannot replace it. Fresh rainy conditions take precedence, without changing the truck, logo or card.
+Time selection uses device-local hours: **05:00–10:59 morning; 11:00–14:59 noon; 15:00–17:59 sunset; 18:00–04:59 night**. The clock refreshes each minute and on resume. Greetings use Good Morning, Good Afternoon or Good Evening. The current scene stays visible until the requested next asset decodes successfully, then both scenery and underlay use a 900 ms fade; reduced-motion settings switch immediately. Failed image loads retain the current scene, and superseded image requests cannot replace it.
 
-Rain selection uses [Open-Meteo's model-based current conditions](https://open-meteo.com/en/docs) for fixed Sipalay coordinates 9.7525, 122.4038. Requests begin in the foreground and recur every 15 minutes; backgrounding stops polling. Failed, malformed or stale results fall back to local time. Both the model timestamp and fetch time must be within 30 minutes; no resident GPS is sent. Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current conditions into an artwork choice; the keyless endpoint is subject to [noncommercial API terms](https://open-meteo.com/en/terms). Linked weather attribution sits in the existing space below the splash card and in Profile's About dialog; it does not move the slogan card.
+The 1.4.0 release keeps rain and time together. Morning rain has a cool morning treatment; afternoon rain has a warmer treatment; evening/night rain uses dark blue wet scenery. Cloudy conditions use muted lighting, and thunderstorm conditions use the wet scene. These are native color filters over the same supplied rainy/day scenes, rather than newly generated trucks or different city compositions. The filter affects illustration pixels only; the logo, wordmark, subtitle, card, controls and actual map tiles are outside it.
+
+### Location and weather consent in the 1.4.0 release
+
+Before authentication, a first-open dialog offers **Enable local weather** or **Use time only**. Weather is optional and does not require an account. Choosing local weather allows the app to request the phone's foreground location permission. If the phone's Location switch is off, SUNDO can offer its Location settings; it cannot turn that switch on itself. The weather choice is saved on the device and can be changed through **Profile → Location Permission → Location & weather**. The app does not repeatedly request permission during automatic refreshes.
+
+With consent and permission, SUNDO obtains a fresh one-shot device position and rounds latitude/longitude to two decimal places before sending them to [Open-Meteo's model-based current conditions endpoint](https://open-meteo.com/en/docs). Weather coordinates are held in memory rather than persisted, and this feature starts no background GPS stream. Current conditions describe the approximate model area and may differ from rain on an individual street.
+
+If GPS is denied, disabled or unavailable, a supported saved Sipalay barangay/address can supply explicitly city-level weather: the fixed city coordinates 9.7525, 122.4038 are used, rounded in the same way. The banner identifies **Sipalay City (saved area)**; no unverified barangay centroid is invented. Without a reliable saved area, or when weather is switched off, SUNDO uses time-only scenery. Weather state is cleared when the resident identity or saved area changes.
+
+Requests recur every 15 minutes while the app is in the foreground; backgrounding stops polling and invalidates pending results. Both the model timestamp and fetch time must be within 30 minutes. Failed, malformed, unknown or stale results cannot produce a weather banner; unavailable/stale data returns the theme to device-local time. A compact Home banner names clear, cloudy, rain, light rain or thunderstorms, identifies the area, shows the model update age and adds a collection caution for wet conditions. It does not claim an official collection delay or emergency alert.
+
+Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current conditions into an artwork/lighting choice; the keyless endpoint is subject to [noncommercial API terms](https://open-meteo.com/en/terms). Linked weather attribution sits in the existing space below the splash card and in Profile's About dialog; it does not move the slogan card.
 
 Run `node scripts/package-environment-assets.mjs C:/Users/User/Downloads` to package the five supplied files. The script validates their common dimensions and compares decoded RGBA pixels after conversion. Current asset checks confirm all five WebP files preserve the original decoded pixels and both logo files retain their original SHA-256.
 
@@ -62,7 +74,28 @@ Exact image-generation prompt:
 
 > Use case: photorealistic-natural. Asset type: transparent PNG botanical decoration for SUNDO mobile UI. Generate a single compact sprig of exactly three fresh tropical green leaves connected to one thin gently curved green stem. Place the stem attachment at the TOP RIGHT corner; the sprig extends diagonally DOWN LEFT like leaves hanging in the upper-right corner of a screen. Natural leaves with detailed branching veins, subtle irregular edges, translucent light along edges, realistic waxy surfaces, lime-to-emerald greens, soft dimensional shading and tiny contact shadows. Three overlapping broad lanceolate pointed leaves placed at different heights along the same stem, matching a roughly square footprint, fill most of canvas with a little clear margin. Calm soft daylight, no dramatic lighting. Transparent background including between leaves, preserve alpha. No pot, flowers, truck, logo, words, watermark, frame, scenery, flat cartoon illustration or vector style. This is a botanical cutout only, kept constant across day/night/weather.
 
-The 1.3.0 environment update passed Flutter analysis and all 132 tests on GitHub's Linux runner. All nine splash tests passed again while generating the five native scene previews, which were visually reviewed. The APK was compiled and re-signed locally using the existing development key; package version 1.3.0+6 and the matching certificate were verified. Local Windows compilation remains blocked by Application Control. Physical-device testing remains pending; compact splash framing can hide the moon behind the fixed branding plate.
+The prior 1.3.0 environment update passed analysis and all 132 tests on GitHub's Linux runner. Version 1.4.0 now passes analysis and all 190 tests locally through the standard Windows SDK, plus 49 native preview tests. Resident screens, supplied truck rim phases, map and rainy-night splash were visually reviewed. The locally compiled 1.4.0+7 APK verifies with the previous signing certificate, and GitHub's published asset digest matches its local SHA-256. See `MOBILE_STATUS.md` for exact metadata. Physical-device testing remains pending; compact splash framing can hide the moon behind the fixed branding plate.
+
+## Supplied operational trucks in the 1.4.0 release
+
+The resident supplied separate side-view and angled map PNGs. Both already have alpha transparency. `scripts/package-supplied-trucks.mjs` copies the original PNG bytes and verifies all decoded RGBA pixels; no truck is regenerated, recolored or replaced with a second model. Original and packaged SHA-256 hashes match:
+
+| Use | Supplied source in `C:/Users/User/AppData/Local/Temp/` | Asset | Dimensions | SHA-256 |
+| --- | --- | --- | --- | --- |
+| Map | `codex-clipboard-ce9fd9f1-939d-4810-b75b-972007b14064.png` | `flutter_sundo/assets/images/sundo-map-truck.png` | 1254 × 1254 | `00169B01BB325F8F1B4636E631EEA339FDABC3D596A859CE8316B05968692BD5` |
+| Side view | `codex-clipboard-ed25bf4f-3284-4ec9-917a-5348471c138c.png` | `flutter_sundo/assets/images/sundo-side-truck.png` | 1536 × 1024 | `21B83C4A45ABBE16D56D82404ED8FCE474D9BE9831181EEB75F832E9C5E73EA3` |
+
+Run from the repository root:
+
+```powershell
+node scripts/package-supplied-trucks.mjs "C:/Users/User/AppData/Local/Temp/codex-clipboard-ce9fd9f1-939d-4810-b75b-972007b14064.png" "C:/Users/User/AppData/Local/Temp/codex-clipboard-ed25bf4f-3284-4ec9-917a-5348471c138c.png"
+```
+
+The shared `SundoTruckGraphic` uses the side-view artwork in the previous icon bounds. Home, schedule cards, approaching alerts, collection updates, onboarding illustrations and staff truck listings inherit the replacement. The map uses the angled artwork, rotates it to the reported heading and preserves its existing marker footprint. Unknown headings remain explicitly unavailable. Operational icons do not replace the supplied SUNDO logo, wordmark or subtitle.
+
+`SundoVehicleGraphic` keeps the truck body and rubber tires fixed and rotates clipped silver rim pixels from that same image. A caller supplies its phase and movement state; the widget has no independent animation timer and cannot create GPS positions. Map rims rotate only during a fresh, active position interpolation with visual motion enabled. Stopped, stale and offline trucks do not spin. Demo movement remains labelled as simulated; connected movement requires actual operational truck updates. Reduced-motion settings disable rim animation.
+
+Native asset, narrow-layout and wheel-only pixel tests passed for these graphics. Generate the review sheet with `flutter test --dart-define=GENERATE_PREVIEWS=true --update-goldens test/supplied_truck_graphics_test.dart` from `flutter_sundo`; its output is `test/goldens/supplied_truck_rims.png`. The map preview also awaits both supplied PNG decodes before capture.
 
 ## Map presentation in 1.2.1
 
@@ -90,6 +123,6 @@ Map previews use a synthetic canvas basemap only in test fixtures, with a visibl
 
 ## Installer website
 
-The React/Vercel site is an APK-only installer with the supplied logo, matching city artwork, clay green download controls, installation steps and FAQ. Browser accounts, maps, report tools and simulator pages have been removed. `/download-apk` opens the latest GitHub Release `SUNDO.apk` asset.
+The React/Vercel site is an APK-only installer with the supplied logo, matching city artwork, clay green download controls, installation steps and FAQ. Browser accounts, maps, report tools and simulator pages have been removed. `/download-apk?v=1.4.0` is pinned to the verified 1.4.0 GitHub Release APK. Download redirects use no-store headers.
 
 Web validation uses TypeScript/lint and a production build. Browser inspection was declined by the permission system, so no visual browser QA is claimed. Publication status must be checked separately after releasing/deploying the current source.

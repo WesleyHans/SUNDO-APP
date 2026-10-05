@@ -1,8 +1,11 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/time_theme.dart';
 
 const sundoBrandLogoAsset = 'assets/images/sundo-brand-logo.png';
+const sundoSideTruckAsset = 'assets/images/sundo-side-truck.png';
+const sundoMapTruckAsset = 'assets/images/sundo-map-truck.png';
 
 /// The supplied SUNDO brand artwork, preserved without redrawing.
 class SundoBrandMark extends StatelessWidget {
@@ -19,7 +22,7 @@ class SundoBrandMark extends StatelessWidget {
       );
 }
 
-/// Sundo Garbage Truck Vector Graphic
+/// The supplied side-view collection truck, keeping existing icon dimensions.
 class SundoTruckGraphic extends StatelessWidget {
   final double width;
   final double height;
@@ -31,149 +34,156 @@ class SundoTruckGraphic extends StatelessWidget {
   });
 
   @override
+  Widget build(BuildContext context) =>
+      SundoVehicleGraphic(width: width, height: height);
+}
+
+/// User-supplied vehicle artwork with optional, externally driven rim rotation.
+///
+/// The caller supplies motion from an actual position change (or an explicitly
+/// labelled demo). This widget never invents movement or starts its own ticker.
+class SundoVehicleGraphic extends StatelessWidget {
+  final bool mapView;
+  final double width;
+  final double height;
+  final bool moving;
+
+  /// One turn is 1.0; this can accumulate between GPS updates without jumping.
+  final double wheelPhase;
+
+  const SundoVehicleGraphic({
+    super.key,
+    this.mapView = false,
+    this.width = 120,
+    this.height = 100,
+    this.moving = false,
+    this.wheelPhase = 0,
+  });
+
+  @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(width, height),
-      painter: _SundoTruckPainter(),
+    final asset = mapView ? sundoMapTruckAsset : sundoSideTruckAsset;
+    final sourceSize =
+        mapView ? const Size(1254, 1254) : const Size(1536, 1024);
+    final phase = wheelPhase.isFinite ? wheelPhase % 1 : 0.0;
+    final spin = moving && !MediaQuery.disableAnimationsOf(context);
+    // These are the original image's silver rims, not replacement wheels.
+    final rims = mapView
+        ? const [
+            Rect.fromLTWH(198, 635, 78, 114),
+            Rect.fromLTWH(595, 955, 78, 114)
+          ]
+        : const [
+            Rect.fromLTWH(303, 725, 135, 138),
+            Rect.fromLTWH(1167, 725, 135, 138)
+          ];
+
+    return Semantics(
+      label: 'SUNDO garbage collection truck',
+      image: true,
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: LayoutBuilder(builder: (context, constraints) {
+          final destination = Size(constraints.maxWidth, constraints.maxHeight);
+          final fitted = applyBoxFit(BoxFit.contain, sourceSize, destination);
+          final imageRect = Alignment.center
+              .inscribe(fitted.destination, Offset.zero & destination);
+          final scale = imageRect.width / sourceSize.width;
+          return IgnorePointer(
+            child: Stack(
+              children: [
+                Positioned.fromRect(
+                  rect: imageRect,
+                  child: Image.asset(
+                    asset,
+                    key: const ValueKey('sundo-truck-body'),
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.high,
+                    excludeFromSemantics: true,
+                  ),
+                ),
+                if (spin)
+                  for (var index = 0; index < rims.length; index++)
+                    Positioned.fromRect(
+                      rect: Rect.fromLTWH(
+                        imageRect.left + rims[index].left * scale,
+                        imageRect.top + rims[index].top * scale,
+                        rims[index].width * scale,
+                        rims[index].height * scale,
+                      ),
+                      child: _SuppliedTruckRim(
+                        key: ValueKey('sundo-truck-rim-$index'),
+                        asset: asset,
+                        sourceSize: sourceSize,
+                        sourceRect: rims[index],
+                        angle: phase * math.pi * 2,
+                      ),
+                    ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-class _SundoTruckPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double scale = size.width / 160.0;
-    canvas.save();
-    canvas.scale(scale);
+/// Normalizes a perspective rim to a circle before rotating, then projects it
+/// back into its fixed oval. The truck body and rubber tires stay untouched.
+class _SuppliedTruckRim extends StatelessWidget {
+  final String asset;
+  final Size sourceSize;
+  final Rect sourceRect;
+  final double angle;
 
-    // 1. Sprouting Eco Leaves above cab
-    final mainLeafPaint = Paint()
-      ..color = const Color(0xFF34D399)
-      ..style = PaintingStyle.fill;
-    final leafStrokePaint = Paint()
-      ..color = const Color(0xFF059669)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final leaf1 = Path()
-      ..moveTo(52, 48)
-      ..cubicTo(46, 22, 28, 8, 10, 12)
-      ..cubicTo(6, 30, 20, 46, 44, 48)
-      ..cubicTo(46.8, 48.2, 49.5, 48.2, 52, 48)
-      ..close();
-    canvas.drawPath(leaf1, mainLeafPaint);
-
-    final leafStem1 = Path()
-      ..moveTo(52, 48)
-      ..cubicTo(36, 34, 26, 22, 10, 12);
-    canvas.drawPath(leafStem1, leafStrokePaint);
-
-    final leaf2Paint = Paint()
-      ..color = const Color(0xFF10B981)
-      ..style = PaintingStyle.fill;
-    final leaf2 = Path()
-      ..moveTo(50, 42)
-      ..cubicTo(56, 24, 72, 15, 88, 20)
-      ..cubicTo(90, 38, 78, 52, 56, 46)
-      ..cubicTo(53.8, 45.4, 51.8, 43.8, 50, 42)
-      ..close();
-    canvas.drawPath(leaf2, leaf2Paint);
-
-    final leafStem2 = Path()
-      ..moveTo(50, 42)
-      ..cubicTo(64, 33, 76, 26, 88, 20);
-    canvas.drawPath(leafStem2, leafStrokePaint);
-
-    // 2. Truck Body (Back Container)
-    final outerContainerPaint = Paint()..color = const Color(0xFF10B981);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(58, 44, 86, 54), const Radius.circular(10)),
-      outerContainerPaint,
-    );
-
-    final innerContainerPaint = Paint()..color = const Color(0xFF059669);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(62, 48, 78, 46), const Radius.circular(7)),
-      innerContainerPaint,
-    );
-
-    // 3. Truck Cab (Front)
-    final cabPaint = Paint()..color = const Color(0xFF10B981);
-    final cabPath = Path()
-      ..moveTo(26, 62)
-      ..cubicTo(26, 55.4, 31.4, 50, 38, 50)
-      ..lineTo(58, 50)
-      ..lineTo(58, 98)
-      ..lineTo(26, 98)
-      ..close();
-    canvas.drawPath(cabPath, cabPaint);
-
-    // Cab Windshield
-    final windshieldPaint = Paint()..color = const Color(0xFFE0F2FE);
-    final windshieldPath = Path()
-      ..moveTo(32, 56)
-      ..lineTo(52, 56)
-      ..cubicTo(53.6, 56, 55, 57.3, 55, 59)
-      ..lineTo(55, 76)
-      ..lineTo(30, 76)
-      ..cubicTo(30, 73, 30.5, 63, 32, 56)
-      ..close();
-    canvas.drawPath(windshieldPath, windshieldPaint);
-
-    // Headlight
-    final headlightPaint = Paint()..color = const Color(0xFFFDE047);
-    canvas.drawCircle(const Offset(26, 84), 3.5, headlightPaint);
-
-    // Front Bumper
-    final bumperPaint = Paint()..color = const Color(0xFF334155);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(22, 88, 8, 8), const Radius.circular(2)),
-      bumperPaint,
-    );
-
-    final recycling = TextPainter(
-        textDirection: TextDirection.ltr,
-        text: TextSpan(
-            text: String.fromCharCode(Icons.recycling.codePoint),
-            style: TextStyle(
-                fontFamily: Icons.recycling.fontFamily,
-                fontSize: 28,
-                color: const Color(0xFFECFDF5))))
-      ..layout();
-    recycling.paint(
-        canvas, Offset(101 - recycling.width / 2, 71 - recycling.height / 2));
-
-    // Chassis Under-rail
-    final chassisPaint = Paint()..color = const Color(0xFF1E293B);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(30, 96, 112, 7), const Radius.circular(3)),
-      chassisPaint,
-    );
-
-    // Wheels helper
-    void drawWheel(double cx, double cy) {
-      canvas.drawCircle(
-          Offset(cx, cy), 14, Paint()..color = const Color(0xFF1E293B));
-      canvas.drawCircle(
-          Offset(cx, cy), 8, Paint()..color = const Color(0xFF64748B));
-      canvas.drawCircle(
-          Offset(cx, cy), 3.5, Paint()..color = const Color(0xFFF8FAFC));
-    }
-
-    drawWheel(44, 103);
-    drawWheel(104, 103);
-    drawWheel(132, 103);
-
-    canvas.restore();
-  }
+  const _SuppliedTruckRim({
+    super.key,
+    required this.asset,
+    required this.sourceSize,
+    required this.sourceRect,
+    required this.angle,
+  });
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) => ClipOval(
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox.square(
+            dimension: 100,
+            child: Transform.rotate(
+              angle: angle,
+              child: FittedBox(
+                fit: BoxFit.fill,
+                child: SizedBox(
+                  width: sourceRect.width,
+                  height: sourceRect.height,
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.topLeft,
+                      minWidth: sourceSize.width,
+                      maxWidth: sourceSize.width,
+                      minHeight: sourceSize.height,
+                      maxHeight: sourceSize.height,
+                      child: Transform.translate(
+                        offset: -sourceRect.topLeft,
+                        child: Image.asset(
+                          asset,
+                          width: sourceSize.width,
+                          height: sourceSize.height,
+                          fit: BoxFit.fill,
+                          filterQuality: FilterQuality.high,
+                          excludeFromSemantics: true,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 /// Sipalay City Skyline & Karst Hills Graphic

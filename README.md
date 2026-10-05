@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Current APK: **1.3.0+6**, with time/weather scenery and fixed splash branding.
+The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Current APK: **1.4.0+7**, with optional local weather before login, rainy-night scenery, a Home weather banner and the supplied moving truck artwork. [Download the APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.4.0/SUNDO.apk).
 
 ## Run the mobile app
 
@@ -36,7 +36,7 @@ The default **3D** view adds perspective to the actual street map, with raised c
 
 Cached base maps do not make GPS or truck updates current. Live mode still requires the configured city backend and a fresh truck fix. Route chevrons decorate the supplied route geometry and never substitute for a reported truck position. No map tiles are bulk downloaded.
 
-## Time and weather scenery — working source
+## Time and local weather scenery — 1.4.0 release
 
 The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corner leaf frames and bottom **Track. Prepare. Collect.** card fixed. Branding colors and positions remain constant when the environment changes. Five supplied illustrations use the same truck model, orientation, road, city layout and foreground plants; they are bundled as lossless WebP assets rather than generating a new truck for each condition.
 
@@ -46,15 +46,22 @@ The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corne
 | 11:00–14:59 | Noon |
 | 15:00–17:59 | Afternoon / sunset |
 | 18:00–04:59 | Evening / night |
-| Fresh rainy conditions at any time | Rainy override |
+| Fresh rain, drizzle or thunderstorms during daytime | Rainy atmosphere matched to the time period |
+| Fresh rain, drizzle or thunderstorms at night | Dark rainy night atmosphere |
 
 Scene changes fade over 900 ms; system reduced-motion settings select the new scene immediately. Other resident screens use a continuous, softly masked backdrop rather than separate illustration bands. Home's greeting no longer receives a second status-bar inset in the demo shell. Detailed transparent natural leaves replace the painted leaves within their existing frames.
 
-Rain selection uses [Open-Meteo current model conditions](https://open-meteo.com/en/docs) for fixed Sipalay coordinates **9.7525, 122.4038**. It requests current precipitation, rain, showers and weather code on foreground entry and every 15 minutes while foregrounded. A failed, malformed or more-than-30-minute-old result falls back to the time scene. Weather requests do not use or transmit resident GPS coordinates. This is an atmospheric illustration, not a local rain sensor or weather warning.
+On first launch, before account creation or login, an explanation offers **Enable local weather** or **Use time only**. Enabling weather requests foreground device location permission and offers phone Location settings when the switch is off. Valid, recent coordinates are rounded to approximately 0.01 degrees before being sent to [Open-Meteo current model conditions](https://open-meteo.com/en/docs). Coordinates are not saved. A genuinely saved Sipalay address can provide explicitly labeled city-level weather if device location is unavailable; a new guest without an address uses time only. The preference remains available through Profile → Location Permission.
 
-Weather data by [Open-Meteo](https://open-meteo.com/), under [CC BY 4.0](https://open-meteo.com/en/licence); SUNDO interprets the data into a rainy/clear artwork choice. The keyless endpoint follows Open-Meteo's [noncommercial API terms](https://open-meteo.com/en/terms). Commercial distribution or higher request volume requires appropriate API service configuration.
+Weather refreshes on foreground entry and every 15 minutes while foregrounded. Failed, malformed, unsupported or more-than-30-minute-old conditions fall back to time; no clear-weather claim is invented. Home displays a compact banner with the area, model source, update age and an optional rain collection caution. Clear, cloudy, rain, drizzle and thunderstorm conditions combine with the local device time. Rainy night uses the same supplied rainy scene with a darker atmosphere; branding stays outside scenery filters. Shared backgrounds remain faint for readable forms and cards.
 
-The 1.3.0 cloud build passed Flutter analysis, all **132 tests**, APK compilation and nine additional splash preview tests. Five native scene previews were reviewed. The APK signature and 1.3.0+6 package metadata were verified after signing locally with the existing app key. Local Windows compilation remains blocked by Application Control; GitHub's Linux runner produced this build. See [mobile status](MOBILE_STATUS.md) and [artwork provenance](DESIGN_NOTES.md).
+The supplied angled truck replaces the old map graphic, and the supplied side view replaces collection truck icons in cards, schedules, alerts and staff listings. Original transparent PNGs are bundled without pixel changes. The map preserves position updates, heading and camera rotation. Only the original silver rims rotate while a fresh position is interpolating; inactive tracking, stale positions and reduced motion stop the visual effect. Actual fleet GPS still requires the city backend; the demo route remains labeled simulated.
+
+Weather data by [Open-Meteo](https://open-meteo.com/), under [CC BY 4.0](https://open-meteo.com/en/licence); SUNDO interprets current model conditions into atmospheric scenery. The keyless endpoint follows Open-Meteo's [noncommercial API terms](https://open-meteo.com/en/terms). Commercial distribution or higher request volume requires appropriate API service configuration.
+
+The prior 1.3.0 cloud build passed Flutter analysis, all **132 tests**, APK compilation and nine additional splash preview tests. Its signature and 1.3.0+6 package metadata were verified after signing locally with the existing app key. Windows Application Control blocked local compilation at that time; GitHub's Linux runner produced that build. See [mobile status](MOBILE_STATUS.md) and [artwork provenance](DESIGN_NOTES.md).
+
+The 1.4.0 release passes analysis and **all 190 tests locally** through the standard Windows Flutter SDK. Another **49 native preview tests passed**, and the supplied trucks, readable Home weather, map and rainy-night splash were visually reviewed. The APK compiled locally, its signature matches 1.3.0, and GitHub's uploaded SHA-256 matches the verified local file. Physical-device validation remains pending.
 
 ## Activate the shared backend
 
@@ -81,7 +88,7 @@ npm run build
 npm run dev
 ```
 
-Vercel builds `dist`. `/download-apk` redirects to the latest GitHub Release asset named `SUNDO.apk`, so binaries are kept outside Git and the web bundle. The previous PWA worker is retired to remove the browser simulation. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). A successful local build does not itself confirm a new production deployment.
+Vercel builds `dist`. `/download-apk?v=1.4.0` is pinned to the verified 1.4.0 GitHub Release asset named `SUNDO.apk`, so binaries are kept outside Git and the web bundle. Download redirects use no-store headers. The previous PWA worker is retired to remove the browser simulation. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). A successful local build does not itself confirm a new production deployment.
 
 The [Android workflow](.github/workflows/build-apk.yml) runs analysis/tests and retains APK/preview artifacts on mobile changes to `main`. Its public Supabase values come from Actions variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Builds now run under WesleyHans after the repository transfer. Before release publication, sign the artifact with the existing local app key and verify its signature, version and checksum; runner-signed builds are never automatically published.
 

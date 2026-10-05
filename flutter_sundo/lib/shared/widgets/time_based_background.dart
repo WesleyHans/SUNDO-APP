@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/time_theme.dart';
+import '../../repositories/weather_repository.dart';
 
 /// All five illustrations use the same camera, truck and city composition.
 String sundoEnvironmentArtwork(SundoEnvironment environment) =>
-    'assets/images/environment-${environment.name}.webp';
+    // The wet-night variant reuses the matching rainy scene. Its lighting is
+    // applied to scenery alone, preserving the original truck and city pixels.
+    'assets/images/environment-${environment == SundoEnvironment.rainyNight ? 'rainy' : environment.name}.webp';
 
 /// Scenery fills the available surface; branding and controls are separate.
 class SundoTimeBasedBackground extends StatefulWidget {
@@ -25,10 +28,10 @@ class SundoTimeBasedBackground extends StatefulWidget {
     stops: [0, .28, .58, .86, 1],
     colors: [
       Colors.transparent,
-      Color(0x0FFFFFFF),
+      Color(0x08FFFFFF),
+      Color(0x1FFFFFFF),
       Color(0x38FFFFFF),
-      Color(0x66FFFFFF),
-      Color(0x58FFFFFF),
+      Color(0x2CFFFFFF),
     ],
   );
 
@@ -166,12 +169,138 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
     ).createShader(bounds);
   }
 
+  /// Lighting filters touch only the decorative illustration. They never
+  /// recolor SUNDO branding, cards, text, controls, or functional map tiles.
+  ColorFilter? _sceneLighting(SundoTimeMood mood) {
+    if (mood.environment == SundoEnvironment.rainyNight) {
+      return const ColorFilter.matrix([
+        .45,
+        0,
+        0,
+        0,
+        0,
+        0,
+        .51,
+        0,
+        0,
+        0,
+        0,
+        0,
+        .64,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    if (mood.weatherCondition == WeatherCondition.thunderstorm) {
+      return const ColorFilter.matrix([
+        .72,
+        0,
+        0,
+        0,
+        0,
+        0,
+        .77,
+        0,
+        0,
+        0,
+        0,
+        0,
+        .86,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    if (mood.raining && mood.period == SundoDayPeriod.afternoon) {
+      return const ColorFilter.matrix([
+        .94,
+        0,
+        0,
+        0,
+        5,
+        0,
+        .87,
+        0,
+        0,
+        2,
+        0,
+        0,
+        .80,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    if (mood.raining && mood.period == SundoDayPeriod.morning) {
+      return const ColorFilter.matrix([
+        .91,
+        0,
+        0,
+        0,
+        3,
+        0,
+        .94,
+        0,
+        0,
+        3,
+        0,
+        0,
+        .98,
+        0,
+        2,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    if (mood.weatherCondition == WeatherCondition.cloudy) {
+      return const ColorFilter.matrix([
+        .63024,
+        .26319,
+        .02657,
+        0,
+        0,
+        .07824,
+        .81519,
+        .02657,
+        0,
+        0,
+        .07824,
+        .26319,
+        .62657,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final mood = _displayedMood!;
     final environment = _displayedEnvironment!;
     final reducedMotion = MediaQuery.disableAnimationsOf(context);
-    final scene = Image.asset(
+    final image = Image.asset(
       sundoEnvironmentArtwork(environment),
       key: ValueKey(environment),
       fit: widget.fit,
@@ -180,6 +309,10 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       filterQuality: FilterQuality.medium,
       errorBuilder: (context, error, stack) => const SizedBox.expand(),
     );
+    final lighting = _sceneLighting(mood);
+    final scene = lighting == null
+        ? image
+        : ColorFiltered(colorFilter: lighting, child: image);
     return Stack(fit: StackFit.expand, children: [
       AnimatedContainer(
           duration:
@@ -191,7 +324,11 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
             end: Alignment.bottomCenter,
             colors: widget.fullScene
                 ? [mood.background, mood.background, mood.background]
-                : [mood.background, mood.background, mood.sky],
+                : [
+                    mood.background,
+                    mood.background,
+                    Color.lerp(mood.background, mood.sky, .18)!,
+                  ],
             stops: const [0, .72, 1],
           ))),
       IgnorePointer(
@@ -204,7 +341,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
             fit: StackFit.expand,
             children: [...previous, if (current != null) current]),
         child: ShaderMask(
-            key: ValueKey(environment),
+            key: ValueKey(mood.sceneryIdentity),
             blendMode: BlendMode.dstIn,
             shaderCallback: widget.fullScene
                 ? _fullSceneMask

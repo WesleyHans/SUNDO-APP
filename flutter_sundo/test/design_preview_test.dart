@@ -16,6 +16,8 @@ import 'package:sundo_sipalay/features/report_concern/report_concern_screen.dart
 import 'package:sundo_sipalay/features/profile/profile_screen.dart';
 import 'package:sundo_sipalay/features/live_map/truck_alert_modal.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
+import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
 
 void main() {
@@ -74,6 +76,9 @@ void main() {
           await GoogleFonts.pendingFonts();
           final context = tester.element(find.byKey(const ValueKey('preview')));
           await precacheImage(const AssetImage(clayHeroAsset), context);
+          await precacheImage(
+              AssetImage(sundoEnvironmentArtwork(mood.environment)), context);
+          await precacheImage(const AssetImage(sundoSideTruckAsset), context);
           await precacheImage(
               const AssetImage('assets/images/sundo-brand-logo.png'), context);
         });

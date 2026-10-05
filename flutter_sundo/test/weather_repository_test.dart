@@ -8,6 +8,36 @@ import 'package:http/testing.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 
+const testWeatherLocation = WeatherLocation(
+    latitude: 14.599512,
+    longitude: 120.984222,
+    label: 'your location',
+    isDeviceLocation: true);
+
+class TestWeatherLocationService extends EnvironmentLocationService {
+  WeatherLocation? location = testWeatherLocation.approximate;
+  EnvironmentLocationStatus status = EnvironmentLocationStatus.device;
+  EnvironmentLocationStatus access = EnvironmentLocationStatus.device;
+  int fixes = 0;
+  int permissionRequests = 0;
+  Future<EnvironmentLocationResult> Function()? onResolve;
+
+  @override
+  Future<EnvironmentLocationResult> resolve(
+      {required bool requestPermission, bool Function()? canContinue}) async {
+    fixes++;
+    if (requestPermission) permissionRequests++;
+    final result = await (onResolve?.call() ??
+        Future.value(EnvironmentLocationResult(status, location: location)));
+    return canContinue?.call() == false
+        ? const EnvironmentLocationResult(EnvironmentLocationStatus.unavailable)
+        : result;
+  }
+
+  @override
+  Future<EnvironmentLocationStatus> deviceAccessStatus() async => access;
+}
+
 Map<String, dynamic> _payload(DateTime now,
         {int code = 0,
         double precipitation = 0,
@@ -39,13 +69,13 @@ http.Response _response(DateTime now,
 void main() {
   final now = DateTime.utc(2026, 10, 5, 6);
 
-  test('current request uses fixed Sipalay coordinates, no key or resident GPS',
+  test('current request uses rounded selected coordinates without an API key',
       () async {
     final client = MockClient((request) async {
       expect(request.url.scheme, 'https');
       expect(request.url.host, 'api.open-meteo.com');
-      expect(request.url.queryParameters['latitude'], '9.7525');
-      expect(request.url.queryParameters['longitude'], '122.4038');
+      expect(request.url.queryParameters['latitude'], '14.60');
+      expect(request.url.queryParameters['longitude'], '120.98');
       expect(request.url.queryParameters['timeformat'], 'unixtime');
       expect(request.url.queryParameters['current'],
           'precipitation,rain,showers,weather_code');
@@ -55,9 +85,10 @@ void main() {
     addTearDown(client.close);
     final weather =
         await SipalayWeatherRepository(client: client, clock: () => now)
-            .fetchCurrent();
+            .fetchCurrent(location: testWeatherLocation);
     expect(weather?.validAt, now);
     expect(weather?.isRaining, isTrue);
+    expect(weather?.location, testWeatherLocation.approximate);
   });
 
   test('WMO rain and drizzle codes detect rain with a rounded zero total', () {
@@ -68,9 +99,29 @@ void main() {
     }
   });
 
-  test('fog, clouds, and dry thunderstorm codes do not select rainy artwork',
-      () {
-    for (final code in [0, 1, 2, 3, 45, 48, 95, 96, 97, 99]) {
+  test('missing or invalid location never sends a weather request', () async {
+    var requests = 0;
+    final client = MockClient((_) async {
+      requests++;
+      return _response(now);
+    });
+    addTearDown(client.close);
+    final repository =
+        SipalayWeatherRepository(client: client, clock: () => now);
+    expect(await repository.fetchCurrent(), isNull);
+    expect(
+        await repository.fetchCurrent(
+            location: const WeatherLocation(
+                latitude: 91,
+                longitude: 180,
+                label: 'invalid',
+                isDeviceLocation: true)),
+        isNull);
+    expect(requests, 0);
+  });
+
+  test('fog, clouds, and unsupported codes do not select rainy artwork', () {
+    for (final code in [0, 1, 2, 3, 45, 48, 71, 77, 97]) {
       expect(SipalayWeather.fromJson(_payload(now, code: code), now).isRaining,
           isFalse,
           reason: 'WMO code $code');
@@ -121,7 +172,7 @@ void main() {
       addTearDown(client.close);
       expect(
           await SipalayWeatherRepository(client: client, clock: () => now)
-              .fetchCurrent(),
+              .fetchCurrent(location: testWeatherLocation),
           isNull);
     }
   });
@@ -150,14 +201,14 @@ void main() {
     addTearDown(hanging.close);
     expect(
         await SipalayWeatherRepository(client: throwing, clock: () => now)
-            .fetchCurrent(),
+            .fetchCurrent(location: testWeatherLocation),
         isNull);
     expect(
         await SipalayWeatherRepository(
                 client: hanging,
                 clock: () => now,
                 requestTimeout: const Duration(milliseconds: 5))
-            .fetchCurrent(),
+            .fetchCurrent(location: testWeatherLocation),
         isNull);
   });
 
@@ -172,6 +223,10 @@ void main() {
     });
     addTearDown(client.close);
     final container = ProviderContainer(overrides: [
+      sundoWeatherClockProvider.overrideWithValue(() => clock),
+      environmentLocationServiceProvider
+          .overrideWithValue(TestWeatherLocationService()),
+      sundoSavedWeatherAreaProvider.overrideWithValue(() async => null),
       sundoWeatherRepositoryProvider.overrideWithValue(
           SipalayWeatherRepository(client: client, clock: () => clock)),
     ]);
@@ -180,6 +235,7 @@ void main() {
     await tester.pump(const Duration(minutes: 30));
     expect(requests, 0);
     controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
     await tester.pump();
     expect(requests, 1);
     expect(container.read(sundoWeatherProvider)?.isRaining, isTrue);
@@ -209,6 +265,10 @@ void main() {
         fail ? http.Response('unavailable', 503) : _response(now, code: 61));
     addTearDown(client.close);
     final container = ProviderContainer(overrides: [
+      sundoWeatherClockProvider.overrideWithValue(() => now),
+      environmentLocationServiceProvider
+          .overrideWithValue(TestWeatherLocationService()),
+      sundoSavedWeatherAreaProvider.overrideWithValue(() async => null),
       sundoClockProvider.overrideWithValue(() => now),
       sundoWeatherRepositoryProvider.overrideWithValue(
           SipalayWeatherRepository(client: client, clock: () => now)),
@@ -218,6 +278,7 @@ void main() {
         SundoEnvironment.morning);
     final controller = container.read(sundoWeatherProvider.notifier);
     controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
     await tester.pump();
     expect(container.read(sundoDayNightThemeProvider).environment,
         SundoEnvironment.rainy);
@@ -239,16 +300,21 @@ void main() {
     });
     addTearDown(client.close);
     final container = ProviderContainer(overrides: [
+      sundoWeatherClockProvider.overrideWithValue(() => now),
+      environmentLocationServiceProvider
+          .overrideWithValue(TestWeatherLocationService()),
+      sundoSavedWeatherAreaProvider.overrideWithValue(() async => null),
       sundoWeatherRepositoryProvider.overrideWithValue(
           SipalayWeatherRepository(client: client, clock: () => now)),
     ]);
     addTearDown(container.dispose);
     final controller = container.read(sundoWeatherProvider.notifier);
     controller.setForeground(true);
+    final pending = controller.initializeLocation(requestPermission: false);
     await tester.pump();
     controller.setForeground(false);
     response.complete(_response(now, code: 63));
-    await tester.pump();
+    await pending;
     expect(container.read(sundoWeatherProvider), isNull);
     controller.setForeground(true);
     await tester.pump();
@@ -262,10 +328,16 @@ void main() {
     final client = MockClient((_) => response.future);
     addTearDown(client.close);
     final container = ProviderContainer(overrides: [
+      sundoWeatherClockProvider.overrideWithValue(() => now),
+      environmentLocationServiceProvider
+          .overrideWithValue(TestWeatherLocationService()),
+      sundoSavedWeatherAreaProvider.overrideWithValue(() async => null),
       sundoWeatherRepositoryProvider.overrideWithValue(
           SipalayWeatherRepository(client: client, clock: () => now)),
     ]);
-    container.read(sundoWeatherProvider.notifier).setForeground(true);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    unawaited(controller.initializeLocation(requestPermission: false));
     await tester.pump();
     container.dispose();
     response.complete(_response(now, code: 63));

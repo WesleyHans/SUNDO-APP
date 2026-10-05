@@ -14,6 +14,7 @@ import '../../core/utils/resident_area.dart';
 import '../../shared/widgets/sundo_graphics.dart';
 import '../live_map/widgets/map_tracking_widgets.dart';
 import '../../shared/widgets/resident_components.dart';
+import '../../shared/widgets/weather_status_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int) onNavigate;
@@ -168,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SundoWeatherStatusBanner(),
                             if (_error != null)
                               Padding(
                                   padding: const EdgeInsets.only(bottom: 12),

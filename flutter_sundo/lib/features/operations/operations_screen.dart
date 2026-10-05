@@ -7,6 +7,7 @@ import '../../services/backend_service.dart';
 import '../report_concern/report_concern_screen.dart';
 import '../../core/theme/clay_theme.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
+import '../../shared/widgets/sundo_graphics.dart';
 
 class OperationsScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -443,11 +444,11 @@ class _OperationsScreenState extends State<OperationsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _stat('$pending', 'Open reports',
-                              Icons.assignment_outlined),
+                              const Icon(Icons.assignment_outlined)),
                           _stat('$completed', 'Collected',
-                              Icons.check_circle_outline),
+                              const Icon(Icons.check_circle_outline)),
                           _stat('$activeTrucks', 'Live trucks',
-                              Icons.local_shipping_outlined),
+                              const SundoTruckGraphic(width: 24, height: 24)),
                         ]),
                   ])),
           const SizedBox(height: 18),
@@ -482,8 +483,9 @@ class _OperationsScreenState extends State<OperationsScreen> {
         ]);
   }
 
-  Widget _stat(String number, String label, IconData icon) => Column(children: [
-        Icon(icon, color: const Color(0xFF07853D)),
+  Widget _stat(String number, String label, Widget icon) => Column(children: [
+        IconTheme(
+            data: const IconThemeData(color: Color(0xFF07853D)), child: icon),
         const SizedBox(height: 6),
         Text(number,
             style: const TextStyle(
@@ -724,10 +726,10 @@ class _OperationsScreenState extends State<OperationsScreen> {
                           width: 90,
                           height: 55,
                           child: Column(children: [
-                            Icon(Icons.local_shipping,
-                                color:
-                                    _fresh(truck) ? Colors.green : Colors.grey,
-                                size: 30),
+                            Opacity(
+                                opacity: _fresh(truck) ? 1 : .55,
+                                child: const SundoVehicleGraphic(
+                                    mapView: true, width: 30, height: 30)),
                             Text(truck['id'] as String,
                                 style: const TextStyle(
                                     backgroundColor: Colors.white)),
@@ -745,9 +747,10 @@ class _OperationsScreenState extends State<OperationsScreen> {
               : ListView(
                   children: _trucks
                       .map((truck) => ListTile(
-                            leading: Icon(Icons.local_shipping,
-                                color:
-                                    _fresh(truck) ? Colors.green : Colors.grey),
+                            leading: Opacity(
+                                opacity: _fresh(truck) ? 1 : .55,
+                                child: const SundoTruckGraphic(
+                                    width: 24, height: 24)),
                             title:
                                 Text('${truck['id']} · ${truck['route_name']}'),
                             subtitle: Text(_fresh(truck)

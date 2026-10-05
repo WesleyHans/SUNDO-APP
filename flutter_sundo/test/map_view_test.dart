@@ -57,10 +57,12 @@ class _ControlledTruckRepository implements MapTruckRepository {
 
   late final StreamController<List<MapTruckSnapshot>> _updates;
 
-  void publish(LatLng position) => _updates.add([
+  void publish(LatLng position, {String id = 'Truck 02', double? heading}) =>
+      _updates.add([
         MapTruckSnapshot(
-          id: 'Truck 02',
+          id: id,
           position: position,
+          heading: heading,
           route: const MapOperatingRoute(
             id: 'A',
             name: 'Route A',
@@ -371,6 +373,57 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets(
+      'truck rolls only between source fixes and preserves unknown heading',
+      (tester) async {
+    final repository = _ControlledTruckRepository();
+    await mountMap(tester, repository: repository);
+    try {
+      SundoMapTruckMarker truck() =>
+          tester.widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker));
+      Marker marker() => tester
+          .widget<MarkerLayer>(find
+              .ancestor(
+                  of: find.byType(SundoMapTruckMarker),
+                  matching: find.byType(MarkerLayer))
+              .first)
+          .markers
+          .last;
+      expect(truck().headingDegrees, isNull,
+          reason: 'An active first fix does not establish compass direction.');
+      expect(truck().moving, isFalse);
+
+      const previous = LatLng(9.7525, 122.4038);
+      const next = LatLng(9.7531, 122.4041);
+      repository.publish(next);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(truck().moving, isTrue);
+      expect(
+          truck().headingDegrees, closeTo(mapBearing(previous, next), .0001));
+      expect(marker().point.latitude, greaterThan(previous.latitude));
+      expect(marker().point.latitude, lessThan(next.latitude));
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(marker().point, next);
+      expect(truck().moving, isFalse);
+
+      const replacement = LatLng(9.7490, 122.4050);
+      repository.publish(replacement, id: 'Truck 03');
+      await tester.pump();
+      await tester.pump();
+      expect(marker().point, replacement,
+          reason:
+              'Replacing trucks must not animate across unrelated GPS fixes.');
+      expect(truck().headingDegrees, isNull);
+      expect(truck().moving, isFalse);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(repository.dispose);
+      await tester.pump();
+    }
+  });
+
   testWidgets('pausing map effects keeps published GPS tracking live',
       (tester) async {
     final repository = _ControlledTruckRepository();
@@ -409,6 +462,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(milliseconds: 100),
           EnginePhase.sendSemanticsUpdate, const Duration(seconds: 3));
       final pausedPulse = truck().pulse;
+      expect(truck().moving, isFalse);
       final pausedArrow = arrows().markers.first.point;
       expect(tester.binding.hasScheduledFrame, isFalse);
       await tester.pump(const Duration(seconds: 1));
@@ -426,6 +480,7 @@ void main() {
               matching: find.byType(MarkerLayer))
           .first);
       expect(vehicleLayer.markers.last.point, updated);
+      expect(truck().moving, isFalse);
       expect(mapController(tester).camera.center.latitude,
           closeTo(updated.latitude, .000001));
       expect(mapController(tester).camera.center.longitude,
@@ -441,37 +496,76 @@ void main() {
     }
   });
 
-  testWidgets('map effects pause in the background and resume on return',
+  testWidgets(
+      'map wheels pause for OS dialogs and background without losing fixes',
       (tester) async {
-    await mountMap(tester);
+    final repository = _ControlledTruckRepository();
+    await mountMap(tester, repository: repository);
     try {
-      await tester.pump(const Duration(milliseconds: 600));
-      expect(tester.binding.hasScheduledFrame, isTrue);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      await tester.pump();
-      final paused = tester
-          .widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker))
-          .pulse;
-      await tester.pump(const Duration(seconds: 1));
-      expect(tester.binding.hasScheduledFrame, isFalse);
-      expect(
-          tester
-              .widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker))
-              .pulse,
-          paused);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 600));
-      expect(tester.binding.hasScheduledFrame, isTrue);
-      expect(
-          tester
-              .widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker))
-              .pulse,
-          isNot(closeTo(paused, .0001)));
+      SundoMapTruckMarker truck() =>
+          tester.widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker));
+      Marker marker() => tester
+          .widget<MarkerLayer>(find
+              .ancestor(
+                  of: find.byType(SundoMapTruckMarker),
+                  matching: find.byType(MarkerLayer))
+              .first)
+          .markers
+          .last;
+      var latitude = 9.7525;
+      for (final lifecycle in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.paused
+      ]) {
+        latitude += .0004;
+        repository.publish(LatLng(latitude, 122.4038));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
+        expect(truck().moving, isTrue);
+        expect(tester.binding.hasScheduledFrame, isTrue);
+
+        tester.binding.handleAppLifecycleStateChanged(lifecycle);
+        await tester.pump();
+        final paused = truck().pulse;
+        expect(truck().moving, isFalse);
+        await tester.pump(const Duration(seconds: 1));
+        expect(tester.binding.hasScheduledFrame, isFalse);
+        expect(truck().pulse, paused);
+
+        // Operational updates continue while visual effects are paused. Flutter
+        // intentionally skips painting while fully backgrounded; verify that
+        // pending fixes appear immediately on return rather than forcing frames.
+        latitude += .0004;
+        final currentFix = LatLng(latitude, 122.4038);
+        repository.publish(currentFix);
+        await tester.pump();
+        await tester.pump();
+        if (lifecycle == AppLifecycleState.inactive) {
+          expect(marker().point, currentFix);
+        } else {
+          expect(tester.binding.framesEnabled, isFalse);
+        }
+        expect(truck().moving, isFalse);
+        expect(truck().pulse, paused);
+        expect(tester.binding.hasScheduledFrame, isFalse);
+
+        tester.binding
+            .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(marker().point, currentFix,
+            reason: 'The latest operational fix must survive backgrounding.');
+        expect(tester.binding.hasScheduledFrame, isTrue);
+        expect(truck().pulse, isNot(closeTo(paused, .0001)));
+        expect(truck().moving, isFalse,
+            reason: 'Returning alone must not invent vehicle travel.');
+      }
       expect(tester.takeException(), isNull);
     } finally {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(repository.dispose);
+      await tester.pump();
     }
   });
 

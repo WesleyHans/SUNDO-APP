@@ -10,6 +10,9 @@ import '../../services/push_notification_service.dart';
 import '../../core/theme/clay_theme.dart';
 import '../auth/widgets/auth_form_widgets.dart';
 import '../../shared/widgets/weather_attribution.dart';
+import '../../shared/widgets/weather_location_settings.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../repositories/weather_repository.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -101,6 +104,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       .showSnackBar(SnackBar(content: Text(value)));
 
   Future<void> _permissionTap() async {
+    await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => WeatherLocationSettings(
+            onManagePermission: _manageLocationPermission));
+  }
+
+  Future<void> _manageLocationPermission() async {
     try {
       final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -112,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             builder: (context) => AlertDialog(
                     title: const Text('Location Permission'),
                     content: Text(_locationAllowed
-                        ? 'Location is allowed. SUNDO uses it to show your position on the map. You can change permission in phone settings.'
+                        ? 'Location is allowed. SUNDO uses it for the map and, if enabled, local weather. You can change permission in phone settings.'
                         : 'Enable SUNDO location and phone GPS in settings. Your selected address remains available when permission is denied.'),
                     actions: [
                       TextButton(
@@ -163,6 +174,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           zone: zone);
     }
     await _loadProfile();
+    if (mounted) {
+      await ProviderScope.containerOf(context, listen: false)
+          .read(sundoWeatherProvider.notifier)
+          .refreshSavedArea();
+    }
   }
 
   Future<void> _editProfile() async {
@@ -612,7 +628,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             fontWeight: FontWeight.w700, fontSize: 13)),
                     const SizedBox(height: 8),
                     const Text(
-                        'Weather backgrounds use Open-Meteo\'s model-based current conditions at fixed Sipalay City coordinates. Your GPS location is never sent for weather. SUNDO interprets current rain into rainy artwork; unavailable or stale data uses the time-of-day scene.',
+                        'If you enable local weather, SUNDO sends approximate coordinates to Open-Meteo while the app is open. A reliable saved Sipalay area may be used when GPS is unavailable; that banner is labeled as saved-area weather. Weather is model-based and may differ from conditions on your street. Clear, cloudy, rain, drizzle and thunderstorms combine with local device time. Unavailable or stale data uses time-based scenery. Change this in Location Permission.',
                         style: TextStyle(fontSize: 12, height: 1.6)),
                     const SizedBox(height: 12),
                     const WeatherAttribution(compact: false),
