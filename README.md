@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Release configuration: **1.2.1+5**.
+The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Appearance and greetings change automatically with local time. Published APK: **1.2.1+5**. The environment-update source is prepared as **1.3.0+6**, pending a verified build and publication.
 
 ## Run the mobile app
 
@@ -35,6 +35,26 @@ The default **3D** view adds perspective to the actual street map, with raised c
 - OpenStreetMap tiles are cached as they are viewed, with a bounded device cache and HTTP freshness checks. Previously viewed tiles may remain available during a failed connection when the server permits reuse. This is not a downloadable offline city map; unvisited areas need a connection, and the OS may clear cached tiles.
 
 Cached base maps do not make GPS or truck updates current. Live mode still requires the configured city backend and a fresh truck fix. Route chevrons decorate the supplied route geometry and never substitute for a reported truck position. No map tiles are bulk downloaded.
+
+## Time and weather scenery — working source
+
+The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corner leaf frames and bottom **Track. Prepare. Collect.** card fixed. Branding colors and positions remain constant when the environment changes. Five supplied illustrations use the same truck model, orientation, road, city layout and foreground plants; they are bundled as lossless WebP assets rather than generating a new truck for each condition.
+
+| Device local time | Scene |
+| --- | --- |
+| 05:00–10:59 | Morning |
+| 11:00–14:59 | Noon |
+| 15:00–17:59 | Afternoon / sunset |
+| 18:00–04:59 | Evening / night |
+| Fresh rainy conditions at any time | Rainy override |
+
+Scene changes fade over 900 ms; system reduced-motion settings select the new scene immediately. Other resident screens use a continuous, softly masked backdrop rather than separate illustration bands. Home's greeting no longer receives a second status-bar inset in the demo shell. Detailed transparent natural leaves replace the painted leaves within their existing frames.
+
+Rain selection uses [Open-Meteo current model conditions](https://open-meteo.com/en/docs) for fixed Sipalay coordinates **9.7525, 122.4038**. It requests current precipitation, rain, showers and weather code on foreground entry and every 15 minutes while foregrounded. A failed, malformed or more-than-30-minute-old result falls back to the time scene. Weather requests do not use or transmit resident GPS coordinates. This is an atmospheric illustration, not a local rain sensor or weather warning.
+
+Weather data by [Open-Meteo](https://open-meteo.com/), under [CC BY 4.0](https://open-meteo.com/en/licence); SUNDO interprets the data into a rainy/clear artwork choice. The keyless endpoint follows Open-Meteo's [noncommercial API terms](https://open-meteo.com/en/terms). Commercial distribution or higher request volume requires appropriate API service configuration.
+
+This environment update is **unreleased working source** on top of the 1.2.1 installer. Current Flutter analysis passes, but native tests, rendered previews and a new APK remain pending: Windows Application Control still blocks Flutter's compiler after the normal retry. The previous release's 90 passing tests do not validate these new changes. See [mobile status](MOBILE_STATUS.md) and [artwork provenance](DESIGN_NOTES.md).
 
 ## Activate the shared backend
 

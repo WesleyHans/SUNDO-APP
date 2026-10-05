@@ -11,7 +11,6 @@ import '../../core/storage/app_store.dart';
 import '../../services/backend_service.dart';
 import '../../core/theme/time_theme.dart';
 import '../../core/utils/resident_area.dart';
-import '../../shared/widgets/time_based_background.dart';
 import '../../shared/widgets/sundo_graphics.dart';
 import '../live_map/widgets/map_tracking_widgets.dart';
 import '../../shared/widgets/resident_components.dart';
@@ -116,65 +115,54 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
+            // The demo banner in the shell already reserves the status bar.
+            top: BackendService.live,
+            bottom: false,
             child: RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(padding: EdgeInsets.zero, children: [
-                  SizedBox(
-                      height: 142,
-                      child: SundoTimeBasedBackground(
-                          fullScene: true,
-                          alignment: const Alignment(0, -.15),
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                      colors: mood.isNight
-                                          ? const [
-                                              Color(0xEE142E35),
-                                              Color(0x33233C48)
-                                            ]
-                                          : const [
-                                              Color(0xCCF8FFF4),
-                                              Color(0x11F4FFF2)
-                                            ],
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight)),
-                              padding:
-                                  const EdgeInsets.fromLTRB(20, 22, 18, 22),
-                              child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                        child: SundoDynamicGreeting(
-                                            firstName: firstName.isEmpty
-                                                ? 'Resident'
-                                                : firstName)),
-                                    Semantics(
-                                        label: 'Notifications, $_unread unread',
-                                        button: true,
-                                        child: IconButton(
-                                            onPressed: () =>
-                                                widget.onNavigate(3),
-                                            icon: Badge(
-                                                isLabelVisible: _unread > 0,
-                                                label: Text(_unread.toString()),
-                                                child: Icon(
-                                                    Icons.notifications_rounded,
-                                                    color: mood.textColor)))),
-                                    const SizedBox(width: 5),
-                                    InkWell(
-                                        onTap: () => widget.onNavigate(4),
-                                        borderRadius: BorderRadius.circular(30),
-                                        child: CircleAvatar(
-                                            radius: 22,
-                                            backgroundColor:
-                                                const Color(0xFF0B8F3E),
-                                            foregroundColor: Colors.white,
-                                            child: Text(initials,
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.w700))))
-                                  ])))),
+                  Container(
+                      constraints: const BoxConstraints(minHeight: 138),
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              colors: [
+                            mood.sky.withValues(alpha: .24),
+                            mood.sky.withValues(alpha: 0)
+                          ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter)),
+                      padding: const EdgeInsets.fromLTRB(20, 24, 18, 36),
+                      child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                                child: SundoDynamicGreeting(
+                                    firstName: firstName.isEmpty
+                                        ? 'Resident'
+                                        : firstName)),
+                            Semantics(
+                                label: 'Notifications, $_unread unread',
+                                button: true,
+                                child: IconButton(
+                                    onPressed: () => widget.onNavigate(3),
+                                    icon: Badge(
+                                        isLabelVisible: _unread > 0,
+                                        label: Text(_unread.toString()),
+                                        child: Icon(Icons.notifications_rounded,
+                                            color: mood.textColor)))),
+                            const SizedBox(width: 5),
+                            InkWell(
+                                onTap: () => widget.onNavigate(4),
+                                borderRadius: BorderRadius.circular(30),
+                                child: CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: const Color(0xFF0B8F3E),
+                                    foregroundColor: Colors.white,
+                                    child: Text(initials,
+                                        style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700))))
+                          ])),
                   Padding(
                       padding: const EdgeInsets.fromLTRB(18, 0, 18, 22),
                       child: Column(
@@ -228,33 +216,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                       onTap: () => _wasteGuide(context)))
                             ]),
                             const SizedBox(height: 22),
-                            SizedBox(
-                                height: 103,
-                                child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: SundoTimeBasedBackground(
-                                        fullScene: true,
-                                        child: Container(
-                                            alignment: Alignment.centerLeft,
-                                            padding: const EdgeInsets.all(17),
-                                            color: mood.isNight
-                                                ? const Color(0x99112E26)
-                                                : const Color(0xAAEAF8EE),
-                                            child: Row(children: [
-                                              Icon(Icons.eco_rounded,
-                                                  size: 40, color: mood.accent),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                  child: Text(
-                                                      'Together for a\nCleaner Sipalay',
-                                                      style: GoogleFonts.outfit(
-                                                          fontSize: 19,
-                                                          height: 1.15,
-                                                          fontWeight:
-                                                              FontWeight.w800,
-                                                          color:
-                                                              mood.textColor)))
-                                            ]))))),
+                            SundoSurface(
+                                radius: 20,
+                                padding: const EdgeInsets.all(17),
+                                child: Row(children: [
+                                  Icon(Icons.eco_rounded,
+                                      size: 40, color: mood.accent),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                      child: Text(
+                                          'Together for a\nCleaner Sipalay',
+                                          style: GoogleFonts.outfit(
+                                              fontSize: 19,
+                                              height: 1.15,
+                                              fontWeight: FontWeight.w800,
+                                              color: mood.textColor)))
+                                ])),
                           ])),
                 ]))));
   }

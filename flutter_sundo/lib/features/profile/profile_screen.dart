@@ -9,6 +9,7 @@ import '../../services/backend_service.dart';
 import '../../services/push_notification_service.dart';
 import '../../core/theme/clay_theme.dart';
 import '../auth/widgets/auth_form_widgets.dart';
+import '../../shared/widgets/weather_attribution.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -593,6 +594,35 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: const Text('Close'))
               ]));
 
+  Future<void> _about() => showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+              title: const Text('About SUNDO'),
+              content: SingleChildScrollView(
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(
+                        'Smart Urban Navigation for Dynamic Waste Operations\n\nA resident app for waste collection tracking, schedules and community notifications in Sipalay.\n\n${BackendService.live ? 'Connected to your configured Supabase city service.' : 'Development demo: trucks, schedules and notifications are sample data. Accounts, preferences and reports stay on this device.'}\n\nSUNDO is a project in development; city endorsement has not been verified.',
+                        style: const TextStyle(fontSize: 13, height: 1.6)),
+                    const SizedBox(height: 18),
+                    const Text('Weather artwork',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'Weather backgrounds use Open-Meteo\'s model-based current conditions at fixed Sipalay City coordinates. Your GPS location is never sent for weather. SUNDO interprets current rain into rainy artwork; unavailable or stale data uses the time-of-day scene.',
+                        style: TextStyle(fontSize: 12, height: 1.6)),
+                    const SizedBox(height: 12),
+                    const WeatherAttribution(compact: false),
+                  ])),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close')),
+              ]));
+
   Future<void> _logout() async {
     if (_loggingOut) return;
     setState(() => _loggingOut = true);
@@ -720,8 +750,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   SundoProfileMenuItem(
                       icon: Icons.info_outline_rounded,
                       title: 'About SUNDO',
-                      onTap: () => _info('About SUNDO',
-                          'Smart Urban Navigation for Dynamic Waste Operations\n\nA resident app for waste collection tracking, schedules and community notifications in Sipalay.\n\n${BackendService.live ? 'Connected to your configured Supabase city service.' : 'Development demo: trucks, schedules and notifications are sample data. Accounts, preferences and reports stay on this device.'}\n\nSUNDO is a project in development; city endorsement has not been verified.')),
+                      onTap: _about),
                 ])),
             const SizedBox(height: 20),
             OutlinedButton.icon(

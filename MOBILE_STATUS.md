@@ -1,11 +1,13 @@
 # SUNDO mobile status
 
-Open `flutter_sundo` as the Flutter project. The resident redesign and map enhancements are prepared for version **1.2.1+5**. Source/build/release publication and production deployment are separate steps; this document does not certify their completion.
+Open `flutter_sundo` as the Flutter project. The current Android release is **1.3.0+6**, with time/weather scenes and unchanged splash branding. Source validation, APK publication and production deployment are separate steps.
 
 ## Resident functionality
 
 - Native Flutter splash, welcome, register, login and five main tabs: Home, Live Map, Schedule, Alerts and Profile. Report Concern opens from Home.
-- Clay cards, green controls, supplied logo and illustrated backgrounds. Local morning (06:00–11:59), afternoon (12:00–17:59) and evening/night (18:00–05:59) themes and greetings refresh every minute and when the app resumes.
+- Clay cards, green controls, supplied logo and illustrated backgrounds. Working source now selects morning (05:00–10:59), noon (11:00–14:59), afternoon/sunset (15:00–17:59) and evening/night (18:00–04:59) scenes; time and greetings refresh every minute and when the app resumes.
+- Five supplied matching scenes are bundled as lossless WebP. The splash logo, wordmark, subtitle, branding colors/positions, decorative leaf frames and bottom slogan card stay static while only the environment fades over 900 ms. Reduced-motion settings switch the scene immediately. Detailed transparent natural leaves replace the painted leaves without changing their frames. Shared backgrounds use continuous alpha feathering rather than a cut-off 220 px image band; Home removes repeated image strips and its doubled demo status-bar inset.
+- Fresh rainy conditions override the time scene. Open-Meteo model data uses fixed Sipalay coordinates 9.7525, 122.4038, with a foreground request and 15-minute polling. Weather does not request or send resident GPS. Failed, malformed or more-than-30-minute-old conditions fall back to local time; weather artwork is not a local sensor reading or safety warning.
 - Local demo registration/login with email or Philippine mobile number, duplicate-account validation, confirmed passwords and remembered sessions. Credentials use Flutter Secure Storage; account data uses scoped local storage. This does not authenticate a city account.
 - Home shows the selected resident area's next published/sample pickup, the shared truck state, unread alerts and working shortcuts.
 - Real OpenStreetMap tiles centered on Sipalay, attribution, zoom/recenter/route-fit controls, north reset, read-only route display, raised clay collection landmarks and a draggable tracking sheet. The default 3D view projects the map into perspective; the 2D control returns to a flat view. Raised symbols do not represent actual building heights or terrain meshes.
@@ -32,6 +34,20 @@ Optional Firebase initialization, device-token registration and addressed **data
 
 The test suite covers demo authentication, scoped resident storage, schedule/report behavior, map controls/interpolation, shortest-arc headings, route-flow spacing, tile-cache behavior, push recipient checks, time boundaries and day/night layouts at regular and small phone sizes. Preview rendering uses local fonts/assets and test-controlled data. It does not verify live map tile delivery, physical GPS/camera, remote RLS or notification delivery.
 
+## Environment update — 1.3.0 validation
+
+After the repository moved to WesleyHans, [cloud build 37323368457](https://github.com/WesleyHans/SUNDO-APP/actions/runs/37323368457) passed Flutter analysis and **all 132 tests**, including exact time boundaries, rain/freshness fallback, foreground polling, fixed splash branding/card geometry, scenery fades, backdrop seams and narrow Home layout. The first cloud run exposed weather cleanup during widget disposal and test cleanup/timing issues; these were fixed before this successful build.
+
+The same run built the APK and passed all nine splash tests again while rendering five native previews. Morning, noon, sunset, night and rainy previews were visually reviewed. The compact 320x640 framing can hide the moon behind the fixed branding plate. Physical-device validation remains pending. Local Windows Application Control still blocks Flutter's compiler; the build used GitHub's Linux runner without changing that policy.
+
+The final APK was re-signed locally using the existing development key so it can update 1.2.1. Its signature verifies, its certificate matches the previous APK, and package metadata confirms `com.sundo.sipalay`, version 1.3.0, code 6, minimum API 24 and target API 36. Size: **72,163,846 bytes**. SHA-256: `df87ee7265bb2ef3aa579c788e27b41baf83e105a6acc4cbbc8810a173645988`. [Release and APK](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.3.0).
+
+The workflow retains reviewed APKs as artifacts and never automatically publishes a runner-signed APK. Before publication, use the existing local signing key and verify the resulting certificate/version/checksum. The key is not uploaded to GitHub.
+
+Weather data by [Open-Meteo](https://open-meteo.com/), using [model-based current conditions](https://open-meteo.com/en/docs), under [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current weather into the rainy artwork choice. The current keyless endpoint uses the [noncommercial API terms](https://open-meteo.com/en/terms); production service sizing and any commercial API configuration must be reviewed before a broader rollout. [Design notes](DESIGN_NOTES.md) record supplied scene paths and the exact natural-leaf generation prompt.
+
+## Remaining release work
+
 Before public city use:
 
 1. Create Supabase, apply the appropriate schema/migration, configure email delivery and build with public project values. Verify the role, photo and report policies using separate resident/driver/staff accounts.
@@ -56,7 +72,7 @@ flutter build apk --release
 
 Use Flutter 3.47.6 / Dart 3.13.5, Java 17 and the Android SDK. The APK is produced at `build/app/outputs/flutter-apk/app-release.apk`. Backend build flags and iOS permission discovery are documented in [Supabase setup](supabase/README.md).
 
-The configured GitHub Android workflow performs the same analysis/tests before publishing. Its runs were blocked by the account's billing lock during this work; local verification and manual release publication are the available route until Actions is restored.
+The configured GitHub Android workflow performs the same analysis/tests before retaining its build artifact. The former owner's billing lock blocked earlier runs; builds run successfully under WesleyHans following the repository transfer. Release publication follows local signing and verification.
 
 ## Local verification for 1.2.1
 

@@ -18,13 +18,51 @@ Splash, welcome, account screens and installer branding use that asset. Android 
 - `flutter_sundo/lib/features/` contains splash, onboarding, auth, home, live_map, schedule, notifications, report_concern and profile screens; operations retains the connected staff/driver workflows.
 - `flutter_sundo/lib/shared/widgets/` holds reusable controls, brand graphics, scenery, time-based backgrounds, schedule/notification components and bottom navigation.
 - `flutter_sundo/lib/core/theme/` contains the clay palette and local-time theme controller. The app refreshes its greeting and mood each minute and on resume.
-- Morning uses cool blue daylight; afternoon adds a warmer sky tint; evening uses dark surfaces, a moon, stars and city-window glow. Inputs, cards and text remain interactive native elements across themes.
+- The environment scene follows morning, noon, sunset and night boundaries, with fresh rainy conditions overriding the time scene. Inputs, cards and text remain interactive native elements across themes. Splash branding uses a constant daytime scope so logo text and subtitle colors do not change at night.
 - The live map uses OpenStreetMap tiles rather than a static map image. The default perspective presentation and raised clay markers are visual effects around the actual map. Demo routes are sample paths; live routes come from operational data.
 - Outfit and Plus Jakarta Sans fonts are bundled with their OFL licenses, so interface text does not require font downloads.
 
-The city illustration is stored at `flutter_sundo/assets/images/clay-city-hero.png` and `public/clay-city-hero.png`. It was created with the built-in image generation tool using this prompt:
+The earlier city illustration remains at `flutter_sundo/assets/images/clay-city-hero.png` and `public/clay-city-hero.png` for the operations/installer artwork. It was created with the built-in image generation tool using this prompt:
 
 > Production portrait background for SUNDO, inspired by the supplied reference: a green municipal recycling truck on a clean Sipalay road, rounded clay foliage, lime and emerald trees, pale cyan city buildings, warm sunshine, cream clouds and spacious pale blue sky for headings. Matte sculpted materials, soft bevels and ambient shadows. Truck and city in the lower half, foliage at the bottom corners. No phone frame, UI, written words or watermark.
+
+## Fixed branding and dynamic environment update
+
+The splash has two independent layers. Its upper branding plate preserves the existing centered logo, large SUNDO wordmark and **Smart Urban Navigation / for Dynamic Waste Operations** subtitle with their previous colors, sizes and positions. The decorative leaf frames also stay in their existing positions. The lower city/truck scene changes behind a soft blend into that plate; the white rounded bottom card, **Track. Prepare. Collect.** and **Together for a cleaner Sipalay** remain fixed. Background transitions cannot animate or reposition those Flutter branding/card widgets.
+
+The user supplied five matching 1024 × 1536 PNG scenes. They are converted to lossless WebP at the same dimensions, preserving the supplied single truck model, orientation, road, buildings, plants and camera framing. No truck or environment variant was newly generated for this update.
+
+| Environment | Supplied source in `C:/Users/User/Downloads/` | Project asset |
+| --- | --- | --- |
+| Morning | `ChatGPT Image Oct 5, 2026, 07_07_06 PM-1.png` | `flutter_sundo/assets/images/environment-morning.webp` |
+| Noon | `ChatGPT Image Oct 5, 2026, 07_07_09 PM-2.png` | `flutter_sundo/assets/images/environment-noon.webp` |
+| Sunset | `ChatGPT Image Oct 5, 2026, 07_07_11 PM-3.png` | `flutter_sundo/assets/images/environment-sunset.webp` |
+| Night | `ChatGPT Image Oct 5, 2026, 07_07_14 PM-4.png` | `flutter_sundo/assets/images/environment-night.webp` |
+| Rainy | `ChatGPT Image Oct 5, 2026, 07_07_15 PM-5.png` | `flutter_sundo/assets/images/environment-rainy.webp` |
+
+Every variant uses the same fit and alignment. Splash uses `BoxFit.fitWidth` to retain the supplied truck's full cab and tail. On taller phones, the last 48 pixels of the illustration blend into the surrounding surface so the image cannot end in a hard horizontal cut beside the card. The fixed branding plate follows the existing text layout, including accessibility text scaling. A small night-only moon is drawn in the supplied sky coordinates beneath that plate; the truck image is not edited. The branding plate can cover that sky position on compact phones.
+
+Other resident screens receive an edge-to-edge scene through a continuous alpha mask; the previous 220 px illustration band and duplicated Home header/footer image strips are removed. Home's header is content-driven and the demo banner's status inset is not applied a second time. System-bar icon colors follow the time theme, with a fixed dark-icon override on the splash's light branding plate.
+
+Time selection uses device-local hours: **05:00–10:59 morning; 11:00–14:59 noon; 15:00–17:59 sunset; 18:00–04:59 night**. The clock refreshes each minute and on resume. The current scene stays visible until the requested next asset decodes successfully, then both scenery and underlay use a 900 ms fade; reduced-motion settings switch immediately. Failed image loads retain the current scene, and superseded image requests cannot replace it. Fresh rainy conditions take precedence, without changing the truck, logo or card.
+
+Rain selection uses [Open-Meteo's model-based current conditions](https://open-meteo.com/en/docs) for fixed Sipalay coordinates 9.7525, 122.4038. Requests begin in the foreground and recur every 15 minutes; backgrounding stops polling. Failed, malformed or stale results fall back to local time. Both the model timestamp and fetch time must be within 30 minutes; no resident GPS is sent. Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current conditions into an artwork choice; the keyless endpoint is subject to [noncommercial API terms](https://open-meteo.com/en/terms). Linked weather attribution sits in the existing space below the splash card and in Profile's About dialog; it does not move the slogan card.
+
+Run `node scripts/package-environment-assets.mjs C:/Users/User/Downloads` to package the five supplied files. The script validates their common dimensions and compares decoded RGBA pixels after conversion. Current asset checks confirm all five WebP files preserve the original decoded pixels and both logo files retain their original SHA-256.
+
+### Natural leaf asset provenance
+
+The only newly generated artwork in this update is a transparent botanical sprig. It replaces the earlier painted leaves within the same decorative sizes, positions and flip settings, and stays constant across time and weather. The original supplied SUNDO logo is not edited.
+
+- Generated output: `C:/Users/User/.codex/generated_images/01a106ac-6cd6-7d41-bfbd-0dfebfc80608/exec-8e3fa390-9430-4b62-b721-8b673fa3d60f.png`
+- Project asset: `flutter_sundo/assets/images/sundo-leaf-sprig.png`
+- Transparent PNG dimensions: 1254 × 1254; alpha includes both transparent and opaque pixels.
+
+Exact image-generation prompt:
+
+> Use case: photorealistic-natural. Asset type: transparent PNG botanical decoration for SUNDO mobile UI. Generate a single compact sprig of exactly three fresh tropical green leaves connected to one thin gently curved green stem. Place the stem attachment at the TOP RIGHT corner; the sprig extends diagonally DOWN LEFT like leaves hanging in the upper-right corner of a screen. Natural leaves with detailed branching veins, subtle irregular edges, translucent light along edges, realistic waxy surfaces, lime-to-emerald greens, soft dimensional shading and tiny contact shadows. Three overlapping broad lanceolate pointed leaves placed at different heights along the same stem, matching a roughly square footprint, fill most of canvas with a little clear margin. Calm soft daylight, no dramatic lighting. Transparent background including between leaves, preserve alpha. No pot, flowers, truck, logo, words, watermark, frame, scenery, flat cartoon illustration or vector style. This is a botanical cutout only, kept constant across day/night/weather.
+
+Current source analysis passes. New native environment/layout tests, updated Flutter previews and a new APK are pending because Windows Application Control still blocks the compiler after the user's normal retry. Existing release previews and the 90 passing 1.2.1 tests describe the previous release; they do not certify the environment update.
 
 ## Map presentation in 1.2.1
 

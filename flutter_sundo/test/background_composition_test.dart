@@ -1,0 +1,376 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sundo_sipalay/app/resident_shell.dart';
+import 'package:sundo_sipalay/core/storage/app_store.dart';
+import 'package:sundo_sipalay/core/theme/app_theme.dart';
+import 'package:sundo_sipalay/core/theme/time_theme.dart';
+import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    AppStore.setIdentity(null);
+  });
+
+  final moods = [
+    SundoTimeMood(DateTime(2026, 10, 5, 8)),
+    SundoTimeMood(DateTime(2026, 10, 5, 12)),
+    SundoTimeMood(DateTime(2026, 10, 5, 17)),
+    SundoTimeMood(DateTime(2026, 10, 5, 20)),
+    SundoTimeMood(DateTime(2026, 10, 5, 14), raining: true),
+  ];
+  for (final mood in moods) {
+    testWidgets(
+        '${mood.environment.name} scenery has no former 220 px band seam',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final boundaryKey = GlobalKey();
+      await tester.pumpWidget(MaterialApp(
+          home: SundoTimeScope(
+              mood: mood,
+              child: RepaintBoundary(
+                  key: boundaryKey,
+                  child: const ScenicBackdrop(child: SizedBox.shrink())))));
+      await tester.runAsync(() async {
+        final context = boundaryKey.currentContext!;
+        await precacheImage(
+            AssetImage(sundoEnvironmentArtwork(mood.environment)), context);
+        await precacheImage(const AssetImage(sundoLeafSprigAsset), context);
+      });
+      await tester.pump();
+      final backgroundRect =
+          tester.getRect(find.byType(SundoTimeBasedBackground));
+      expect(backgroundRect, const Rect.fromLTWH(0, 0, 320, 640));
+      final pixels = await tester.runAsync(() async {
+        final image = await (boundaryKey.currentContext!.findRenderObject()
+                as RenderRepaintBoundary)
+            .toImage();
+        final bytes =
+            await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+        image.dispose();
+        return bytes!.buffer.asUint8List();
+      });
+      double rowLuminance(int y) {
+        var total = 0.0;
+        for (var x = 80; x < 240; x++) {
+          final offset = (y * 320 + x) * 4;
+          total += pixels![offset] * .2126 +
+              pixels[offset + 1] * .7152 +
+              pixels[offset + 2] * .0722;
+        }
+        return total / 160;
+      }
+
+      // The old illustrated band began abruptly at y=420 on this phone.
+      for (var y = 412; y < 428; y++) {
+        expect((rowLuminance(y + 1) - rowLuminance(y)).abs(), lessThan(5),
+            reason: 'The backdrop must blend continuously across row $y.');
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
+  testWidgets('only scenery fades while foreground controls stay fixed',
+      (tester) async {
+    var presses = 0;
+    final foreground = TextButton(
+        onPressed: () => presses++,
+        child: const Text('Fixed branding control'));
+    Widget surface(SundoTimeMood mood, {bool reduceMotion = false}) =>
+        MaterialApp(
+            home: MediaQuery(
+                data: MediaQueryData(disableAnimations: reduceMotion),
+                child: SundoTimeScope(
+                    mood: mood,
+                    child: SundoTimeBasedBackground(
+                        fullScene: true, child: Center(child: foreground)))));
+    await tester.pumpWidget(surface(moods.first));
+    await _waitForScene(tester, moods.first.environment);
+    final original = tester.getRect(find.text('Fixed branding control'));
+    await tester.pumpWidget(surface(moods.last));
+    await _waitForScene(tester, moods.last.environment);
+    await tester.pump(const Duration(milliseconds: 450));
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(2));
+    expect(images.map((image) => image.fit).toSet(), {BoxFit.cover});
+    expect(images.map((image) => image.alignment).toSet(),
+        {Alignment.bottomCenter});
+    expect(tester.getRect(find.text('Fixed branding control')), original);
+    await tester.tap(find.text('Fixed branding control'));
+    expect(presses, 1);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(Image), findsOneWidget);
+    await tester.pumpWidget(surface(moods.first, reduceMotion: true));
+    await _waitForScene(tester, moods.first.environment);
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
+    expect(tester.getRect(find.text('Fixed branding control')), original);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('slow next decode retains the ready scene until fade can start',
+      (tester) async {
+    final bundle = _DeferredSceneBundle();
+    final rainyAsset = sundoEnvironmentArtwork(SundoEnvironment.rainy);
+    bundle.defer(rainyAsset);
+    await tester.pumpWidget(_surface(moods.first, bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.morning);
+    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pump(const Duration(seconds: 2));
+    expect(_displayedScenes(tester), [SundoEnvironment.morning]);
+    expect(bundle.sceneRequests.toSet(), {
+      sundoEnvironmentArtwork(SundoEnvironment.morning),
+      rainyAsset,
+    });
+    await _releaseScene(tester, bundle, rainyAsset);
+    await _waitForScene(tester, SundoEnvironment.rainy);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(_displayedScenes(tester).toSet(), {
+      SundoEnvironment.morning,
+      SundoEnvironment.rainy,
+    });
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_displayedScenes(tester), [SundoEnvironment.rainy]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('returning to ready scene cancels a pending different scene',
+      (tester) async {
+    final bundle = _DeferredSceneBundle();
+    final rainyAsset = sundoEnvironmentArtwork(SundoEnvironment.rainy);
+    bundle.defer(rainyAsset);
+    await tester.pumpWidget(_surface(moods.first, bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.morning);
+    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(_surface(moods.first, bundle: bundle));
+    await _releaseScene(tester, bundle, rainyAsset);
+    await _waitForScene(tester, SundoEnvironment.rainy);
+    await tester.pump(const Duration(seconds: 1));
+    expect(_displayedScenes(tester), [SundoEnvironment.morning]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('failed next scene keeps current artwork and a later retry works',
+      (tester) async {
+    final bundle = _DeferredSceneBundle();
+    final rainyAsset = sundoEnvironmentArtwork(SundoEnvironment.rainy);
+    bundle.defer(rainyAsset);
+    await tester.pumpWidget(_surface(moods.first, bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.morning);
+    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.runAsync(() async {
+      bundle.fail(rainyAsset);
+      // Wait for the failing decoder before requesting the retry.
+      await precacheImage(AssetImage(rainyAsset, bundle: bundle),
+          tester.element(find.byType(SundoTimeBasedBackground)),
+          onError: (error, stack) {});
+      await AssetImage(rainyAsset, bundle: bundle).evict();
+    });
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(_displayedScenes(tester), [SundoEnvironment.morning]);
+    expect(tester.takeException(), isNull);
+    // A later clock refresh requests the same desired scene again.
+    await tester.pumpWidget(_surface(
+        SundoTimeMood(DateTime(2026, 10, 5, 14, 1), raining: true),
+        bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.rainy);
+    await tester.pump(const Duration(seconds: 1));
+    expect(_displayedScenes(tester), [SundoEnvironment.rainy]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a scene finishing after disposal never updates the old widget',
+      (tester) async {
+    final bundle = _DeferredSceneBundle();
+    final rainyAsset = sundoEnvironmentArtwork(SundoEnvironment.rainy);
+    bundle.defer(rainyAsset);
+    await tester.pumpWidget(_surface(moods.first, bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.morning);
+    await tester.pumpWidget(_surface(moods.last, bundle: bundle));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _releaseScene(tester, bundle, rainyAsset);
+    await tester.runAsync(() async {
+      await precacheImage(AssetImage(rainyAsset, bundle: bundle),
+          tester.element(find.byType(SizedBox).first));
+    });
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final mood in [moods.first, moods[3], moods.last]) {
+    testWidgets(
+        '${mood.environment.name} full truck scene feathers into tall-phone bottom',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final boundary = GlobalKey();
+      await tester.pumpWidget(_surface(mood,
+          boundary: boundary,
+          fit: BoxFit.fitWidth,
+          alignment: const Alignment(0, .35)));
+      await _waitForScene(tester, mood.environment);
+      final pixels = await _capturePixels(tester, boundary);
+      double rowLuminance(int y) {
+        var total = 0.0;
+        for (var x = 80; x < 240; x++) {
+          final offset = (y * 320 + x) * 4;
+          total += pixels[offset] * .2126 +
+              pixels[offset + 1] * .7152 +
+              pixels[offset + 2] * .0722;
+        }
+        return total / 160;
+      }
+
+      // 320x480 artwork aligned at .35 ends at y588 in this viewport.
+      // Its last pixels blend into the surface instead of forming a stripe.
+      for (var y = 580; y < 594; y++) {
+        expect((rowLuminance(y + 1) - rowLuminance(y)).abs(), lessThan(8));
+      }
+      final color = mood.background.toARGB32();
+      const bottom = (620 * 320 + 160) * 4;
+      expect(pixels.sublist(bottom, bottom + 3),
+          [(color >> 16) & 255, (color >> 8) & 255, color & 255]);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
+  for (final scale in [1.0, 1.4]) {
+    testWidgets('narrow demo home shows full greeting at text scale $scale',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      await AppStore.setName('Juan Dela Cruz');
+      await tester.runAsync(() async {
+        for (final weight in FontWeight.values) {
+          GoogleFonts.outfit(fontWeight: weight);
+          GoogleFonts.plusJakartaSans(fontWeight: weight);
+        }
+        await GoogleFonts.pendingFonts();
+      });
+      final mood = moods.first;
+      await tester.pumpWidget(MaterialApp(
+          theme: buildSundoTheme(mood),
+          builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!),
+          home: SundoTimeScope(
+              mood: mood,
+              child: ScenicBackdrop(
+                  child: MainNavigationShell(onLogout: () {})))));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.runAsync(() => GoogleFonts.pendingFonts());
+      await tester.pump();
+      final banner = tester.getRect(find.text(
+          'LOCAL DEMO · Sample fleet and schedules · Reports stay on this phone'));
+      final greeting = tester.getRect(find.text('Good Morning,'));
+      final firstName = tester.getRect(find.text('Juan!'));
+      final collection = tester.getRect(find.text('Next Collection'));
+      expect(banner.top, greaterThanOrEqualTo(24));
+      expect(greeting.top, greaterThan(banner.bottom + 15));
+      expect(greeting.top, lessThan(banner.bottom + 40));
+      expect(firstName.top, greaterThanOrEqualTo(greeting.bottom));
+      expect(firstName.bottom, lessThan(collection.top));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+  }
+}
+
+Widget _surface(SundoTimeMood mood,
+        {AssetBundle? bundle,
+        GlobalKey? boundary,
+        BoxFit fit = BoxFit.cover,
+        Alignment alignment = Alignment.bottomCenter}) =>
+    MaterialApp(
+        home: DefaultAssetBundle(
+            bundle: bundle ?? rootBundle,
+            child: SundoTimeScope(
+                mood: mood,
+                child: RepaintBoundary(
+                    key: boundary,
+                    child: SundoTimeBasedBackground(
+                        fullScene: true, fit: fit, alignment: alignment)))));
+
+Future<void> _waitForScene(
+    WidgetTester tester, SundoEnvironment environment) async {
+  final context = tester.element(find.byType(SundoTimeBasedBackground).first);
+  await tester.runAsync(() =>
+      precacheImage(AssetImage(sundoEnvironmentArtwork(environment)), context));
+  await tester.pump();
+}
+
+List<SundoEnvironment> _displayedScenes(WidgetTester tester) => tester
+    .widgetList<Image>(find.byType(Image))
+    .map((image) => image.image)
+    .whereType<AssetImage>()
+    .where((provider) =>
+        provider.assetName.startsWith('assets/images/environment-'))
+    .map((provider) => SundoEnvironment.values.firstWhere((environment) =>
+        sundoEnvironmentArtwork(environment) == provider.assetName))
+    .toList();
+
+Future<List<int>> _capturePixels(WidgetTester tester, GlobalKey key) async =>
+    (await tester.runAsync(() async {
+      final image = await (key.currentContext!.findRenderObject()
+              as RenderRepaintBoundary)
+          .toImage();
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      image.dispose();
+      return bytes!.buffer.asUint8List();
+    }))!;
+
+Future<void> _releaseScene(
+    WidgetTester tester, _DeferredSceneBundle bundle, String asset) async {
+  final bytes = await tester.runAsync(() => rootBundle.load(asset));
+  bundle.complete(asset, bytes!);
+  await tester.pump();
+}
+
+class _DeferredSceneBundle extends CachingAssetBundle {
+  final _deferred = <String, Completer<ByteData>>{};
+  final sceneRequests = <String>[];
+
+  void defer(String asset) => _deferred[asset] = Completer<ByteData>();
+
+  void complete(String asset, ByteData bytes) =>
+      _deferred.remove(asset)!.complete(bytes);
+
+  void fail(String asset) =>
+      _deferred.remove(asset)!.completeError(StateError('Missing test scene'));
+
+  @override
+  Future<ByteData> load(String key) {
+    if (key.startsWith('assets/images/environment-')) {
+      sceneRequests.add(key);
+      final pending = _deferred[key];
+      if (pending != null) return pending.future;
+    }
+    return rootBundle.load(key);
+  }
+}
