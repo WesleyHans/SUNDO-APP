@@ -56,6 +56,8 @@ The locally compiled APK verifies with the same certificate as 1.3.0: SHA-256 `9
 
 The installer passed TypeScript checks and Vite production compilation. On 6 October 2026, Vercel confirmed production deployment `dpl_7AqHuBjiURhYq2bCM2mLPkYBUXzL` as **READY** and aliased it to [sundo-app.vercel.app](https://sundo-app.vercel.app) under the transferred SUNDO (`sundo3`) team. Project authentication protection remains preview-only. The installer displays 1.4.0 and all APK aliases target the published 1.4.0 asset; primary download redirects use no-store headers. Production readiness and alias were verified through Vercel metadata; a live browser download was not part of this check.
 
+The automatic [Linux build 37350772047](https://github.com/WesleyHans/SUNDO-APP/actions/runs/37350772047) then passed analysis, all **190 tests**, APK compilation and **27 additional preview tests** for merged commit `1341b4555606d3baece7ee91ee7539360109c7c0`. It retained APK and preview artifacts. The public download continues to use the locally verified APK with the existing certificate, rather than the runner's differently signed artifact.
+
 Weather data by [Open-Meteo](https://open-meteo.com/), using [model-based current conditions](https://open-meteo.com/en/docs), under [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current weather into the rainy artwork choice. The current keyless endpoint uses the [noncommercial API terms](https://open-meteo.com/en/terms); production service sizing and any commercial API configuration must be reviewed before a broader rollout. [Design notes](DESIGN_NOTES.md) record supplied scene paths and the exact natural-leaf generation prompt.
 
 ## Remaining release work
