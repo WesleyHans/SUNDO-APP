@@ -54,6 +54,8 @@ Another **49 native preview tests passed** while rendering resident screens, sev
 
 The locally compiled APK verifies with the same certificate as 1.3.0: SHA-256 `9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`. Package metadata confirms `com.sundo.sipalay`, version 1.4.0, code 7, minimum API 24 and target API 36. Size: **74,878,282 bytes**. APK SHA-256: `d092a469e2eaf7ce0b13515c93a31361d718526b10854461c9834cbaa0e86042`. GitHub reports the identical uploaded digest. [Release and APK](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.4.0).
 
+The installer passed TypeScript checks and Vite production compilation. On 6 October 2026, Vercel confirmed production deployment `dpl_7AqHuBjiURhYq2bCM2mLPkYBUXzL` as **READY** and aliased it to [sundo-app.vercel.app](https://sundo-app.vercel.app) under the transferred SUNDO (`sundo3`) team. Project authentication protection remains preview-only. The installer displays 1.4.0 and all APK aliases target the published 1.4.0 asset; primary download redirects use no-store headers. Production readiness and alias were verified through Vercel metadata; a live browser download was not part of this check.
+
 Weather data by [Open-Meteo](https://open-meteo.com/), using [model-based current conditions](https://open-meteo.com/en/docs), under [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current weather into the rainy artwork choice. The current keyless endpoint uses the [noncommercial API terms](https://open-meteo.com/en/terms); production service sizing and any commercial API configuration must be reviewed before a broader rollout. [Design notes](DESIGN_NOTES.md) record supplied scene paths and the exact natural-leaf generation prompt.
 
 ## Remaining release work
