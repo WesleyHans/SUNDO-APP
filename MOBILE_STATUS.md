@@ -25,7 +25,9 @@ midpoint and completion previews inspected; pixel checks cover first-frame scene
 continuity and gradual blending. Tab checks cover retained input/state, rapid
 navigation, outgoing input exclusion and reduced motion. Narrow-phone checks cover
 the shared header, unchanged leaf frame, large text and working Profile/Alerts
-actions. Android version 1.5.2+10.
+actions. Android version 1.5.2+10. Verified APK: 94,464,618 bytes, SHA-256
+`f105238a03c79eeb78bba169b31692b8ec275a85b547ad724546900bd6afd17f`.
+The signing certificate matches the existing locally signed Android releases.
 
 ## Version 1.5.1 weather, scenery and Philippine time fixes
 
