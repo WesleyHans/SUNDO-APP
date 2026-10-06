@@ -9,6 +9,11 @@ enum SundoEnvironment { morning, noon, sunset, night, rainy, rainyNight }
 
 class SundoTimeMood {
   final DateTime now;
+  final DateTime? _philippineTime;
+
+  /// UI clock fields in Philippine Standard Time. `now` remains the actual
+  /// instant for freshness/elapsed time; wall-clock offsets must not age weather.
+  DateTime get localTime => _philippineTime ?? now;
 
   /// Only a current, reliable snapshot is supplied by the theme controller.
   final SipalayWeather? weather;
@@ -17,21 +22,34 @@ class SundoTimeMood {
   const SundoTimeMood(this.now,
       {bool raining = false,
       WeatherCondition weatherCondition = WeatherCondition.unknown,
+      DateTime? philippineTime,
       this.weather})
       : _raining = raining,
+        _philippineTime = philippineTime,
         _weatherCondition = weatherCondition;
-  WeatherCondition get weatherCondition =>
-      weather?.condition ?? _weatherCondition;
+
+  /// Production clocks use an absolute instant, independent of device timezone.
+  /// The original constructor also supports explicit wall-clock preview scenes.
+  factory SundoTimeMood.fromInstant(DateTime instant,
+          {SipalayWeather? weather}) =>
+      SundoTimeMood(instant,
+          weather: weather,
+          philippineTime: instant.toUtc().add(const Duration(hours: 8)));
+  WeatherCondition get weatherCondition => weather == null
+      ? _weatherCondition
+      : weather!.isFreshAt(now)
+          ? weather!.condition
+          : WeatherCondition.unknown;
   bool get raining =>
       _raining ||
       weatherCondition == WeatherCondition.rain ||
       weatherCondition == WeatherCondition.drizzle ||
       weatherCondition == WeatherCondition.thunderstorm;
-  SundoDayPeriod get period => now.hour >= 5 && now.hour < 11
+  SundoDayPeriod get period => localTime.hour >= 5 && localTime.hour < 11
       ? SundoDayPeriod.morning
-      : now.hour >= 11 && now.hour < 15
+      : localTime.hour >= 11 && localTime.hour < 15
           ? SundoDayPeriod.noon
-          : now.hour >= 15 && now.hour < 18
+          : localTime.hour >= 15 && localTime.hour < 18
               ? SundoDayPeriod.afternoon
               : SundoDayPeriod.evening;
   SundoEnvironment get environment => raining
@@ -43,12 +61,11 @@ class SundoTimeMood {
           SundoDayPeriod.evening => SundoEnvironment.night,
         };
   bool get isNight => period == SundoDayPeriod.evening;
-  String get greeting => switch (period) {
-        SundoDayPeriod.morning => 'Good Morning',
-        SundoDayPeriod.noon => 'Good Afternoon',
-        SundoDayPeriod.afternoon => 'Good Afternoon',
-        SundoDayPeriod.evening => 'Good Evening',
-      };
+  String get greeting => localTime.hour < 12 && localTime.hour >= 5
+      ? 'Good Morning'
+      : localTime.hour >= 12 && localTime.hour < 18
+          ? 'Good Afternoon'
+          : 'Good Evening';
   Color get background => isNight
       ? (raining ? const Color(0xFF101D29) : const Color(0xFF0F1E1A))
       : (raining || weatherCondition == WeatherCondition.cloudy
@@ -104,27 +121,39 @@ class SundoDayNightThemeController extends Notifier<SundoTimeMood> {
     scheduleMinuteBoundary();
     ref.onDispose(() => timer?.cancel());
     final now = clock();
-    return SundoTimeMood(now,
+    return SundoTimeMood.fromInstant(now,
         weather: weather != null && weather.isFreshAt(now) ? weather : null);
   }
 
   void refresh() {
     final now = ref.read(sundoClockProvider)();
     final weather = ref.read(sundoWeatherProvider);
-    state = SundoTimeMood(now,
+    state = SundoTimeMood.fromInstant(now,
         weather: weather != null && weather.isFreshAt(now) ? weather : null);
   }
 }
 
 class SundoTimeScope extends InheritedWidget {
   final SundoTimeMood mood;
-  const SundoTimeScope({super.key, required this.mood, required super.child});
+  final VoidCallback? onWeatherRefresh;
+  final bool checkingWeather;
+  final bool weatherEnabled;
+  const SundoTimeScope(
+      {super.key,
+      required this.mood,
+      required super.child,
+      this.onWeatherRefresh,
+      this.checkingWeather = false,
+      this.weatherEnabled = false});
   static SundoTimeMood of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<SundoTimeScope>()?.mood ??
-      SundoTimeMood(DateTime.now());
+      SundoTimeMood.fromInstant(DateTime.now());
   @override
   bool updateShouldNotify(SundoTimeScope oldWidget) =>
       oldWidget.mood.now != mood.now ||
+      oldWidget.mood.localTime != mood.localTime ||
+      oldWidget.checkingWeather != checkingWeather ||
+      oldWidget.weatherEnabled != weatherEnabled ||
       oldWidget.mood.raining != mood.raining ||
       oldWidget.mood.weatherCondition != mood.weatherCondition ||
       oldWidget.mood.weather != mood.weather;

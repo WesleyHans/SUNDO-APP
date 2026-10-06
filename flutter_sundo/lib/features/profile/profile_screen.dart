@@ -1,3 +1,4 @@
+import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -674,6 +675,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+          flexibleSpace: const SundoHeaderLeaves(),
           centerTitle: true,
           title: Text('Profile',
               style: GoogleFonts.outfit(

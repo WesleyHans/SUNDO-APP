@@ -78,7 +78,7 @@ class EnvironmentLocationService {
         _requestPermission = requestPermission ?? Geolocator.requestPermission,
         _fetchPosition = fetchPosition ??
             (() => Geolocator.getCurrentPosition(
-                  desiredAccuracy: LocationAccuracy.low,
+                  desiredAccuracy: LocationAccuracy.medium,
                   timeLimit: const Duration(seconds: 12),
                 )),
         _openLocationSettings =

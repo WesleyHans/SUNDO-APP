@@ -5,6 +5,50 @@ import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 
 void main() {
+  test('Philippine greeting changes at noon, independent of device timezone',
+      () {
+    for (final stamp in [
+      '2026-10-06T03:00:00Z',
+      '2026-10-06T11:00:00+08:00',
+      '2026-10-05T23:00:00-04:00'
+    ]) {
+      final instant = DateTime.parse(stamp);
+      final mood = SundoTimeMood.fromInstant(instant);
+      expect(mood.localTime.hour, 11);
+      expect(mood.localTime.day, 6);
+      expect(mood.greeting, 'Good Morning');
+      expect(mood.environment, SundoEnvironment.noon);
+      expect(mood.now.toUtc(), DateTime.utc(2026, 10, 6, 3));
+    }
+    for (final entry in {
+      '11:59': 'Good Morning',
+      '12:00': 'Good Afternoon',
+      '17:59': 'Good Afternoon',
+      '18:00': 'Good Evening'
+    }.entries) {
+      final instant = DateTime.parse('2026-10-06T${entry.key}:00+08:00');
+      expect(SundoTimeMood.fromInstant(instant).greeting, entry.value);
+    }
+    expect(
+        SundoTimeMood.fromInstant(DateTime.utc(2026, 10, 6, 16)).localTime.day,
+        7);
+  });
+
+  test('Philippine display offset does not expire a fresh weather snapshot',
+      () {
+    final now = DateTime.utc(2026, 10, 6, 3);
+    final weather = SipalayWeather(
+        validAt: now,
+        fetchedAt: now,
+        weatherCode: 61,
+        precipitationMm: 0,
+        rainMm: 0,
+        showersMm: 0);
+    final mood = SundoTimeMood.fromInstant(now, weather: weather);
+    expect(mood.localTime.hour, 11);
+    expect(mood.raining, isTrue);
+    expect(weather.isFreshAt(mood.now), isTrue);
+  });
   test('all four periods switch at the exact requested minute boundaries', () {
     final cases = <(int, int, SundoDayPeriod, SundoEnvironment)>[
       (0, 0, SundoDayPeriod.evening, SundoEnvironment.night),
@@ -25,11 +69,11 @@ void main() {
       expect(mood.isNight, hour < 5 || hour >= 18);
       expect(
           mood.greeting,
-          switch (period) {
-            SundoDayPeriod.morning => 'Good Morning',
-            SundoDayPeriod.noon || SundoDayPeriod.afternoon => 'Good Afternoon',
-            SundoDayPeriod.evening => 'Good Evening',
-          });
+          hour >= 5 && hour < 12
+              ? 'Good Morning'
+              : hour >= 12 && hour < 18
+                  ? 'Good Afternoon'
+                  : 'Good Evening');
     }
   });
   test('rain retains local time and uses dark rainy scenery after 18:00', () {
@@ -83,18 +127,18 @@ void main() {
   test(
       'theme controller refreshes after a local time change and disposes ticker',
       () {
-    var clock = DateTime(2026, 10, 4, 17, 59);
+    var clock = _phInstant(2026, 10, 4, 17, 59);
     final container = ProviderContainer(
         overrides: [sundoClockProvider.overrideWithValue(() => clock)]);
     addTearDown(container.dispose);
     expect(container.read(sundoDayNightThemeProvider).isNight, isFalse);
-    clock = DateTime(2026, 10, 4, 18);
+    clock = _phInstant(2026, 10, 4, 18);
     container.read(sundoDayNightThemeProvider.notifier).refresh();
     expect(container.read(sundoDayNightThemeProvider).isNight, isTrue);
     expect(container.read(sundoDayNightThemeProvider).greeting, 'Good Evening');
   });
   test('weather-only scope changes notify without moving the clock', () {
-    final now = DateTime(2026, 10, 5, 8);
+    final now = _phInstant(2026, 10, 5, 8);
     final clear = SundoTimeScope(
         mood: SundoTimeMood(now), child: const SizedBox.shrink());
     final rain = SundoTimeScope(
@@ -109,7 +153,7 @@ void main() {
   });
   testWidgets('minute ticker changes at 11:00 even when started at 10:59:55',
       (tester) async {
-    var clock = DateTime(2026, 10, 5, 10, 59, 55);
+    var clock = _phInstant(2026, 10, 5, 10, 59, 55);
     final container = ProviderContainer(
         overrides: [sundoClockProvider.overrideWithValue(() => clock)]);
     addTearDown(container.dispose);
@@ -126,7 +170,7 @@ void main() {
     container.dispose();
   });
   test('theme provider ignores stale rainy current conditions', () {
-    final now = DateTime.utc(2026, 10, 5, 8);
+    final now = _phInstant(2026, 10, 5, 8);
     final weather = SipalayWeather(
       validAt: now.subtract(const Duration(minutes: 31)),
       fetchedAt: now,
@@ -144,7 +188,7 @@ void main() {
         SundoEnvironment.morning);
   });
   test('theme expires rain even when no replacement response arrives', () {
-    var clock = DateTime.utc(2026, 10, 5, 14);
+    var clock = _phInstant(2026, 10, 5, 14);
     final weather = SipalayWeather(
       validAt: clock,
       fetchedAt: clock,
@@ -169,7 +213,7 @@ void main() {
         WeatherCondition.unknown);
   });
   test('fresh local rain snapshot remains available in the evening theme', () {
-    final now = DateTime(2026, 10, 5, 19, 10);
+    final now = _phInstant(2026, 10, 5, 19, 10);
     final weather = SipalayWeather(
       validAt: now,
       fetchedAt: now,
@@ -197,3 +241,8 @@ class _FixedWeatherController extends SundoWeatherController {
   @override
   SipalayWeather? build() => weather;
 }
+
+DateTime _phInstant(int year, int month, int day,
+        [int hour = 0, int minute = 0, int second = 0]) =>
+    DateTime.utc(year, month, day, hour, minute, second)
+        .subtract(const Duration(hours: 8));

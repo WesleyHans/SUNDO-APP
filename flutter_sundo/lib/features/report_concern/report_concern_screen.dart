@@ -1,3 +1,4 @@
+import '../../shared/widgets/scenic_backdrop.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -212,6 +213,7 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+          flexibleSpace: const SundoHeaderLeaves(),
           backgroundColor: mood.background,
           surfaceTintColor: Colors.transparent,
           centerTitle: true,

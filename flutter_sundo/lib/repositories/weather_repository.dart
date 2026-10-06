@@ -30,7 +30,8 @@ class SipalayWeather {
   final double showersMm;
   final WeatherLocation? location;
 
-  static const maximumAge = Duration(minutes: 30);
+  static const maximumAge = Duration(minutes: 20);
+  static const maximumFetchAge = Duration(minutes: 10);
   static const _clockTolerance = Duration(minutes: 5);
   WeatherCondition get condition {
     if ({95, 96, 99}.contains(weatherCode)) {
@@ -39,10 +40,10 @@ class SipalayWeather {
     if ({51, 53, 55, 56, 57}.contains(weatherCode)) {
       return WeatherCondition.drizzle;
     }
-    if ({61, 63, 65, 66, 67, 80, 81, 82}.contains(weatherCode) ||
-        rainMm > 0 ||
-        showersMm > 0 ||
-        (precipitationMm > 0 && {0, 1, 2, 3, 45, 48}.contains(weatherCode))) {
+    // The instantaneous WMO code describes current conditions. Rain totals
+    // cover a preceding interval and can stay positive after rain has stopped.
+    // Do not turn a clear/cloudy code into rain from a trace accumulated amount.
+    if ({61, 63, 65, 66, 67, 80, 81, 82}.contains(weatherCode)) {
       return WeatherCondition.rain;
     }
     if ({0, 1}.contains(weatherCode)) return WeatherCondition.clear;
@@ -57,12 +58,12 @@ class SipalayWeather {
       }.contains(condition);
 
   bool isFreshAt(DateTime now) {
-    bool fresh(DateTime value) {
+    bool fresh(DateTime value, Duration limit) {
       final age = now.toUtc().difference(value.toUtc());
-      return age >= -_clockTolerance && age <= maximumAge;
+      return age >= -_clockTolerance && age <= limit;
     }
 
-    return fresh(validAt) && fresh(fetchedAt);
+    return fresh(validAt, maximumAge) && fresh(fetchedAt, maximumFetchAge);
   }
 
   factory SipalayWeather.fromJson(Map<String, dynamic> json, DateTime fetchedAt,
@@ -161,12 +162,22 @@ final sundoWeatherRepositoryProvider =
 final sundoWeatherProvider =
     NotifierProvider<SundoWeatherController, SipalayWeather?>(
         SundoWeatherController.new);
+final sundoWeatherLoadingProvider =
+    NotifierProvider<WeatherLoadingController, bool>(
+        WeatherLoadingController.new);
+
+class WeatherLoadingController extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void setLoading(bool value) => state = value;
+}
+
 final sundoSavedWeatherAreaProvider =
     Provider<Future<String?> Function()>((ref) => AppStore.getSavedWeatherArea);
 
 /// Polling starts only when the app is foregrounded and never blocks startup.
 class SundoWeatherController extends Notifier<SipalayWeather?> {
-  static const refreshInterval = Duration(minutes: 15);
+  static const refreshInterval = Duration(minutes: 5);
   Timer? _timer;
   bool _foreground = false;
   int _request = 0;
@@ -180,6 +191,12 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
   void _setStatus(EnvironmentLocationStatus value) {
     if (!_disposed && ref.mounted) {
       ref.read(environmentLocationStatusProvider.notifier).setStatus(value);
+    }
+  }
+
+  void _setLoading(bool value) {
+    if (!_disposed && ref.mounted) {
+      ref.read(sundoWeatherLoadingProvider.notifier).setLoading(value);
     }
   }
 
@@ -201,6 +218,7 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
     if (!foreground) {
       // A response from before backgrounding must not restore stale rain.
       _request++;
+      _setLoading(false);
       return;
     }
     if (_enabled) {
@@ -240,6 +258,7 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
     _timer = null;
     _location = null;
     state = null;
+    _setLoading(false);
     _setStatus(EnvironmentLocationStatus.idle);
   }
 
@@ -278,66 +297,71 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
         _enabled &&
         request == _request &&
         AppStore.identity == identity;
-    _setStatus(EnvironmentLocationStatus.checking);
-    final resolved = await ref
-        .read(environmentLocationServiceProvider)
-        .resolve(requestPermission: requestPermission, canContinue: current);
-    if (!current()) return;
-    final validDeviceResult =
-        resolved.status == EnvironmentLocationStatus.device &&
-            resolved.location?.isValid == true &&
-            resolved.location?.isDeviceLocation == true;
-    var location = validDeviceResult ? resolved.location : null;
-    final locationStatus =
-        resolved.status == EnvironmentLocationStatus.device &&
-                !validDeviceResult
-            ? EnvironmentLocationStatus.unavailable
-            : resolved.status;
-    if (location == null) {
-      final area = await _savedArea();
-      if (!current()) return;
-      location = EnvironmentLocationService.savedAreaLocation(area);
-    }
-    if (!current()) return;
-    if (_location != location || resolved.location == null) state = null;
-    _location = location;
-    _setStatus(location == null
-        ? locationStatus
-        : location.isDeviceLocation
-            ? EnvironmentLocationStatus.device
-            : EnvironmentLocationStatus.savedArea);
-    if (location == null) return;
-    final repository = ref.read(sundoWeatherRepositoryProvider);
-    final weather = await repository.fetchCurrent(location: location);
-    if (!current()) return;
-    if (location.isDeviceLocation) {
-      final access = await ref
+    _setLoading(true);
+    try {
+      _setStatus(EnvironmentLocationStatus.checking);
+      final resolved = await ref
           .read(environmentLocationServiceProvider)
-          .deviceAccessStatus();
+          .resolve(requestPermission: requestPermission, canContinue: current);
       if (!current()) return;
-      if (access != EnvironmentLocationStatus.device) {
-        _location = null;
-        state = null;
-        _setStatus(access);
-        // Permission may be revoked while HTTP is pending. A real saved area
-        // can still provide explicitly approximate city weather.
+      final validDeviceResult =
+          resolved.status == EnvironmentLocationStatus.device &&
+              resolved.location?.isValid == true &&
+              resolved.location?.isDeviceLocation == true;
+      var location = validDeviceResult ? resolved.location : null;
+      final locationStatus =
+          resolved.status == EnvironmentLocationStatus.device &&
+                  !validDeviceResult
+              ? EnvironmentLocationStatus.unavailable
+              : resolved.status;
+      if (location == null) {
         final area = await _savedArea();
         if (!current()) return;
-        final fallback = EnvironmentLocationService.savedAreaLocation(area);
-        if (fallback == null) return;
-        _location = fallback;
-        _setStatus(EnvironmentLocationStatus.savedArea);
-        final fallbackWeather =
-            await repository.fetchCurrent(location: fallback);
-        if (!current()) return;
-        final now = ref.read(sundoWeatherClockProvider)();
-        state = fallbackWeather != null && fallbackWeather.isFreshAt(now)
-            ? fallbackWeather
-            : null;
-        return;
+        location = EnvironmentLocationService.savedAreaLocation(area);
       }
+      if (!current()) return;
+      if (_location != location || resolved.location == null) state = null;
+      _location = location;
+      _setStatus(location == null
+          ? locationStatus
+          : location.isDeviceLocation
+              ? EnvironmentLocationStatus.device
+              : EnvironmentLocationStatus.savedArea);
+      if (location == null) return;
+      final repository = ref.read(sundoWeatherRepositoryProvider);
+      final weather = await repository.fetchCurrent(location: location);
+      if (!current()) return;
+      if (location.isDeviceLocation) {
+        final access = await ref
+            .read(environmentLocationServiceProvider)
+            .deviceAccessStatus();
+        if (!current()) return;
+        if (access != EnvironmentLocationStatus.device) {
+          _location = null;
+          state = null;
+          _setStatus(access);
+          // Permission may be revoked while HTTP is pending. A real saved area
+          // can still provide explicitly approximate city weather.
+          final area = await _savedArea();
+          if (!current()) return;
+          final fallback = EnvironmentLocationService.savedAreaLocation(area);
+          if (fallback == null) return;
+          _location = fallback;
+          _setStatus(EnvironmentLocationStatus.savedArea);
+          final fallbackWeather =
+              await repository.fetchCurrent(location: fallback);
+          if (!current()) return;
+          final now = ref.read(sundoWeatherClockProvider)();
+          state = fallbackWeather != null && fallbackWeather.isFreshAt(now)
+              ? fallbackWeather
+              : null;
+          return;
+        }
+      }
+      final now = ref.read(sundoWeatherClockProvider)();
+      state = weather != null && weather.isFreshAt(now) ? weather : null;
+    } finally {
+      if (current()) _setLoading(false);
     }
-    final now = ref.read(sundoWeatherClockProvider)();
-    state = weather != null && weather.isFreshAt(now) ? weather : null;
   }
 }

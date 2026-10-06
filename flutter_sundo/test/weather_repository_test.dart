@@ -128,26 +128,26 @@ void main() {
     }
   });
 
-  test('positive current rain, showers, or precipitation overrides a dry code',
+  test('accumulated rain does not override an instantaneous dry weather code',
       () {
     for (final payload in [
       _payload(now, rain: .01),
       _payload(now, showers: .01),
-      _payload(now, code: 95, precipitation: .01),
+      _payload(now, code: 3, precipitation: 2),
     ]) {
-      expect(SipalayWeather.fromJson(payload, now).isRaining, isTrue);
+      expect(SipalayWeather.fromJson(payload, now).isRaining, isFalse);
     }
   });
 
   test('both server timestamp and fetch timestamp must remain fresh', () {
     final weather = SipalayWeather.fromJson(_payload(now, code: 61), now);
-    expect(weather.isFreshAt(now.add(const Duration(minutes: 30))), isTrue);
-    expect(weather.isFreshAt(now.add(const Duration(minutes: 30, seconds: 1))),
+    expect(weather.isFreshAt(now.add(const Duration(minutes: 10))), isTrue);
+    expect(weather.isFreshAt(now.add(const Duration(minutes: 10, seconds: 1))),
         isFalse);
     expect(
         weather.isFreshAt(now.subtract(const Duration(minutes: 6))), isFalse);
     final staleServer = SipalayWeather.fromJson(
-        _payload(now.subtract(const Duration(minutes: 31)), code: 61), now);
+        _payload(now.subtract(const Duration(minutes: 21)), code: 61), now);
     expect(staleServer.isFreshAt(now), isFalse);
   });
 
@@ -213,7 +213,7 @@ void main() {
   });
 
   testWidgets(
-      'polls only in foreground every 15 minutes and refreshes on resume',
+      'polls only in foreground every five minutes and refreshes on resume',
       (tester) async {
     var clock = now;
     var requests = 0;
@@ -240,9 +240,9 @@ void main() {
     expect(requests, 1);
     expect(container.read(sundoWeatherProvider)?.isRaining, isTrue);
     controller.setForeground(true);
-    await tester.pump(const Duration(minutes: 14));
+    await tester.pump(const Duration(minutes: 4));
     expect(requests, 1);
-    clock = clock.add(const Duration(minutes: 15));
+    clock = clock.add(const Duration(minutes: 5));
     await tester.pump(const Duration(minutes: 1));
     expect(requests, 2);
     controller.setForeground(false);
@@ -275,7 +275,7 @@ void main() {
     ]);
     addTearDown(container.dispose);
     expect(container.read(sundoDayNightThemeProvider).environment,
-        SundoEnvironment.morning);
+        SundoEnvironment.noon);
     final controller = container.read(sundoWeatherProvider.notifier);
     controller.setForeground(true);
     await controller.initializeLocation(requestPermission: false);
@@ -286,7 +286,7 @@ void main() {
     await controller.refresh();
     expect(container.read(sundoWeatherProvider), isNull);
     expect(container.read(sundoDayNightThemeProvider).environment,
-        SundoEnvironment.morning);
+        SundoEnvironment.noon);
     container.dispose();
   });
 

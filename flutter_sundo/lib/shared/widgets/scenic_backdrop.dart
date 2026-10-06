@@ -11,11 +11,23 @@ class ScenicBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Stack(fit: StackFit.expand, children: [
         const Positioned.fill(child: SundoTimeBasedBackground()),
-        const Positioned(right: -22, top: -10, child: LeafSprig(size: 110)),
-        const Positioned(
-            left: -35, bottom: 25, child: LeafSprig(size: 95, flipped: true)),
         child,
       ]);
+}
+
+/// Decorative leaves stay inside their own header surface, below system
+/// insets. Painting behind titles/buttons leaves their hit targets unchanged.
+class SundoHeaderLeaves extends StatelessWidget {
+  const SundoHeaderLeaves({super.key});
+  @override
+  Widget build(BuildContext context) => const SafeArea(
+        bottom: false,
+        child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+                padding: EdgeInsets.only(top: 2, right: 6),
+                child: Opacity(opacity: .24, child: LeafSprig(size: 48)))),
+      );
 }
 
 /// A detailed natural leaf asset preserves the existing decorative footprint.

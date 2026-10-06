@@ -43,7 +43,7 @@ class _SundoBootstrapState extends State<SundoBootstrap> {
           return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'SUNDO',
-              theme: buildSundoTheme(SundoTimeMood(DateTime.now())),
+              theme: buildSundoTheme(SundoTimeMood.fromInstant(DateTime.now())),
               home: Scaffold(
                   body: SafeArea(
                       child: Center(

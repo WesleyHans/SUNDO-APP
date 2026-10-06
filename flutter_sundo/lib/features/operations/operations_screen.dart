@@ -299,6 +299,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
     final titles = ['Home', 'Live Map', 'Reports', 'Schedules', 'Profile'];
     return Scaffold(
       appBar: AppBar(
+          flexibleSpace: const SundoHeaderLeaves(),
           title: Text('SUNDO · ${_profile?['name'] ?? 'Loading'}'),
           actions: [
             IconButton(

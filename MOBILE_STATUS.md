@@ -1,5 +1,31 @@
 # SUNDO mobile status
 
+## Version 1.5.1 weather, scenery and Philippine time fixes
+
+Production greetings and scenery use Philippine Standard Time (UTC+8), independent
+of the phone timezone. Good Morning runs 05:00–11:59, Good Afternoon 12:00–17:59
+and Good Evening 18:00–04:59. The brighter noon scene still begins at 11:00.
+Weather age uses the actual instant, without shifting its timestamp by eight hours.
+
+Instantaneous WMO weather codes determine rain, drizzle and thunderstorms.
+Accumulated precipitation no longer overrides clear/cloudy conditions. Weather
+refreshes every five minutes while foregrounded; server observations expire after
+20 minutes and unsuccessful fetches cannot retain a snapshot beyond ten minutes.
+Home offers a manual refresh and explicitly shows unavailable weather while using
+time-based scenery. The provider supplies model-based area estimates, not a
+guaranteed measurement at the resident's exact spot.
+
+Secondary screens use softer backgrounds. The scenery fade uses one shared alpha
+mask to avoid midpoint flashes; expired rain transitions to neutral scenery even
+if the dry asset fails to decode. Header leaves stay inside their own app bars and
+splash leaves stay within safe bounds. Logo/title/subtitle/card geometry is unchanged.
+
+Validation: Flutter analysis clean and all 198 tests passed. Native Schedule previews
+cover clear/cloudy/rain with 32 px system inset and 1.4× text on a 320 px phone.
+Splash checks preserve brand/card geometry across environments. Regression checks
+cover timezone offsets, noon greetings, stale weather, offline retry and failed
+dry-scene decoding. Android release version is 1.5.1+9.
+
 ## Version 1.5.0 directional marker update
 
 Sixteen generated transparent views replace the map's single-sided vehicle.
@@ -26,7 +52,7 @@ Open `flutter_sundo` as the Flutter project. The current Android release is **1.
 - Clay cards, green controls, supplied logo and illustrated backgrounds. Working source now selects morning (05:00–10:59), noon (11:00–14:59), afternoon/sunset (15:00–17:59) and evening/night (18:00–04:59) scenes; time and greetings refresh every minute and when the app resumes.
 - Five supplied matching scenes are bundled as lossless WebP. The splash logo, wordmark, subtitle, branding colors/positions, decorative leaf frames and bottom slogan card stay static while only the environment fades over 900 ms. Reduced-motion settings switch the scene immediately. Detailed transparent natural leaves replace the painted leaves without changing their frames. Shared backgrounds use continuous alpha feathering rather than a cut-off 220 px image band; Home removes repeated image strips and its doubled demo status-bar inset.
 - Version 1.4.0 offers local weather before login, with an explanation, native foreground permission request and phone Location settings. Device coordinates are validated, rounded to approximately 0.01 degrees and sent to Open-Meteo only after enabling weather; they are not persisted. A genuinely saved Sipalay address offers labeled city-level fallback. Otherwise weather remains unavailable and backgrounds use time. The Profile Location Permission sheet can disable weather independently of map permission.
-- Current model conditions distinguish clear, cloudy, rain, drizzle and thunderstorms. Wet daytime and wet night atmospheres retain the same scene composition while respecting time; branding remains unchanged. The compact Home banner names its area/source/update age and optional collection rain caution. Foreground polling runs every 15 minutes. Failed, malformed, unsupported and stale data produces time-only scenery rather than an invented weather reading. Account changes, revocation, backgrounding and opt-out invalidate pending responses.
+- Current model conditions distinguish clear, cloudy, rain, drizzle and thunderstorms. Wet daytime and wet night atmospheres retain the same scene composition while respecting time; branding remains unchanged. The compact Home banner names its area/source/update age and optional collection rain caution. Foreground polling runs every five minutes. Failed, malformed, unsupported and stale data produces time-only scenery rather than an invented weather reading. Account changes, revocation, backgrounding and opt-out invalidate pending responses.
 - Local demo registration/login with email or Philippine mobile number, duplicate-account validation, confirmed passwords and remembered sessions. Credentials use Flutter Secure Storage; account data uses scoped local storage. This does not authenticate a city account.
 - Home shows the selected resident area's next published/sample pickup, the shared truck state, unread alerts and working shortcuts.
 - Real OpenStreetMap tiles centered on Sipalay, attribution, zoom/recenter/route-fit controls, north reset, read-only route display, raised clay collection landmarks and a draggable tracking sheet. The default 3D view projects the map into perspective; the 2D control returns to a flat view. Raised symbols do not represent actual building heights or terrain meshes.

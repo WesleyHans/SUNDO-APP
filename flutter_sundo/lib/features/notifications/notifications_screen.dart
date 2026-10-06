@@ -1,3 +1,4 @@
+import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -195,6 +196,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        flexibleSpace: const SundoHeaderLeaves(),
         backgroundColor: mood.background,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
