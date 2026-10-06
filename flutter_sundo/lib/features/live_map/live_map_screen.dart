@@ -833,72 +833,78 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     Positioned(
                         top: 12,
                         left: 16,
-                        right: 16,
-                        child: SundoMapSceneHeader(
-                            demo: _demo,
-                            rotation: _mapRotation,
-                            onNorth: () {
-                              setState(() => _followTruck = false);
-                              if (_mapReady) {
-                                _flyTo(_mapController.camera.center,
-                                    _mapController.camera.zoom,
-                                    rotation: 0);
-                              }
-                            },
-                            onFit: _recenter)),
+                        child: Row(children: [
+                          ValueListenableBuilder<double>(
+                              valueListenable: _mapRotation,
+                              builder: (context, angle, _) => Transform.rotate(
+                                  angle: angle * math.pi / 180,
+                                  child: SundoMapControlButton(
+                                      tooltip: 'Reset map north',
+                                      icon: Icons.navigation_rounded,
+                                      onPressed: () {
+                                        setState(() => _followTruck = false);
+                                        if (_mapReady) {
+                                          _flyTo(_mapController.camera.center,
+                                              _mapController.camera.zoom,
+                                              rotation: 0);
+                                        }
+                                      }))),
+                          const SizedBox(width: 8),
+                          SundoMapControlButton(
+                              tooltip: 'Fit active route',
+                              icon: Icons.center_focus_strong,
+                              onPressed: _recenter),
+                        ])),
                     Positioned(
                         top: 82,
                         left: 16,
                         right: 72,
-                        child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
-                            decoration: mapSurfaceDecoration(mood, radius: 12),
-                            child: Row(children: [
-                              Icon(
-                                  resident == null
-                                      ? Icons.location_off_outlined
-                                      : Icons.my_location,
-                                  size: 14,
-                                  color: resident == null
-                                      ? mood.mutedTextColor
-                                      : const Color(0xFF2F80ED)),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                  child: Text(_locationMessage,
-                                      style: TextStyle(
-                                          fontSize: 9, color: mood.textColor))),
-                            ]))),
-                    Positioned(
-                        top: 129,
-                        left: 16,
-                        right: 72,
-                        child: SundoMapViewBar(
-                            angled: _angled,
-                            following: _followTruck,
-                            canFollow: _truckFresh && _displayTruck != null,
-                            onViewChanged: _setView,
-                            onWatch: _follow)),
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                          Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
+                              decoration:
+                                  mapSurfaceDecoration(mood, radius: 12),
+                              child: Row(children: [
+                                Icon(
+                                    resident == null
+                                        ? Icons.location_off_outlined
+                                        : Icons.my_location,
+                                    size: 14,
+                                    color: resident == null
+                                        ? mood.mutedTextColor
+                                        : const Color(0xFF2F80ED)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                    child: Text(_locationMessage,
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: mood.textColor))),
+                              ])),
+                          const SizedBox(height: 8),
+                          SundoMapViewBar(
+                              angled: _angled,
+                              following: _followTruck,
+                              canFollow: _truckFresh && _displayTruck != null,
+                              onViewChanged: _setView,
+                              onWatch: _follow),
+                        ])),
                     Positioned(
                         top: 82,
                         right: 16,
                         child:
                             Column(mainAxisSize: MainAxisSize.min, children: [
                           SundoMapControlButton(
-                              icon: Icons.center_focus_strong,
-                              tooltip: 'Re-center active route',
-                              onPressed: _recenter),
-                          const SizedBox(height: 8),
-                          SundoMapControlButton(
                               icon: Icons.add,
                               tooltip: 'Zoom in',
                               onPressed: () => _zoom(1)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: constraints.maxHeight < 520 ? 4 : 8),
                           SundoMapControlButton(
                               icon: Icons.remove,
                               tooltip: 'Zoom out',
                               onPressed: () => _zoom(-1)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: constraints.maxHeight < 520 ? 4 : 8),
                           SundoMapControlButton(
                               icon: Icons.my_location,
                               tooltip: 'Use my current location',
@@ -908,7 +914,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                 _readResidentLocation(
                                     requestPermission: true, recenter: true);
                               }),
-                          const SizedBox(height: 8),
+                          SizedBox(height: constraints.maxHeight < 520 ? 4 : 8),
                           SundoMapControlButton(
                               icon: Icons.layers_outlined,
                               tooltip: 'Map layers',

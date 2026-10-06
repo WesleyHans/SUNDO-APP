@@ -8,6 +8,73 @@ import '../report_concern/report_concern_screen.dart';
 import '../../core/theme/clay_theme.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import '../../shared/widgets/sundo_graphics.dart';
+import '../../shared/widgets/editor_routes.dart';
+
+/// Shared city-account forms keep validation visible while the keyboard is open.
+class OperationsFormDialog extends StatefulWidget {
+  const OperationsFormDialog({
+    super.key,
+    required this.title,
+    required this.acceptLabel,
+    required this.fields,
+    required this.requiredFields,
+  });
+
+  final String title;
+  final String acceptLabel;
+  final Map<String, TextEditingController> fields;
+  final Set<String> requiredFields;
+
+  @override
+  State<OperationsFormDialog> createState() => _OperationsFormDialogState();
+}
+
+class _OperationsFormDialogState extends State<OperationsFormDialog> {
+  final _form = GlobalKey<FormState>();
+
+  void _submit() {
+    if (_form.currentState?.validate() == true) Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        scrollable: true,
+        title: Text(widget.title),
+        content: SingleChildScrollView(
+          child: Form(
+            key: _form,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              for (final entry in widget.fields.entries)
+                TextFormField(
+                  key: ValueKey('operation-field-${entry.key}'),
+                  controller: entry.value,
+                  keyboardType:
+                      entry.key == 'Phone' ? TextInputType.phone : null,
+                  textInputAction: entry.key == widget.fields.keys.last
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  onFieldSubmitted: (_) => entry.key == widget.fields.keys.last
+                      ? _submit()
+                      : FocusScope.of(context).nextFocus(),
+                  validator: (value) =>
+                      widget.requiredFields.contains(entry.key) &&
+                              value?.trim().isNotEmpty != true
+                          ? 'Enter ${entry.key.toLowerCase()}.'
+                          : null,
+                  decoration:
+                      InputDecoration(labelText: entry.key, errorMaxLines: 3),
+                ),
+            ]),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(onPressed: _submit, child: Text(widget.acceptLabel)),
+        ],
+      );
+}
 
 class OperationsScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -22,6 +89,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
   String? _error;
   int _tab = 0;
   bool _loading = false, _sharing = false, _publishing = false;
+  bool _sharingBusy = false;
   Position? _lastPosition;
   StreamSubscription<Position>? _gps;
   Timer? _timer;
@@ -95,14 +163,18 @@ class _OperationsScreenState extends State<OperationsScreen> {
   }
 
   Future<void> _shareLocation() async {
-    if (_sharing) {
-      _heartbeat?.cancel();
-      await _gps?.cancel();
-      if (mounted) setState(() => _sharing = false);
-      if (_lastPosition != null) await _publish(_lastPosition!, active: false);
-      return;
-    }
+    if (_sharingBusy) return;
+    setState(() => _sharingBusy = true);
     try {
+      if (_sharing) {
+        _heartbeat?.cancel();
+        await _gps?.cancel();
+        if (mounted) setState(() => _sharing = false);
+        if (_lastPosition != null) {
+          await _publish(_lastPosition!, active: false);
+        }
+        return;
+      }
       if (!await Geolocator.isLocationServiceEnabled()) {
         throw StateError('Enable location services first.');
       }
@@ -139,7 +211,11 @@ class _OperationsScreenState extends State<OperationsScreen> {
           onError: (_) =>
               _message('GPS stream interrupted. Stop and restart sharing.'));
     } catch (e) {
-      _message(e.toString());
+      _message(e is StateError
+          ? e.message.toString()
+          : 'Could not share truck location. Check permission and try again.');
+    } finally {
+      if (mounted) setState(() => _sharingBusy = false);
     }
   }
 
@@ -230,37 +306,17 @@ class _OperationsScreenState extends State<OperationsScreen> {
     final waste = TextEditingController();
     final note = TextEditingController();
     try {
-      final accepted = await showDialog<bool>(
+      final accepted = await showSundoEditorDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-                title: const Text('Create collection schedule'),
-                content: SingleChildScrollView(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  TextField(
-                      controller: barangay,
-                      decoration: const InputDecoration(labelText: 'Barangay')),
-                  TextField(
-                      controller: waste,
-                      decoration:
-                          const InputDecoration(labelText: 'Waste type')),
-                  TextField(
-                      controller: note,
-                      decoration: const InputDecoration(
-                          labelText: 'Instructions (optional)')),
-                ])),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel')),
-                  FilledButton(
-                      onPressed: () {
-                        if (barangay.text.trim().isNotEmpty &&
-                            waste.text.trim().isNotEmpty) {
-                          Navigator.pop(context, true);
-                        }
-                      },
-                      child: const Text('Choose date'))
-                ],
+          builder: (context) => OperationsFormDialog(
+                title: 'Create collection schedule',
+                acceptLabel: 'Choose date',
+                fields: {
+                  'Barangay': barangay,
+                  'Waste type': waste,
+                  'Instructions (optional)': note
+                },
+                requiredFields: const {'Barangay', 'Waste type'},
               ));
       if (accepted != true || !mounted) return;
       final date = await showDatePicker(
@@ -298,9 +354,13 @@ class _OperationsScreenState extends State<OperationsScreen> {
   Widget build(BuildContext context) {
     final titles = ['Home', 'Live Map', 'Reports', 'Schedules', 'Profile'];
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-          flexibleSpace: const SundoHeaderLeaves(),
-          title: Text('SUNDO · ${_profile?['name'] ?? 'Loading'}'),
+          flexibleSpace: _tab == 1 ? null : const SundoHeaderLeaves(),
+          title: Text(
+              _profile == null ? 'SUNDO' : 'SUNDO · ${_profile!['name']}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
           actions: [
             IconButton(
                 tooltip: 'Refresh',
@@ -308,15 +368,17 @@ class _OperationsScreenState extends State<OperationsScreen> {
                 icon: const Icon(Icons.refresh)),
             IconButton(
                 tooltip: 'Log out',
-                onPressed: () async {
-                  if (_sharing) await _shareLocation();
-                  try {
-                    await BackendService.logout();
-                    if (mounted) widget.onLogout();
-                  } catch (_) {
-                    _message('Could not log out. Please retry.');
-                  }
-                },
+                onPressed: _sharingBusy
+                    ? null
+                    : () async {
+                        if (_sharing) await _shareLocation();
+                        try {
+                          await BackendService.logout();
+                          if (mounted) widget.onLogout();
+                        } catch (_) {
+                          _message('Could not log out. Please retry.');
+                        }
+                      },
                 icon: const Icon(Icons.logout)),
           ]),
       body: Column(children: [
@@ -335,11 +397,17 @@ class _OperationsScreenState extends State<OperationsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(children: [
                 FilledButton.icon(
-                    onPressed: _shareLocation,
-                    icon: Icon(_sharing ? Icons.stop : Icons.gps_fixed),
-                    label: Text(_sharing
-                        ? 'Stop sharing truck location'
-                        : 'Start sharing truck location')),
+                    onPressed: _sharingBusy ? null : _shareLocation,
+                    icon: _sharingBusy
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(_sharing ? Icons.stop : Icons.gps_fixed),
+                    label: Text(_sharingBusy
+                        ? (_sharing ? 'Stopping sharing…' : 'Starting GPS…')
+                        : _sharing
+                            ? 'Stop sharing truck location'
+                            : 'Start sharing truck location')),
                 const Text(
                     'Keep this screen open during collection. Locations older than 2 minutes are marked offline.',
                     textAlign: TextAlign.center),
@@ -370,7 +438,9 @@ class _OperationsScreenState extends State<OperationsScreen> {
             )
           : _tab == 3 && _role == 'staff'
               ? FloatingActionButton(
-                  onPressed: _addSchedule, child: const Icon(Icons.add))
+                  tooltip: 'Create collection schedule',
+                  onPressed: _addSchedule,
+                  child: const Icon(Icons.add))
               : null,
       bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
@@ -400,7 +470,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 100),
         children: [
           Container(
-              height: 160,
+              constraints: const BoxConstraints(minHeight: 160),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
@@ -409,6 +479,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
                       fit: BoxFit.cover,
                       alignment: Alignment(0, 0.15))),
               child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Good day,',
@@ -424,7 +495,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
                             ?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF174F32))),
-                    const Spacer(),
+                    const SizedBox(height: 16),
                     const Text('Together for a cleaner Sipalay',
                         style: TextStyle(
                             color: Color(0xFF174F32),
@@ -433,7 +504,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
           const SizedBox(height: 20),
           Container(
               padding: const EdgeInsets.all(20),
-              decoration: ClayTheme.card(),
+              decoration: _surface(),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -444,18 +515,24 @@ class _OperationsScreenState extends State<OperationsScreen> {
                     Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _stat('$pending', 'Open reports',
-                              const Icon(Icons.assignment_outlined)),
-                          _stat('$completed', 'Collected',
-                              const Icon(Icons.check_circle_outline)),
-                          _stat('$activeTrucks', 'Live trucks',
-                              const SundoTruckGraphic(width: 24, height: 24)),
+                          Expanded(
+                              child: _stat('$pending', 'Open reports',
+                                  const Icon(Icons.assignment_outlined))),
+                          Expanded(
+                              child: _stat('$completed', 'Collected',
+                                  const Icon(Icons.check_circle_outline))),
+                          Expanded(
+                              child: _stat(
+                                  '$activeTrucks',
+                                  'Live trucks',
+                                  const SundoTruckGraphic(
+                                      width: 24, height: 24))),
                         ]),
                   ])),
           const SizedBox(height: 18),
           Container(
               padding: const EdgeInsets.all(20),
-              decoration: ClayTheme.cardMint(),
+              decoration: _surface(mint: true),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -484,16 +561,36 @@ class _OperationsScreenState extends State<OperationsScreen> {
         ]);
   }
 
+  BoxDecoration _surface({bool mint = false}) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return mint ? ClayTheme.cardMint() : ClayTheme.card();
+    }
+    final colors = Theme.of(context).colorScheme;
+    return BoxDecoration(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: colors.outlineVariant),
+      boxShadow: const [
+        BoxShadow(
+            color: Color(0x25000000), blurRadius: 14, offset: Offset(0, 7))
+      ],
+    );
+  }
+
   Widget _stat(String number, String label, Widget icon) => Column(children: [
         IconTheme(
-            data: const IconThemeData(color: Color(0xFF07853D)), child: icon),
+            data: IconThemeData(color: Theme.of(context).colorScheme.primary),
+            child: icon),
         const SizedBox(height: 6),
-        Text(number,
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF174F32))),
-        Text(label, style: const TextStyle(fontSize: 10)),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(number,
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Theme.of(context).colorScheme.onSurface))),
+        Text(label,
+            textAlign: TextAlign.center, style: const TextStyle(fontSize: 10)),
       ]);
 
   Widget _quickAction(String label, IconData icon, int index) => InkWell(
@@ -501,9 +598,10 @@ class _OperationsScreenState extends State<OperationsScreen> {
         onTap: () => setState(() => _tab = index),
         child: Container(
             padding: const EdgeInsets.all(18),
-            decoration: ClayTheme.card(),
+            decoration: _surface(),
             child: Column(children: [
-              Icon(icon, color: const Color(0xFF07853D), size: 30),
+              Icon(icon,
+                  color: Theme.of(context).colorScheme.primary, size: 30),
               const SizedBox(height: 8),
               Text(label,
                   textAlign: TextAlign.center,
@@ -535,49 +633,59 @@ class _OperationsScreenState extends State<OperationsScreen> {
     return '${schedule['waste_type']} · ${schedule['barangay']}\n${pickup.month}/${pickup.day}/${pickup.year} · ${TimeOfDay.fromDateTime(pickup).format(context)}';
   }
 
-  Widget _buildProfile() =>
-      ListView(padding: const EdgeInsets.all(20), children: [
-        Container(
-            padding: const EdgeInsets.all(24),
-            decoration: ClayTheme.card(),
-            child: Column(children: [
-              const CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Color(0xFFDBEFCB),
-                  child:
-                      Icon(Icons.person, color: Color(0xFF185632), size: 40)),
-              const SizedBox(height: 14),
-              Text(_profile?['name'] as String? ?? '',
-                  style: Theme.of(context).textTheme.titleLarge),
-              Text(BackendService.client.auth.currentUser?.email ?? ''),
-              const SizedBox(height: 8),
-              Text(_role.toUpperCase(),
-                  style: const TextStyle(
-                      color: Color(0xFF07853D), fontWeight: FontWeight.w800)),
-            ])),
-        const SizedBox(height: 18),
-        Container(
-            decoration: ClayTheme.card(),
-            child: Column(children: [
-              ListTile(
-                  leading: const Icon(Icons.place_outlined),
-                  title: const Text('Barangay'),
-                  subtitle: Text(_profile?['barangay'] as String? ?? '')),
-              ListTile(
-                  leading: const Icon(Icons.phone_outlined),
-                  title: const Text('Phone'),
-                  subtitle: Text(_profile?['phone'] as String? ?? '')),
-              ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Edit profile'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _editProfile),
-            ])),
-        const SizedBox(height: 20),
-        const Text(
-            'SUNDO · Smart Urban Navigation for Dynamic Waste Operations\nSipalay City',
-            textAlign: TextAlign.center),
-      ]);
+  Widget _buildProfile() {
+    if (_profile == null) {
+      return const Center(
+          child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('Account information unavailable. Refresh to retry.',
+                  textAlign: TextAlign.center)));
+    }
+    return ListView(padding: const EdgeInsets.all(20), children: [
+      Container(
+          padding: const EdgeInsets.all(24),
+          decoration: _surface(),
+          child: Column(children: [
+            const CircleAvatar(
+                radius: 35,
+                backgroundColor: Color(0xFFDBEFCB),
+                child: Icon(Icons.person, color: Color(0xFF185632), size: 40)),
+            const SizedBox(height: 14),
+            Text(_profile?['name'] as String? ?? '',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge),
+            Text(BackendService.client.auth.currentUser?.email ?? '',
+                textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(_role.toUpperCase(),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w800)),
+          ])),
+      const SizedBox(height: 18),
+      Container(
+          decoration: _surface(),
+          child: Column(children: [
+            ListTile(
+                leading: const Icon(Icons.place_outlined),
+                title: const Text('Barangay'),
+                subtitle: Text(_profile?['barangay'] as String? ?? '')),
+            ListTile(
+                leading: const Icon(Icons.phone_outlined),
+                title: const Text('Phone'),
+                subtitle: Text(_profile?['phone'] as String? ?? '')),
+            ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Edit profile'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _editProfile),
+          ])),
+      const SizedBox(height: 20),
+      const Text(
+          'SUNDO · Smart Urban Navigation for Dynamic Waste Operations\nSipalay City',
+          textAlign: TextAlign.center),
+    ]);
+  }
 
   Future<void> _editProfile() async {
     if (_profile == null) return;
@@ -586,36 +694,13 @@ class _OperationsScreenState extends State<OperationsScreen> {
     final barangay =
         TextEditingController(text: _profile!['barangay'] as String);
     try {
-      final accepted = await showDialog<bool>(
+      final accepted = await showSundoEditorDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-                title: const Text('Edit profile'),
-                content: SingleChildScrollView(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  TextField(
-                      controller: name,
-                      decoration: const InputDecoration(labelText: 'Name')),
-                  TextField(
-                      controller: phone,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'Phone')),
-                  TextField(
-                      controller: barangay,
-                      decoration: const InputDecoration(labelText: 'Barangay')),
-                ])),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel')),
-                  FilledButton(
-                      onPressed: () {
-                        if (name.text.trim().isNotEmpty &&
-                            barangay.text.trim().isNotEmpty) {
-                          Navigator.pop(context, true);
-                        }
-                      },
-                      child: const Text('Save'))
-                ],
+          builder: (context) => OperationsFormDialog(
+                title: 'Edit profile',
+                acceptLabel: 'Save',
+                fields: {'Name': name, 'Phone': phone, 'Barangay': barangay},
+                requiredFields: const {'Name', 'Barangay'},
               ));
       if (accepted != true) return;
       await BackendService.client.from('profiles').update({
@@ -641,7 +726,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
         children: _reports
             .map((report) => Container(
                   margin: const EdgeInsets.only(bottom: 16),
-                  decoration: ClayTheme.card(),
+                  decoration: _surface(),
                   child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -732,8 +817,11 @@ class _OperationsScreenState extends State<OperationsScreen> {
                                 child: const SundoVehicleGraphic(
                                     mapView: true, width: 30, height: 30)),
                             Text(truck['id'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                    backgroundColor: Colors.white)),
+                                    backgroundColor: Colors.white,
+                                    color: Color(0xFF174F32))),
                           ]),
                         ))
                     .toList()),

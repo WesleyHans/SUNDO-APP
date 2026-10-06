@@ -1,4 +1,4 @@
-import '../../shared/widgets/scenic_backdrop.dart';
+import '../../shared/widgets/resident_content.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -64,39 +64,24 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        flexibleSpace: const SundoHeaderLeaves(),
-        backgroundColor: mood.background,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        leading: widget.onBack == null
-            ? null
-            : IconButton(
-                tooltip: 'Back',
-                onPressed: widget.onBack,
-                icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
-        title: Text('Collection Schedule',
-            style: GoogleFonts.outfit(
-                color: mood.textColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w800)),
-        actions: [
+    return SundoResidentContent(
+      actions: [
+        if (widget.onBack != null)
           IconButton(
-              tooltip: 'Refresh schedules',
-              onPressed: _loading ? null : _load,
-              icon: Icon(Icons.refresh_rounded, size: 20, color: mood.accent))
-        ],
-        bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(56),
-            child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                child: SundoSegmentedTabs(
-                    labels: const ['Today', 'This Week', 'Calendar'],
-                    selected: _activeTab,
-                    onSelected: (tab) => setState(() => _activeTab = tab)))),
-      ),
+              tooltip: 'Back',
+              onPressed: widget.onBack,
+              icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
+        IconButton(
+            tooltip: 'Refresh schedules',
+            onPressed: _loading ? null : _load,
+            icon: Icon(Icons.refresh_rounded, size: 20, color: mood.accent))
+      ],
+      filters: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+          child: SundoSegmentedTabs(
+              labels: const ['Today', 'This Week', 'Calendar'],
+              selected: _activeTab,
+              onSelected: (tab) => setState(() => _activeTab = tab))),
       body: RefreshIndicator(
           onRefresh: _load,
           child: SingleChildScrollView(

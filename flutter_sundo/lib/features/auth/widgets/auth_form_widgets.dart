@@ -90,6 +90,7 @@ class SundoTextField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          errorMaxLines: 3,
           labelStyle: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -125,37 +126,42 @@ class SundoPrimaryButton extends StatelessWidget {
   final bool busy;
   final IconData icon;
   @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        decoration: ClayTheme.buttonPrimary(radius: 18),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: busy ? null : onPressed,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 52),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child:
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Flexible(
-                      child: Text(label,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                              color: Colors.white))),
-                  const SizedBox(width: 12),
-                  busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : Icon(icon, color: Colors.white, size: 20),
-                ]),
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        enabled: !busy && onPressed != null,
+        child: Container(
+          width: double.infinity,
+          decoration: ClayTheme.buttonPrimary(radius: 18),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: busy ? null : onPressed,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 52),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                            child: Text(label,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: Colors.white))),
+                        const SizedBox(width: 12),
+                        busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Icon(icon, color: Colors.white, size: 20),
+                      ]),
+                ),
               ),
             ),
           ),

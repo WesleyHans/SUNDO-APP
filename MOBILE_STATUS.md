@@ -1,5 +1,39 @@
 # SUNDO mobile status
 
+## Version 1.5.4 reference leaf placement
+
+This release builds on the restored 1.5.1 checkpoint. It reuses the original
+transparent natural leaf asset and keeps Splash and Welcome branding unchanged.
+Splash restores two leaves entering from its edges. Login's upper leaf begins in
+the status-bar corner, matching the supplied phone reference. Corner stems extend
+outside the viewport intentionally; the visible artwork is clipped to the screen.
+Leaf sizes and offsets are recovered from the original layout in commit `72cfe29`;
+the leaf PNG itself is unchanged.
+Login and registration use fixed corner decorations independent of form scrolling.
+Home, Schedule, Alerts, Profile and Report use consistent upper-right and lower-left
+leaves behind their controls. Resident page-title bars are removed; refresh, filters,
+back navigation and profile editing remain available. Live Map has no leaves.
+North/route-fit controls remain at the upper left; the redundant route-fit button
+was removed from the right column so its remaining controls clear the tracking panel
+on short phones.
+One shell safe area avoids applying the status-bar inset twice.
+
+The checkpoint's weather freshness, Philippine-time greetings, shared scenery fade,
+default route transitions, retained navigation tabs and truck tracking are unchanged.
+Android version 1.5.4+12 allows installation over the earlier releases.
+
+The UI audit also fixes larger-text Welcome overflow, photo button clipping,
+keyboard space in Report, scrolling in announcement/reminder dialogs and the
+premature disposal of profile/city editor controllers during closing animations.
+Staff/driver cards use readable night surfaces; city forms display required-field
+errors and map labels stay compact. Welcome's normal branding and control positions
+remain unchanged, with larger touch targets and keyboard activation for its buttons.
+The scenery behind enlarged Welcome text is softened to keep its message readable.
+
+Validation: Flutter analysis is clean; all 227 tests passed. Another 60 native
+preview checks passed, including the supplied leaf arrangement, day/night screens,
+small phones, enlarged text, keyboard editors, dialogs and leaf-free map controls.
+
 ## Version 1.5.3 restores the complete 1.5.1 checkpoint
 
 The resident app source, assets and tests match checkpoint

@@ -1,4 +1,4 @@
-import '../../shared/widgets/scenic_backdrop.dart';
+import '../../shared/widgets/resident_content.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -86,6 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
+              scrollable: true,
               backgroundColor: mood.surface,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22)),
@@ -130,11 +131,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final mood = SundoTimeScope.of(context);
     await showModalBottomSheet<void>(
         context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
         showDragHandle: true,
         backgroundColor: mood.surface,
         builder: (context) => StatefulBuilder(
             builder: (context, setSheetState) => SafeArea(
-                  child: Padding(
+                  child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                       child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -193,43 +196,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .where(
             (item) => _activeFilter == 'All' || item.category == _activeFilter)
         .toList();
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        flexibleSpace: const SundoHeaderLeaves(),
-        backgroundColor: mood.background,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        leading: widget.onBack == null
-            ? null
-            : IconButton(
-                tooltip: 'Back',
-                onPressed: widget.onBack,
-                icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
-        title: Text('Notifications',
-            style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                color: mood.textColor)),
-        actions: [
+    return SundoResidentContent(
+      actions: [
+        if (widget.onBack != null)
           IconButton(
-              tooltip: 'Mark all read',
-              onPressed: _notifications.isEmpty ? null : _markAllRead,
-              icon: Icon(Icons.done_all_rounded, size: 20, color: mood.accent)),
-          IconButton(
-              tooltip: 'Notification settings',
-              onPressed: _settings,
-              icon: Icon(Icons.tune_rounded, size: 20, color: mood.accent))
-        ],
-        bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(56),
-            child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                child: SundoSegmentedTabs(
-                    labels: const ['All', 'Alerts', 'Announcements'],
-                    selected: _activeFilter,
-                    onSelected: (tab) => setState(() => _activeFilter = tab)))),
-      ),
+              tooltip: 'Back',
+              onPressed: widget.onBack,
+              icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
+        IconButton(
+            tooltip: 'Mark all read',
+            onPressed: _notifications.isEmpty ? null : _markAllRead,
+            icon: Icon(Icons.done_all_rounded, size: 20, color: mood.accent)),
+        IconButton(
+            tooltip: 'Notification settings',
+            onPressed: _settings,
+            icon: Icon(Icons.tune_rounded, size: 20, color: mood.accent))
+      ],
+      filters: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+          child: SundoSegmentedTabs(
+              labels: const ['All', 'Alerts', 'Announcements'],
+              selected: _activeFilter,
+              onSelected: (tab) => setState(() => _activeFilter = tab))),
       body: RefreshIndicator(
           onRefresh: _load,
           child: ListView(

@@ -15,6 +15,7 @@ import 'package:sundo_sipalay/repositories/mock_auth_repository.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/services/weather_consent.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
+import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -111,11 +112,17 @@ void main() {
         of: find.byType(SundoBottomNavigation),
         matching: find.text('Schedule')));
     await tester.pumpAndSettle();
-    expect(find.text('Collection Schedule'), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Collection Schedule'), findsNothing);
+    expect(find.byType(LeafSprig), findsNWidgets(2));
+    expect(find.text('This Week'), findsOneWidget);
     await tester.tap(find.descendant(
         of: find.byType(SundoBottomNavigation), matching: find.text('Alerts')));
     await tester.pumpAndSettle();
-    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Notifications'), findsNothing);
+    expect(find.byType(LeafSprig), findsNWidgets(2));
+    expect(find.byTooltip('Mark all read'), findsOneWidget);
     await tester.tap(find.descendant(
         of: find.byType(SundoBottomNavigation),
         matching: find.text('Profile')));

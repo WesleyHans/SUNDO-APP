@@ -1,4 +1,5 @@
-import '../../shared/widgets/scenic_backdrop.dart';
+import '../../shared/widgets/resident_content.dart';
+import '../../shared/widgets/editor_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -188,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final phone = TextEditingController(text: _phone);
     var busy = false;
     String? error;
-    await showModalBottomSheet<void>(
+    await showSundoEditorSheet<void>(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
@@ -289,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         : sipalayBarangays.first;
     var busy = false;
     String? error;
-    await showModalBottomSheet<void>(
+    await showSundoEditorSheet<void>(
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
@@ -392,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final form = GlobalKey<FormState>();
     final label = TextEditingController();
     final address = TextEditingController();
-    await showDialog<void>(
+    await showSundoEditorDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
               title: const Text('Add Saved Address'),
@@ -672,20 +673,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final night = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-          flexibleSpace: const SundoHeaderLeaves(),
-          centerTitle: true,
-          title: Text('Profile',
-              style: GoogleFonts.outfit(
-                  fontSize: 19, fontWeight: FontWeight.w800)),
-          actions: [
-            IconButton(
-                tooltip: 'Edit profile',
-                onPressed: _editProfile,
-                icon: const Icon(Icons.settings_outlined))
-          ]),
+    return SundoResidentContent(
+      topClearance: 88,
       body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
           child:
@@ -725,7 +714,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     fontSize: 12,
                                     color: colors.onSurfaceVariant)),
                           ])),
-                      const Icon(Icons.edit_outlined, size: 18),
+                      IconButton(
+                          tooltip: 'Edit profile',
+                          onPressed: _editProfile,
+                          icon: const Icon(Icons.edit_outlined, size: 18)),
                     ]))),
             const SizedBox(height: 20),
             Container(

@@ -13,6 +13,7 @@ import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:sundo_sipalay/shared/widgets/directional_truck.dart';
+import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 
 import 'fixtures/map_tile_fixture.dart';
 
@@ -129,7 +130,18 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('Live Truck Tracking'), findsOneWidget);
+      expect(find.text('Live Truck Tracking'), findsNothing);
+      expect(find.byType(LeafSprig), findsNothing);
+      final north = find.byTooltip('Reset map north');
+      final fit = find.byTooltip('Fit active route');
+      expect(north.hitTestable(), findsOneWidget);
+      expect(fit.hitTestable(), findsOneWidget);
+      final northBounds = tester.getRect(north);
+      final fitBounds = tester.getRect(fit);
+      expect(northBounds.center.dy, closeTo(fitBounds.center.dy, .1));
+      expect(northBounds.right, lessThanOrEqualTo(fitBounds.left));
+      expect(northBounds.left, greaterThanOrEqualTo(0));
+      expect(fitBounds.right, lessThanOrEqualTo(390));
       expect(find.text('Watch'), findsOneWidget);
       expect(find.bySemanticsLabel('Your private GPS location'), findsNothing);
       expect(tiles.requestedImages, isNotEmpty);
@@ -160,6 +172,11 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('2D'), findsOneWidget);
       expect(find.text('3D'), findsOneWidget);
+      expect(north.hitTestable(), findsOneWidget);
+      expect(fit.hitTestable(), findsOneWidget);
+      expect(tester.getRect(north).center.dy,
+          closeTo(tester.getRect(fit).center.dy, .1));
+      expect(tester.getRect(fit).right, lessThanOrEqualTo(320));
       await tester.pumpWidget(const SizedBox.shrink());
       expect(tiles.disposeCalls, 1);
     });
