@@ -12,6 +12,9 @@ so residents can install the restored behavior over version 1.5.2.
 Validation: Flutter analysis clean and all 198 tests passed. Runtime source,
 assets, tests, dependency lockfile, platform files and workflow files compared
 directly with the checkpoint and contain no differences.
+Verified APK: version 1.5.3+11, 92,917,994 bytes, SHA-256
+`05fff5d44a3811184c0695ae3283155f69316c8bcf2eb5b61ff2136751920eee`.
+The signing certificate matches the existing installed SUNDO releases.
 
 ## Version 1.5.1 weather, scenery and Philippine time fixes
 
