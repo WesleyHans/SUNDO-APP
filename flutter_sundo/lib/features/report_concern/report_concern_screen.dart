@@ -208,12 +208,17 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SundoResidentContent(
+        body: _ticket != null
+            ? _success()
+            : _tab == 'My Reports'
+                ? _history()
+                : _form(),
+      );
+
+  Widget _controls() {
     final mood = SundoTimeScope.of(context);
-    return SundoResidentContent(
-      topClearance: MediaQuery.viewInsetsOf(context).bottom > 0
-          ? (widget.onBack == null ? 20 : 68)
-          : 120,
+    return SundoResidentInlineControls(
       actions: [
         if (widget.onBack != null)
           IconButton(
@@ -222,20 +227,13 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
               icon: Icon(Icons.chevron_left_rounded, color: mood.textColor))
       ],
       filters: _ticket == null
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-              child: SundoSegmentedTabs(
-                  labels: const ['New Report', 'My Reports'],
-                  selected: _tab,
-                  onSelected: (tab) {
-                    if (!_saving) setState(() => _tab = tab);
-                  }))
+          ? SundoSegmentedTabs(
+              labels: const ['New Report', 'My Reports'],
+              selected: _tab,
+              onSelected: (tab) {
+                if (!_saving) setState(() => _tab = tab);
+              })
           : null,
-      body: _ticket != null
-          ? _success()
-          : _tab == 'My Reports'
-              ? _history()
-              : _form(),
     );
   }
 
@@ -250,11 +248,13 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   Widget _form() {
     final mood = SundoTimeScope.of(context);
     return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 30),
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
         child: Form(
             key: _formKey,
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _controls(),
+              const SizedBox(height: 16),
               _heading('Concern Type'),
               for (final type in [
                 'Missed Collection',
@@ -465,7 +465,8 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
     return SingleChildScrollView(
         padding: const EdgeInsets.all(22),
         child: Column(children: [
-          const SizedBox(height: 40),
+          _controls(),
+          const SizedBox(height: 24),
           const Icon(Icons.check_circle_rounded,
               size: 74, color: Color(0xFF25B84A)),
           const SizedBox(height: 20),
@@ -523,8 +524,10 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
         onRefresh: _loadReports,
         child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
             children: [
+              _controls(),
+              const SizedBox(height: 16),
               if (_loadingHistory)
                 const Padding(
                     padding: EdgeInsets.all(30),

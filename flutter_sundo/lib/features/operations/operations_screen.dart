@@ -9,6 +9,8 @@ import '../../core/theme/clay_theme.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import '../../shared/widgets/sundo_graphics.dart';
 import '../../shared/widgets/editor_routes.dart';
+import '../../shared/widgets/screen_transition.dart';
+import '../../app/navigation_motion.dart';
 
 /// Shared city-account forms keep validation visible while the keyboard is open.
 class OperationsFormDialog extends StatefulWidget {
@@ -413,22 +415,24 @@ class _OperationsScreenState extends State<OperationsScreen> {
                     textAlign: TextAlign.center),
               ])),
         Expanded(
-            child: _tab == 0
-                ? _buildDashboard()
-                : _tab == 1
-                    ? _buildMap()
-                    : _tab == 2
-                        ? _buildReports()
-                        : _tab == 3
-                            ? _buildSchedules()
-                            : _buildProfile()),
+            child: SundoFadeThrough<int>(
+                value: _tab,
+                builder: (context, displayedTab) => displayedTab == 0
+                    ? _buildDashboard()
+                    : displayedTab == 1
+                        ? _buildMap()
+                        : displayedTab == 2
+                            ? _buildReports()
+                            : displayedTab == 3
+                                ? _buildSchedules()
+                                : _buildProfile())),
       ]),
       floatingActionButton: (_tab == 0 || _tab == 2) && _role == 'resident'
           ? FloatingActionButton.extended(
               onPressed: () async {
                 await Navigator.push(
                     context,
-                    MaterialPageRoute<void>(
+                    sundoPageRoute<void>(
                         builder: (_) => ReportGarbageScreen(
                             onBack: () => Navigator.pop(context))));
                 await _refresh();

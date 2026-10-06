@@ -14,6 +14,7 @@ import '../services/backend_service.dart';
 import './resident_shell.dart';
 import '../repositories/weather_repository.dart';
 import '../services/weather_consent.dart';
+import './navigation_motion.dart';
 
 final sundoNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,51 +25,64 @@ final sundoRouterProvider = Provider<GoRouter>((ref) {
       routes: [
         GoRoute(
             path: '/',
-            builder: (context, state) => SplashScreen(onContinue: () async {
+            pageBuilder: (context, state) =>
+                sundoPage(state, SplashScreen(onContinue: () async {
                   await ref.read(weatherStartupChoiceGateProvider).ready;
                   if (!context.mounted) return;
                   context.go(
                       BackendService.live || MockAuthRepository.hasSession
                           ? '/app'
                           : '/welcome');
-                })),
+                }))),
         GoRoute(
             path: '/welcome',
-            builder: (context, state) => WelcomeScreen(
-                onGetStarted: () async {
-                  await BackendService.logout();
-                  await MockAuthRepository.logout();
-                  await ref
-                      .read(sundoWeatherProvider.notifier)
-                      .refreshSavedArea();
-                  if (context.mounted) context.go('/app');
-                },
-                onLogIn: () => context.go('/login'),
-                onCreateAccount: () => context.go('/register'))),
+            pageBuilder: (context, state) => sundoPage(
+                state,
+                WelcomeScreen(
+                    onGetStarted: () async {
+                      await BackendService.logout();
+                      await MockAuthRepository.logout();
+                      await ref
+                          .read(sundoWeatherProvider.notifier)
+                          .refreshSavedArea();
+                      if (context.mounted) context.go('/app');
+                    },
+                    onLogIn: () => context.go('/login'),
+                    onCreateAccount: () => context.go('/register')))),
         GoRoute(
             path: '/login',
-            builder: (context, state) => LoginScreen(
-                onLoginSuccess: () {
-                  ref.read(sundoWeatherProvider.notifier).refreshSavedArea();
-                  context.go('/app');
-                },
-                onCreateAccount: () => context.go('/register'),
-                onBack: () => context.go('/welcome'))),
+            pageBuilder: (context, state) => sundoPage(
+                state,
+                LoginScreen(
+                    onLoginSuccess: () {
+                      ref
+                          .read(sundoWeatherProvider.notifier)
+                          .refreshSavedArea();
+                      context.go('/app');
+                    },
+                    onCreateAccount: () => context.go('/register'),
+                    onBack: () => context.go('/welcome')))),
         GoRoute(
             path: '/register',
-            builder: (context, state) => RegisterScreen(
-                onBack: () => context.go('/welcome'),
-                onRegisterSuccess: () {
-                  ref.read(sundoWeatherProvider.notifier).refreshSavedArea();
-                  context.go('/app');
-                },
-                onGoToLogin: () => context.go('/login'))),
+            pageBuilder: (context, state) => sundoPage(
+                state,
+                RegisterScreen(
+                    onBack: () => context.go('/welcome'),
+                    onRegisterSuccess: () {
+                      ref
+                          .read(sundoWeatherProvider.notifier)
+                          .refreshSavedArea();
+                      context.go('/app');
+                    },
+                    onGoToLogin: () => context.go('/login')))),
         GoRoute(
-            path: '/app', builder: (context, state) => const _AccountShell()),
+            path: '/app',
+            pageBuilder: (context, state) =>
+                sundoPage(state, const _AccountShell())),
         GoRoute(
             path: '/report',
-            builder: (context, state) =>
-                ReportGarbageScreen(onBack: () => context.pop())),
+            pageBuilder: (context, state) => sundoPage(
+                state, ReportGarbageScreen(onBack: () => context.pop()))),
       ],
       errorBuilder: (context, state) => Scaffold(
           body: Center(

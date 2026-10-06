@@ -19,11 +19,13 @@ import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
+import 'location_platform_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   SharedPreferences.setMockInitialValues({});
+  setUp(mockUnavailableDeviceLocation);
   final screens = <String, Widget Function()>{
     'splash': () => SplashScreen(onContinue: () {}),
     'welcome': () => WelcomeScreen(
@@ -83,6 +85,8 @@ void main() {
               const AssetImage('assets/images/sundo-brand-logo.png'), context);
         });
         await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1100));
         expect(tester.takeException(), isNull);
         if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
           await expectLater(

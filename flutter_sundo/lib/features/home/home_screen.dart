@@ -15,10 +15,13 @@ import '../../shared/widgets/sundo_graphics.dart';
 import '../live_map/widgets/map_tracking_widgets.dart';
 import '../../shared/widgets/resident_components.dart';
 import '../../shared/widgets/weather_status_banner.dart';
+import 'home_collection_notice.dart';
+import 'home_location_card.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int) onNavigate;
-  const HomeScreen({super.key, required this.onNavigate});
+  final bool isActive;
+  const HomeScreen({super.key, required this.onNavigate, this.isActive = true});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -29,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _unread = 0;
   String? _error;
   List<CollectionSchedule> _schedules = [];
+  bool _schedulesLoaded = false;
+  bool _schedulesFailed = false;
   MapTruckSnapshot? _truck;
   StreamSubscription<List<MapTruckSnapshot>>? _fleet;
   Timer? _refreshTimer;
@@ -71,13 +76,18 @@ class _HomeScreenState extends State<HomeScreen> {
           _name = name;
           _barangay = barangay;
           _schedules = rows;
+          _schedulesLoaded = true;
+          _schedulesFailed = false;
           _error = null;
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(
-            () => _error = 'Collection information could not be refreshed.');
+        setState(() {
+          _schedulesLoaded = true;
+          _schedulesFailed = true;
+          _error = 'Collection information could not be refreshed.';
+        });
       }
     }
   }
@@ -176,9 +186,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Text(_error!,
                                       style: TextStyle(
                                           color: mood.accent, fontSize: 12))),
+                            HomeCollectionNotice(
+                                schedules: _schedules,
+                                area: _barangay,
+                                isDemo: !BackendService.live,
+                                loaded: _schedulesLoaded,
+                                failed: _schedulesFailed,
+                                onOpenSchedule: () => widget.onNavigate(2)),
+                            const SizedBox(height: 14),
                             _nextCard(context, next),
                             const SizedBox(height: 14),
                             _truckCard(context),
+                            const SizedBox(height: 14),
+                            HomeLocationCard(
+                                isActive: widget.isActive,
+                                onOpenMap: () => widget.onNavigate(1)),
                             const SizedBox(height: 20),
                             Text('Quick Actions',
                                 style: GoogleFonts.outfit(

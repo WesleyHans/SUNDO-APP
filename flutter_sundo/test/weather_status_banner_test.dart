@@ -11,6 +11,7 @@ import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/weather_status_banner.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'location_platform_fixture.dart';
 
 const _deviceLocation = WeatherLocation(
   latitude: 9.75,
@@ -25,6 +26,7 @@ void main() {
   final now = DateTime(2026, 10, 5, 19, 10);
 
   setUp(() {
+    mockUnavailableDeviceLocation();
     SharedPreferences.setMockInitialValues({});
     AppStore.setIdentity(null);
   });

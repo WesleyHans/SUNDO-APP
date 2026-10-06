@@ -56,8 +56,8 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final mood = SundoTimeScope.of(context);
-    // The first scene is mounted immediately, without fading from an empty
-    // previous image. Further scenes must decode before replacing this one.
+    // Keep the original composition while fading a late first image. Further
+    // scenes must decode before replacing this one.
     _displayedEnvironment ??= mood.environment;
     _displayedMood ??= mood;
     _requestScene(mood);
@@ -318,6 +318,20 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       excludeFromSemantics: true,
       filterQuality: FilterQuality.medium,
       errorBuilder: (context, error, stack) => const SizedBox.expand(),
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        // Cached scenery is already part of the page transition. Only a
+        // delayed decode needs its own fade to avoid popping in later.
+        if (wasSynchronouslyLoaded) return child;
+        return AnimatedOpacity(
+          key: const ValueKey('sundo-scene-first-frame'),
+          opacity: frame == null ? 0 : 1,
+          duration: reducedMotion
+              ? Duration.zero
+              : Duration(milliseconds: widget.fullScene ? 900 : 450),
+          curve: Curves.easeOutCubic,
+          child: child,
+        );
+      },
     );
     final lighting = _sceneLighting(mood);
     final scene = _suppressOldRain

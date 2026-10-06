@@ -8,6 +8,7 @@ import '../services/backend_service.dart';
 import '../repositories/notification_repository.dart';
 import '../shared/widgets/resident_components.dart';
 import '../shared/widgets/scenic_backdrop.dart';
+import '../shared/widgets/screen_transition.dart';
 import '../core/theme/time_theme.dart';
 
 class MainNavigationShell extends StatefulWidget {
@@ -55,7 +56,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
     final screens = [
-      HomeScreen(onNavigate: _navigate),
+      HomeScreen(onNavigate: _navigate, isActive: _index == 0),
       _visited.contains(1)
           ? LiveMapScreen(isActive: _index == 1)
           : const SizedBox.shrink(),
@@ -69,30 +70,33 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ];
     return Scaffold(
         backgroundColor: Colors.transparent,
-        body: SundoResidentLeaves(
-            enabled: _index != 1,
-            child: SafeArea(
-                bottom: false,
-                child: Column(children: [
-                  if (!BackendService.live)
-                    Container(
-                        width: double.infinity,
-                        color: mood.isNight
-                            ? const Color(0xFF34402A)
-                            : const Color(0xFFEAF8EE),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 5),
-                        child: Text(
-                            'LOCAL DEMO · Sample fleet and schedules · Reports stay on this phone',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 9,
-                                color: mood.isNight
-                                    ? const Color(0xFFD7E5B9)
-                                    : const Color(0xFF427045)))),
-                  Expanded(
-                      child: IndexedStack(index: _index, children: screens))
-                ]))),
+        body: SundoFadeThrough<int>(
+            value: _index,
+            builder: (context, displayedIndex) => SundoResidentLeaves(
+                enabled: displayedIndex != 1,
+                child: SafeArea(
+                    bottom: false,
+                    child: Column(children: [
+                      if (!BackendService.live)
+                        Container(
+                            width: double.infinity,
+                            color: mood.isNight
+                                ? const Color(0xFF34402A)
+                                : const Color(0xFFEAF8EE),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 5),
+                            child: Text(
+                                'LOCAL DEMO · Sample fleet and schedules · Reports stay on this phone',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    color: mood.isNight
+                                        ? const Color(0xFFD7E5B9)
+                                        : const Color(0xFF427045)))),
+                      Expanded(
+                          child: IndexedStack(
+                              index: displayedIndex, children: screens))
+                    ])))),
         bottomNavigationBar: SundoBottomNavigation(
             index: _index, onChanged: _navigate, unread: _unread));
   }

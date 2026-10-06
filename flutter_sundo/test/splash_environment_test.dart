@@ -282,8 +282,10 @@ void main() {
       await _loadFonts(tester);
       await _pumpSplash(tester, environment.value, const Size(390, 844));
       if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
-        await expectLater(find.byKey(_previewKey),
-            matchesGoldenFile('goldens/splash_${environment.key}.png'));
+        await expectLater(
+            find.byKey(_previewKey),
+            matchesGoldenFile(
+                'goldens/splash_environment_${environment.key}.png'));
       }
       await tester.pumpWidget(const SizedBox.shrink());
       debugDisableShadows = originalShadows;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './time_based_background.dart';
+import '../../core/theme/time_theme.dart';
 
 // Retained for the operations illustration and existing asset preloading.
 const clayHeroAsset = 'assets/images/clay-city-hero.png';
@@ -7,10 +8,20 @@ const sundoLeafSprigAsset = 'assets/images/sundo-leaf-sprig.png';
 
 class ScenicBackdrop extends StatelessWidget {
   final Widget child;
-  const ScenicBackdrop({super.key, required this.child});
+  final Animation<double>? sceneryOpacity;
+  const ScenicBackdrop({super.key, required this.child, this.sceneryOpacity});
   @override
   Widget build(BuildContext context) => Stack(fit: StackFit.expand, children: [
-        const Positioned.fill(child: SundoTimeBasedBackground()),
+        if (sceneryOpacity != null)
+          Positioned.fill(
+              child: ColoredBox(color: SundoTimeScope.of(context).background)),
+        Positioned.fill(
+            child: sceneryOpacity == null
+                ? const SundoTimeBasedBackground()
+                : FadeTransition(
+                    key: const ValueKey('sundo-navigation-scenery-fade'),
+                    opacity: sceneryOpacity!,
+                    child: const SundoTimeBasedBackground())),
         child,
       ]);
 }

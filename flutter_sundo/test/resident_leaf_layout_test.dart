@@ -14,11 +14,13 @@ import 'package:sundo_sipalay/features/report_concern/report_concern_screen.dart
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/schedule_notification_widgets.dart';
+import 'location_platform_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   setUp(() {
+    mockUnavailableDeviceLocation();
     SharedPreferences.setMockInitialValues({});
     AppStore.setIdentity(null);
   });
@@ -103,7 +105,7 @@ void main() {
     expect(
         tester.getRect(find.byTooltip('Back')).overlaps(leaves.first), isFalse);
     expect(tester.getRect(find.byType(SundoSegmentedTabs)).top,
-        greaterThanOrEqualTo(leaves.first.bottom));
+        greaterThanOrEqualTo(tester.getRect(find.byTooltip('Back')).bottom));
     await tester.tap(find.text('My Reports'));
     await tester.pumpAndSettle();
     expect(find.text('No reports yet'), findsOneWidget);
@@ -145,6 +147,7 @@ void main() {
           of: find.byType(SundoBottomNavigation), matching: find.text(tab)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
       expect(find.byType(AppBar), findsNothing);
       expect(find.byType(SundoHeaderLeaves), findsNothing);
       expect(find.byType(SundoResidentLeaves), findsWidgets);
@@ -197,6 +200,7 @@ void main() {
     await tester.tap(find.text('Alerts').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Notification settings'));
     await tester.pumpAndSettle();
     expect(find.byType(SwitchListTile), findsWidgets);

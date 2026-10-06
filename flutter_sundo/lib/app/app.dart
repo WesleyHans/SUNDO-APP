@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/time_theme.dart';
-import '../shared/widgets/scenic_backdrop.dart';
+import './navigation_motion.dart';
 import '../core/theme/app_theme.dart';
 import './router.dart';
 import '../repositories/weather_repository.dart';
@@ -148,11 +148,12 @@ class _SundoAppState extends ConsumerState<SundoApp>
   Widget build(BuildContext context) {
     final mood = ref.watch(sundoDayNightThemeProvider);
     final checkingWeather = ref.watch(sundoWeatherLoadingProvider);
+    final router = ref.watch(sundoRouterProvider);
     return MaterialApp.router(
       title: 'SUNDO - Sipalay Smart Waste',
       debugShowCheckedModeBanner: false,
       theme: buildSundoTheme(mood),
-      routerConfig: ref.watch(sundoRouterProvider),
+      routerConfig: router,
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
           value: (mood.isNight
                   ? SystemUiOverlayStyle.light
@@ -165,7 +166,8 @@ class _SundoAppState extends ConsumerState<SundoApp>
               checkingWeather: checkingWeather,
               weatherEnabled: _weatherController.enabled,
               onWeatherRefresh: () => unawaited(_weatherController.refresh()),
-              child: ScenicBackdrop(child: child ?? const SizedBox.shrink()))),
+              child: SundoNavigationBackdrop(
+                  router: router, child: child ?? const SizedBox.shrink()))),
     );
   }
 }

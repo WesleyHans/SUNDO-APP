@@ -16,11 +16,13 @@ import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/services/weather_consent.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'location_platform_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   setUp(() {
+    mockUnavailableDeviceLocation();
     SharedPreferences.setMockInitialValues({weatherLocationConsentKey: false});
     FlutterSecureStorage.setMockInitialValues({});
     MockAuthRepository.resetMemory();
