@@ -24,7 +24,9 @@ Validation: Flutter analysis clean and all 198 tests passed. Native Schedule pre
 cover clear/cloudy/rain with 32 px system inset and 1.4× text on a 320 px phone.
 Splash checks preserve brand/card geometry across environments. Regression checks
 cover timezone offsets, noon greetings, stale weather, offline retry and failed
-dry-scene decoding. Android release version is 1.5.1+9.
+dry-scene decoding. Android release version is 1.5.1+9, 92,917,994 bytes, SHA-256
+`7dc433e57e776bdb3500f16282f649edbf59fe20329023de68deff17893cb735`.
+The verified signing certificate matches the existing locally signed Android releases.
 
 ## Version 1.5.0 directional marker update
 
