@@ -1,3 +1,4 @@
+import '../../shared/widgets/resident_header.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -64,7 +65,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    return Scaffold(
+    return sundoResidentScreen(
+      context,
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         flexibleSpace: const SundoHeaderLeaves(),
