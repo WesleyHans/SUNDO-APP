@@ -1,33 +1,17 @@
 # SUNDO mobile status
 
-## Version 1.5.2 smooth transitions and shared resident header
+## Version 1.5.3 restores the complete 1.5.1 checkpoint
 
-Welcome, Login, Register, the account shell and Report Concern share a 600 ms
-ease-in-out fade. Each route paints its scenery inside the fading surface, keeping
-the outgoing illustration visible on the first incoming frame instead of exposing
-the shared root backdrop abruptly. Native Report Concern navigation uses the same
-transition. Reduced-motion settings switch routes immediately.
+The resident app source, assets and tests match checkpoint
+`2a482eedc25a4c3afa84834ea705e42ec34cc83f`. This restores the 1.5.1
+layout, leaves, navigation and scenery behavior, including its Philippine-time
+greetings and weather freshness fixes. Changes introduced by 1.5.2 and the
+unfinished corner-leaf work are removed. Android packaging uses version 1.5.3+11
+so residents can install the restored behavior over version 1.5.2.
 
-Resident tabs use a 420 ms fade while preserving their mounted elements, scroll
-positions and form state. Rapid switches continue from the current opacity.
-Outgoing tabs cannot receive pointer, focus or accessibility interaction, and their
-visual tickers pause. Live-map activity still follows the selected tab immediately.
-
-The main resident tabs share one 56 px header below a single system safe area,
-removing the repeated blank top space. Each screen retains its existing actions
-and filters. Header actions occupy the left side, leaving the previous top-right
-leaf frame unchanged (48 px, 2 px top and 6 px right inset). Splash, Login and
-Welcome leaf placements remain intact. The transparent natural-leaf asset contains
-only the three leaves and stem; the stray green logo fragment has been removed.
-
-Validation: Flutter analysis clean, 202 tests passed. Native day/night Login
-midpoint and completion previews inspected; pixel checks cover first-frame scenery
-continuity and gradual blending. Tab checks cover retained input/state, rapid
-navigation, outgoing input exclusion and reduced motion. Narrow-phone checks cover
-the shared header, unchanged leaf frame, large text and working Profile/Alerts
-actions. Android version 1.5.2+10. Verified APK: 94,464,618 bytes, SHA-256
-`f105238a03c79eeb78bba169b31692b8ec275a85b547ad724546900bd6afd17f`.
-The signing certificate matches the existing locally signed Android releases.
+Validation: Flutter analysis clean and all 198 tests passed. Runtime source,
+assets, tests, dependency lockfile, platform files and workflow files compared
+directly with the checkpoint and contain no differences.
 
 ## Version 1.5.1 weather, scenery and Philippine time fixes
 

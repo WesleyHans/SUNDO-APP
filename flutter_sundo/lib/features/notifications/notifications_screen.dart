@@ -1,4 +1,3 @@
-import '../../shared/widgets/resident_header.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -194,8 +193,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .where(
             (item) => _activeFilter == 'All' || item.category == _activeFilter)
         .toList();
-    return sundoResidentScreen(
-      context,
+    return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         flexibleSpace: const SundoHeaderLeaves(),
