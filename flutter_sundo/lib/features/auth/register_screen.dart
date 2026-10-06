@@ -1,3 +1,4 @@
+import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -167,178 +168,193 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-          child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
-        child: AutofillGroup(
-            child: Form(
-          key: _form,
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                    onPressed: _busy ? null : widget.onBack,
-                    tooltip: 'Back',
-                    icon: const Icon(Icons.chevron_left_rounded))),
-            Text('Create Your Account',
-                style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: colors.onSurface)),
-            const SizedBox(height: 5),
-            Text('Join SUNDO and be part of a\ncleaner and greener Sipalay.',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12, color: colors.onSurfaceVariant, height: 1.5)),
-            const SizedBox(height: 18),
-            if (!BackendService.configured) ...[
-              const DemoAuthNotice(),
-              const SizedBox(height: 14)
-            ],
-            SundoTextField(
-                label: 'Full Name',
-                controller: _name,
-                icon: Icons.person_outline,
-                hint: 'Juan Dela Cruz',
-                enabled: !_busy,
-                validator: validateName,
-                autofillHints: const [AutofillHints.name]),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Mobile Number',
-                controller: _phone,
-                icon: Icons.phone_android_outlined,
-                hint: '0912 345 6789',
-                enabled: !_busy,
-                validator: validateMobile,
-                keyboardType: TextInputType.phone,
-                autofillHints: const [AutofillHints.telephoneNumber]),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Email Address',
-                controller: _email,
-                icon: Icons.mail_outline,
-                hint: 'juan@example.com',
-                enabled: !_busy,
-                validator: validateEmail,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email]),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Password',
-                controller: _password,
-                icon: Icons.lock_outline,
-                obscureText: !_showPassword,
-                enabled: !_busy,
-                validator: validatePassword,
-                autofillHints: const [AutofillHints.newPassword],
-                suffixIcon: IconButton(
-                    onPressed: () =>
-                        setState(() => _showPassword = !_showPassword),
-                    tooltip: _showPassword ? 'Hide password' : 'Show password',
-                    icon: Icon(
-                        _showPassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        size: 20))),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Confirm Password',
-                controller: _confirm,
-                icon: Icons.lock_outline,
-                obscureText: !_showPassword,
-                enabled: !_busy,
-                validator: (value) =>
-                    value == _password.text && value?.isNotEmpty == true
-                        ? null
-                        : 'The passwords must match.'),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-                initialValue: _barangay,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                    labelText: 'Barangay / Address',
-                    prefixIcon: Icon(Icons.location_on_outlined, size: 20)),
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12, color: colors.onSurface),
-                items: sipalayBarangays
-                    .map((barangay) => DropdownMenuItem(
-                        value: barangay, child: Text(barangay)))
-                    .toList(),
-                onChanged: _busy
-                    ? null
-                    : (value) =>
-                        setState(() => _barangay = value ?? _barangay)),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Zone / Purok',
-                controller: _zone,
-                icon: Icons.signpost_outlined,
-                hint: 'Purok 2',
-                enabled: !_busy,
-                validator: validateRequired),
-            const SizedBox(height: 12),
-            SundoTextField(
-                label: 'Street / Sitio / Landmark',
-                controller: _street,
-                icon: Icons.home_outlined,
-                hint: 'Near the plaza',
-                enabled: !_busy),
-            const SizedBox(height: 10),
-            SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Use my current location',
-                    style:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                secondary: Icon(Icons.my_location_rounded,
-                    color: colors.primary, size: 21),
-                value: _useLocation,
-                onChanged: _busy || _locationBusy ? null : _toggleLocation),
-            Text(
-                _locationBusy
-                    ? 'Getting an accurate GPS fix…'
-                    : _locationStatus,
-                style: TextStyle(
-                    fontSize: 11, height: 1.5, color: colors.onSurfaceVariant)),
-            if (_locationStatus.contains('blocked'))
-              const Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                      onPressed: Geolocator.openAppSettings,
-                      child: Text('Open phone settings'))),
-            const SizedBox(height: 8),
-            CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                value: _agree,
-                onChanged: _busy
-                    ? null
-                    : (value) => setState(() => _agree = value ?? false),
-                title: const Text(
-                    'I understand my address is used for collection updates and my precise location stays private.',
-                    style: TextStyle(fontSize: 11, height: 1.4))),
-            const SizedBox(height: 14),
-            SundoPrimaryButton(
-                label: _busy ? 'Creating account…' : 'Create Account',
-                busy: _busy,
-                onPressed: _register),
-            const SizedBox(height: 16),
-            Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text('Already have an account?',
-                      style: TextStyle(
-                          fontSize: 12, color: colors.onSurfaceVariant)),
-                  TextButton(
-                      onPressed: _busy ? null : widget.onGoToLogin,
-                      child: const Text('Log In',
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w800)))
-                ]),
-          ]),
-        )),
-      )),
+      body: SundoLeafFrame(
+          size: 44,
+          child: SafeArea(
+              child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+            child: AutofillGroup(
+                child: Form(
+              key: _form,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                            onPressed: _busy ? null : widget.onBack,
+                            tooltip: 'Back',
+                            icon: const Icon(Icons.chevron_left_rounded))),
+                    Text('Create Your Account',
+                        style: GoogleFonts.outfit(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: colors.onSurface)),
+                    const SizedBox(height: 5),
+                    Text(
+                        'Join SUNDO and be part of a\ncleaner and greener Sipalay.',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: colors.onSurfaceVariant,
+                            height: 1.5)),
+                    const SizedBox(height: 18),
+                    if (!BackendService.configured) ...[
+                      const DemoAuthNotice(),
+                      const SizedBox(height: 14)
+                    ],
+                    SundoTextField(
+                        label: 'Full Name',
+                        controller: _name,
+                        icon: Icons.person_outline,
+                        hint: 'Juan Dela Cruz',
+                        enabled: !_busy,
+                        validator: validateName,
+                        autofillHints: const [AutofillHints.name]),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Mobile Number',
+                        controller: _phone,
+                        icon: Icons.phone_android_outlined,
+                        hint: '0912 345 6789',
+                        enabled: !_busy,
+                        validator: validateMobile,
+                        keyboardType: TextInputType.phone,
+                        autofillHints: const [AutofillHints.telephoneNumber]),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Email Address',
+                        controller: _email,
+                        icon: Icons.mail_outline,
+                        hint: 'juan@example.com',
+                        enabled: !_busy,
+                        validator: validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email]),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Password',
+                        controller: _password,
+                        icon: Icons.lock_outline,
+                        obscureText: !_showPassword,
+                        enabled: !_busy,
+                        validator: validatePassword,
+                        autofillHints: const [AutofillHints.newPassword],
+                        suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => _showPassword = !_showPassword),
+                            tooltip: _showPassword
+                                ? 'Hide password'
+                                : 'Show password',
+                            icon: Icon(
+                                _showPassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                size: 20))),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Confirm Password',
+                        controller: _confirm,
+                        icon: Icons.lock_outline,
+                        obscureText: !_showPassword,
+                        enabled: !_busy,
+                        validator: (value) =>
+                            value == _password.text && value?.isNotEmpty == true
+                                ? null
+                                : 'The passwords must match.'),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                        initialValue: _barangay,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                            labelText: 'Barangay / Address',
+                            prefixIcon:
+                                Icon(Icons.location_on_outlined, size: 20)),
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12, color: colors.onSurface),
+                        items: sipalayBarangays
+                            .map((barangay) => DropdownMenuItem(
+                                value: barangay, child: Text(barangay)))
+                            .toList(),
+                        onChanged: _busy
+                            ? null
+                            : (value) =>
+                                setState(() => _barangay = value ?? _barangay)),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Zone / Purok',
+                        controller: _zone,
+                        icon: Icons.signpost_outlined,
+                        hint: 'Purok 2',
+                        enabled: !_busy,
+                        validator: validateRequired),
+                    const SizedBox(height: 12),
+                    SundoTextField(
+                        label: 'Street / Sitio / Landmark',
+                        controller: _street,
+                        icon: Icons.home_outlined,
+                        hint: 'Near the plaza',
+                        enabled: !_busy),
+                    const SizedBox(height: 10),
+                    SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Use my current location',
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w700)),
+                        secondary: Icon(Icons.my_location_rounded,
+                            color: colors.primary, size: 21),
+                        value: _useLocation,
+                        onChanged:
+                            _busy || _locationBusy ? null : _toggleLocation),
+                    Text(
+                        _locationBusy
+                            ? 'Getting an accurate GPS fix…'
+                            : _locationStatus,
+                        style: TextStyle(
+                            fontSize: 11,
+                            height: 1.5,
+                            color: colors.onSurfaceVariant)),
+                    if (_locationStatus.contains('blocked'))
+                      const Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                              onPressed: Geolocator.openAppSettings,
+                              child: Text('Open phone settings'))),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _agree,
+                        onChanged: _busy
+                            ? null
+                            : (value) =>
+                                setState(() => _agree = value ?? false),
+                        title: const Text(
+                            'I understand my address is used for collection updates and my precise location stays private.',
+                            style: TextStyle(fontSize: 11, height: 1.4))),
+                    const SizedBox(height: 14),
+                    SundoPrimaryButton(
+                        label: _busy ? 'Creating account…' : 'Create Account',
+                        busy: _busy,
+                        onPressed: _register),
+                    const SizedBox(height: 16),
+                    Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text('Already have an account?',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.onSurfaceVariant)),
+                          TextButton(
+                              onPressed: _busy ? null : widget.onGoToLogin,
+                              child: const Text('Log In',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800)))
+                        ]),
+                  ]),
+            )),
+          ))),
     );
   }
 }

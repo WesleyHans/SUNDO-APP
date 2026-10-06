@@ -1,4 +1,4 @@
-import '../../shared/widgets/scenic_backdrop.dart';
+import '../../shared/widgets/resident_content.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -210,37 +210,27 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-          flexibleSpace: const SundoHeaderLeaves(),
-          backgroundColor: mood.background,
-          surfaceTintColor: Colors.transparent,
-          centerTitle: true,
-          leading: widget.onBack == null
-              ? null
-              : IconButton(
-                  tooltip: 'Back',
-                  onPressed: _saving ? null : widget.onBack,
-                  icon:
-                      Icon(Icons.chevron_left_rounded, color: mood.textColor)),
-          title: Text('Report a Concern',
-              style: GoogleFonts.outfit(
-                  color: mood.textColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18)),
-          bottom: _ticket == null
-              ? PreferredSize(
-                  preferredSize: const Size.fromHeight(54),
-                  child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                      child: SundoSegmentedTabs(
-                          labels: const ['New Report', 'My Reports'],
-                          selected: _tab,
-                          onSelected: (tab) {
-                            if (!_saving) setState(() => _tab = tab);
-                          })))
-              : null),
+    return SundoResidentContent(
+      topClearance: MediaQuery.viewInsetsOf(context).bottom > 0
+          ? (widget.onBack == null ? 20 : 68)
+          : 120,
+      actions: [
+        if (widget.onBack != null)
+          IconButton(
+              tooltip: 'Back',
+              onPressed: _saving ? null : widget.onBack,
+              icon: Icon(Icons.chevron_left_rounded, color: mood.textColor))
+      ],
+      filters: _ticket == null
+          ? Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+              child: SundoSegmentedTabs(
+                  labels: const ['New Report', 'My Reports'],
+                  selected: _tab,
+                  onSelected: (tab) {
+                    if (!_saving) setState(() => _tab = tab);
+                  }))
+          : null,
       body: _ticket != null
           ? _success()
           : _tab == 'My Reports'
@@ -453,21 +443,21 @@ class _ReportGarbageScreenState extends State<ReportGarbageScreen> {
   Widget _photoButton(
       String label, IconData icon, VoidCallback onTap, Color color) {
     return Container(
+        width: 64,
+        constraints: const BoxConstraints(minHeight: 64),
         decoration: ClayTheme.input(radius: 12),
-        child: SizedBox(
-            width: 64,
-            height: 64,
-            child: TextButton(
-                onPressed: _saving ? null : onTap,
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, color: color, size: 24),
-                      const SizedBox(height: 4),
-                      Text(label,
-                          style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9, color: const Color(0xFF627368)))
-                    ]))));
+        child: TextButton(
+            onPressed: _saving ? null : onTap,
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: color, size: 24),
+                  const SizedBox(height: 4),
+                  Text(label,
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9, color: const Color(0xFF627368)))
+                ])));
   }
 
   Widget _success() {

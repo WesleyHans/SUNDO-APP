@@ -158,7 +158,7 @@ void main() {
     active.value = true;
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byTooltip('Re-center active route'));
+    await tester.tap(find.byTooltip('Fit active route'));
     await finishCamera(tester);
     final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
     expect(map.mapController!.camera.center.latitude, closeTo(9.7508, .00001));
@@ -188,7 +188,17 @@ void main() {
                   repository: _PublishedTruckRepository()))));
       await tester.pump();
       expect(tester.takeException(), isNull);
-      expect(find.text('Live Truck Tracking'), findsOneWidget);
+      expect(find.text('Live Truck Tracking'), findsNothing);
+      final north = find.byTooltip('Reset map north');
+      final fit = find.byTooltip('Fit active route');
+      expect(north.hitTestable(), findsOneWidget);
+      expect(fit.hitTestable(), findsOneWidget);
+      final northBounds = tester.getRect(north);
+      final fitBounds = tester.getRect(fit);
+      expect(northBounds.center.dy, closeTo(fitBounds.center.dy, .1));
+      expect(northBounds.right, lessThanOrEqualTo(fitBounds.left));
+      expect(northBounds.left, greaterThanOrEqualTo(0));
+      expect(fitBounds.right, lessThanOrEqualTo(320));
       expect(find.bySemanticsLabel('Your private GPS location'), findsNothing);
       final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
       final startingZoom = map.mapController!.camera.zoom;
@@ -360,7 +370,7 @@ void main() {
         latitude: 9.7513, longitude: 122.4024, accuracy: 7);
     await mountMap(tester,
         repository: _EmptyTruckRepository(), reducedMotion: true);
-    await tester.tap(find.byTooltip('Re-center active route'));
+    await tester.tap(find.byTooltip('Fit active route'));
     await tester.pump();
     expect(
         mapController(tester).camera.center.latitude, closeTo(9.7513, .00001));

@@ -113,14 +113,12 @@ class _SplashScreenState extends State<SplashScreen> {
                             Color(0x00FAFFF2),
                           ],
                         )))),
-                Positioned(
-                    left: 4,
-                    top: padding.top + 8,
-                    child: const LeafSprig(size: 120, flipped: true)),
-                Positioned(
-                    right: 4,
-                    top: padding.top + 100,
-                    child: const LeafSprig(size: 85)),
+                const Positioned(
+                    left: -22,
+                    top: 25,
+                    child: LeafSprig(size: 120, flipped: true)),
+                const Positioned(
+                    right: -35, top: 100, child: LeafSprig(size: 85)),
                 SafeArea(
                     child: Column(children: [
                   const SizedBox(height: 55),

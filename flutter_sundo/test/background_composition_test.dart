@@ -11,6 +11,7 @@ import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
+import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 
@@ -28,7 +29,7 @@ void main() {
     WeatherCondition.rain
   ]) {
     testWidgets(
-        'schedule header leaves fit below system inset for ${condition.name}',
+        'schedule reference corner leaves stay visible for ${condition.name}',
         (tester) async {
       tester.view.physicalSize = const Size(320, 715);
       tester.view.devicePixelRatio = 1;
@@ -73,18 +74,32 @@ void main() {
                           child: MainNavigationShell(onLogout: () {})))))));
       await _waitForScene(tester, mood.environment);
       await tester.tap(find.text('Schedule').last);
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 450));
       await tester.runAsync(() => precacheImage(
           const AssetImage(sundoLeafSprigAsset),
-          tester.element(find.byType(SundoHeaderLeaves))));
+          tester.element(find.byType(SundoResidentLeaves).first)));
       await tester.pump();
-      final leaves = tester.getRect(find.byType(LeafSprig));
-      final header = tester.getRect(find.byType(AppBar));
-      expect(leaves.top, greaterThanOrEqualTo(32));
-      expect(leaves.left, greaterThanOrEqualTo(0));
-      expect(leaves.right, lessThanOrEqualTo(320));
-      expect(leaves.bottom, lessThanOrEqualTo(header.bottom));
-      await tester.tap(find.byIcon(Icons.refresh_rounded));
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byType(LeafSprig), findsNWidgets(2));
+      final frame = tester.getRect(find.byType(SundoResidentLeaves).first);
+      final navigation = tester.getRect(find.byType(SundoBottomNavigation));
+      expect(frame.top, 0);
+      expect(frame.bottom, lessThanOrEqualTo(navigation.top));
+      for (var i = 0; i < 2; i++) {
+        final leaf = tester.getRect(find.byType(LeafSprig).at(i));
+        final visible = leaf.intersect(frame);
+        expect(visible.width, greaterThanOrEqualTo(60));
+        expect(visible.height, greaterThan(70));
+        expect(visible.left, greaterThanOrEqualTo(frame.left));
+        expect(visible.top, greaterThanOrEqualTo(frame.top));
+        expect(visible.right, lessThanOrEqualTo(frame.right));
+        expect(visible.bottom, lessThanOrEqualTo(frame.bottom));
+        expect(
+            leaf.overlaps(tester.getRect(find.byTooltip('Refresh schedules'))),
+            isFalse);
+      }
+      await tester.tap(find.byTooltip('Refresh schedules'));
       await tester.pump();
       expect(tester.takeException(), isNull);
       if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
@@ -457,6 +472,7 @@ void main() {
       final firstName = tester.getRect(find.text('Juan!'));
       final collection = tester.getRect(find.text('Next Collection'));
       expect(banner.top, greaterThanOrEqualTo(24));
+      expect(find.byType(AppBar), findsNothing);
       expect(greeting.top, greaterThan(banner.bottom + 15));
       expect(greeting.top, lessThan(banner.bottom + 40));
       expect(firstName.top, greaterThanOrEqualTo(greeting.bottom));

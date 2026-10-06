@@ -207,8 +207,8 @@ void main() {
         expect(brandRect.width, 202.5);
         expect(brandRect.center.dx, size.width / 2);
         expect(current['leaves'], [
-          const Rect.fromLTWH(4, 32, 120, 120),
-          Rect.fromLTWH(size.width - 89, 124, 85, 85),
+          const Rect.fromLTWH(-22, 25, 120, 120),
+          Rect.fromLTWH(size.width - 50, 100, 85, 85),
         ]);
         expect(current['leafSizes'], [(120.0, true), (85.0, false)]);
 
