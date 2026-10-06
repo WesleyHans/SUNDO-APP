@@ -36,6 +36,12 @@ small phones, enlarged text, keyboard editors, dialogs and leaf-free map control
 Verified APK: version 1.5.4+12, 92,999,914 bytes, SHA-256
 `f62e4803e8a07d59aa87dd57012e8131cdd8eda459bec9046357e7400c40a8a1`.
 Its signing certificate matches previous locally signed SUNDO releases.
+GitHub release `v1.5.4` contains the matching uploaded APK digest. PR #7 is merged,
+and GitHub Actions run `37444870779` passed its independent Android build and
+preview checks. The installer passed TypeScript checks and its production build.
+Vercel deployment `dpl_2a4oqQfaxMPuXb26M8g4XCtBiFte` is ready under the
+`wesleyplatil20200244-7046` account, with `https://sundo-app.vercel.app` assigned
+as its production URL. All APK download redirects point to `v1.5.4`.
 
 ## Version 1.5.3 restores the complete 1.5.1 checkpoint
 
