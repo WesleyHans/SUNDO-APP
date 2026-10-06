@@ -33,6 +33,9 @@ The scenery behind enlarged Welcome text is softened to keep its message readabl
 Validation: Flutter analysis is clean; all 227 tests passed. Another 60 native
 preview checks passed, including the supplied leaf arrangement, day/night screens,
 small phones, enlarged text, keyboard editors, dialogs and leaf-free map controls.
+Verified APK: version 1.5.4+12, 92,999,914 bytes, SHA-256
+`f62e4803e8a07d59aa87dd57012e8131cdd8eda459bec9046357e7400c40a8a1`.
+Its signing certificate matches previous locally signed SUNDO releases.
 
 ## Version 1.5.3 restores the complete 1.5.1 checkpoint
 
