@@ -1,5 +1,23 @@
 # SUNDO mobile status
 
+## Version 1.5.0 directional marker update
+
+Sixteen generated transparent views replace the map's single-sided vehicle.
+The marker selects views from GPS heading plus camera rotation, corrects each
+illustration's projected bearing, recenters its silhouette and crossfades views.
+Existing position interpolation, unknown/stale telemetry and paused animation
+behavior are retained. The source PNGs are approximate multi-view artwork; see
+`TRUCK_SPRITES.md` for the geometry/perspective limitations. Branding stays fixed.
+
+Validation: Flutter analysis clean, 191 tests passed, all sixteen PNGs checked for
+alpha and windshield/compactor color regions, five native directional/map preview
+checks passed. APK 1.5.0+8: 92,852,458 bytes, SHA-256
+`119355e3a0480f2a3e0944919648ab7b7b4e1b26fd378aa9cc738817a471689d`.
+Signing certificate matches the existing local Android APK. Fleet data remains
+demo until the city Supabase service is configured.
+
+## Earlier 1.4.0 baseline
+
 Open `flutter_sundo` as the Flutter project. The current Android release is **1.4.0+7**, with optional local weather before login, combined rainy-night scenery and supplied moving truck artwork. Splash branding remains unchanged. Source validation, APK publication and production deployment are separate steps.
 
 ## Resident functionality

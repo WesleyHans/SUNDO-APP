@@ -1,0 +1,277 @@
+{
+  "tool": "Built-in image_gen",
+  "frames": [
+    {
+      "angle": 0,
+      "prompt": "Create ONE transparent PNG directional map sprite of this exact reference SUNDO garbage truck. Precise object edit: preserve glossy bright green cab and rectangular refuse body, yellow rear compactor hydraulic structure, blue glass, white side recycling emblem, black chassis and four wheels on two axles with silver rims, two amber cab lights, same proportions and parts. Fixed orthographic slightly elevated camera at 45 degrees above ground, studio light upper left, centered truck on square canvas with generous transparent margin, only compact contact shadow. Target heading 0 degrees: CAB FRONT POINTS STRAIGHT UP/NORTH in image; viewer sees the yellow REAR compactor closest at bottom and the back of green body, cab farther toward top. True rear-facing elevated view of SAME vehicle, not flat rotation of the reference. No second cab, no new parts, no text, labels, scenery, border or road. Plain green roof as reference. Preserve exact model and rendering style. One truck only.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-45b78555-10fb-4cff-aab7-97bbb6b48d2a.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-45b78555-10fb-4cff-aab7-97bbb6b48d2a.png",
+      "file": "truck_000.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 348,
+        "top": 113,
+        "right": 906,
+        "bottom": 1105
+      },
+      "transparentPixels": 1050702,
+      "illustratedBearing": 359.00798682653067
+    },
+    {
+      "angle": 22.5,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: UP AND A LITTLE RIGHT. Cab at (x=760,y=260), yellow rear at (x=490,y=960). Mostly REAR view with a little side, NOT broad side view. This screen orientation is mandatory; do NOT copy reference orientation. Heading 22.5 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-6f7cbd12-47ed-4e2a-ac33-5618e42b6219.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-6f7cbd12-47ed-4e2a-ac33-5618e42b6219.png",
+      "file": "truck_023.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 89,
+        "top": 147,
+        "right": 1179,
+        "bottom": 1129
+      },
+      "transparentPixels": 887893,
+      "illustratedBearing": 62.75757384025053
+    },
+    {
+      "angle": 45,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 45 degrees clockwise from north: CAB FRONT points upper right/northeast, exact screen travel bearing 45°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-fe69094a-91cd-4f63-b821-a19a51b3fa5b.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-fe69094a-91cd-4f63-b821-a19a51b3fa5b.png",
+      "file": "truck_045.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 81,
+        "top": 177,
+        "right": 1196,
+        "bottom": 1097
+      },
+      "transparentPixels": 883503,
+      "illustratedBearing": 69.1907762640239
+    },
+    {
+      "angle": 67.5,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 67.5 degrees clockwise from north: CAB FRONT points upper right/northeast, exact screen travel bearing 67.5°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-33c54224-c4be-424c-8b10-969d09d202d3.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-33c54224-c4be-424c-8b10-969d09d202d3.png",
+      "file": "truck_068.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 123,
+        "top": 217,
+        "right": 1160,
+        "bottom": 1089
+      },
+      "transparentPixels": 935254,
+      "illustratedBearing": 65.67376993390462
+    },
+    {
+      "angle": 90,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: RIGHT. Cab at far right (x=970,y=627), yellow rear at left (x=270,y=627). Exact horizontal side profile, see roof and right side, NO front diagonal. This screen orientation is mandatory; do NOT copy reference orientation. Heading 90 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-3b78f2e7-0e34-4ed7-bc2f-4fdfdee5489a.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-3b78f2e7-0e34-4ed7-bc2f-4fdfdee5489a.png",
+      "file": "truck_090.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 43,
+        "top": 265,
+        "right": 1218,
+        "bottom": 1040
+      },
+      "transparentPixels": 867759,
+      "illustratedBearing": 95.0918077093445
+    },
+    {
+      "angle": 112.5,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 112.5 degrees clockwise from north: CAB FRONT points lower right/southeast, exact screen travel bearing 112.5°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-f0d344b4-7736-480f-a556-f014e479e3a2.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-f0d344b4-7736-480f-a556-f014e479e3a2.png",
+      "file": "truck_113.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 63,
+        "top": 116,
+        "right": 1174,
+        "bottom": 1156
+      },
+      "transparentPixels": 798258,
+      "illustratedBearing": 123.848988087787
+    },
+    {
+      "angle": 135,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 135 degrees clockwise from north: CAB FRONT points lower right/southeast, exact screen travel bearing 135°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-27edee96-0d49-4e6a-9e4c-9ebd9befe840.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-27edee96-0d49-4e6a-9e4c-9ebd9befe840.png",
+      "file": "truck_135.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 89,
+        "top": 134,
+        "right": 1169,
+        "bottom": 1139
+      },
+      "transparentPixels": 819271,
+      "illustratedBearing": 123.00163373091345
+    },
+    {
+      "angle": 157.5,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: DOWN AND A LITTLE RIGHT. Cab at (x=760,y=960), yellow rear at (x=490,y=260). Mostly FRONT view with a little side, NOT broad side view. This screen orientation is mandatory; do NOT copy reference orientation. Heading 157.5 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-a9c0fec1-a05a-447a-8a4e-c2f7e23dd172.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-a9c0fec1-a05a-447a-8a4e-c2f7e23dd172.png",
+      "file": "truck_158.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 75,
+        "top": 87,
+        "right": 1170,
+        "bottom": 1171
+      },
+      "transparentPixels": 836467,
+      "illustratedBearing": 128.4988120643041
+    },
+    {
+      "angle": 180,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: DOWN. Cab at bottom center (x=627,y=930), yellow rear at top center (x=627,y=270). Symmetric head-on front, NO SIDE VIEW. This screen orientation is mandatory; do NOT copy reference orientation. Heading 180 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-127c74c9-7e74-48b1-9e77-3810664bcf0d.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-127c74c9-7e74-48b1-9e77-3810664bcf0d.png",
+      "file": "truck_180.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 310,
+        "top": 63,
+        "right": 943,
+        "bottom": 1165
+      },
+      "transparentPixels": 930614,
+      "illustratedBearing": 179.48852122276128
+    },
+    {
+      "angle": 202.5,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 202.5 degrees clockwise from north: CAB FRONT points lower left/southwest, exact screen travel bearing 202.5°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-d7dc9ec7-c649-4f90-be03-b4dfa981cf2b.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-d7dc9ec7-c649-4f90-be03-b4dfa981cf2b.png",
+      "file": "truck_203.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 118,
+        "top": 120,
+        "right": 1177,
+        "bottom": 1144
+      },
+      "transparentPixels": 858146,
+      "illustratedBearing": 235.32929390513755
+    },
+    {
+      "angle": 225,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 225 degrees clockwise from north: CAB FRONT points lower left/southwest, exact screen travel bearing 225°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-c3408480-4880-430e-845a-a4c57d49114b.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-c3408480-4880-430e-845a-a4c57d49114b.png",
+      "file": "truck_225.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 92,
+        "top": 123,
+        "right": 1182,
+        "bottom": 1145
+      },
+      "transparentPixels": 836884,
+      "illustratedBearing": 237.4194483759067
+    },
+    {
+      "angle": 247.5,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: LEFT AND A LITTLE DOWN. Cab at (x=280,y=780), yellow rear at (x=970,y=490). Front/left three-quarter with more side than front, NOT rear view. This screen orientation is mandatory; do NOT copy reference orientation. Heading 247.5 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-b574d7a6-8df9-4021-b54d-476bdfb3548a.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-b574d7a6-8df9-4021-b54d-476bdfb3548a.png",
+      "file": "truck_248.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 54,
+        "top": 176,
+        "right": 1240,
+        "bottom": 1131
+      },
+      "transparentPixels": 858997,
+      "illustratedBearing": 248.01953648291214
+    },
+    {
+      "angle": 270,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: LEFT. Cab at far left (x=270,y=627), yellow rear at right (x=970,y=627). Exact horizontal side profile, see roof and left side, NO front diagonal. This screen orientation is mandatory; do NOT copy reference orientation. Heading 270 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-c76c6637-f8f2-48e2-ac9b-6a0fe6200236.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-c76c6637-f8f2-48e2-ac9b-6a0fe6200236.png",
+      "file": "truck_270.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 52,
+        "top": 317,
+        "right": 1238,
+        "bottom": 1062
+      },
+      "transparentPixels": 867353,
+      "illustratedBearing": 269.60407012564843
+    },
+    {
+      "angle": 292.5,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 292.5 degrees clockwise from north: CAB FRONT points upper left/northwest, exact screen travel bearing 292.5°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-81ed3f82-7232-4d7a-b209-ae279824c3c6.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-81ed3f82-7232-4d7a-b209-ae279824c3c6.png",
+      "file": "truck_293.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 105,
+        "top": 183,
+        "right": 1172,
+        "bottom": 1116
+      },
+      "transparentPixels": 907153,
+      "illustratedBearing": 293.36523884994835
+    },
+    {
+      "angle": 315,
+      "prompt": "Generate ONE isolated transparent PNG sprite, precise multi-view reconstruction of EXACT SAME SUNDO truck from references. Reference1 master design; reference2 north-facing model/camera consistency. Heading 315 degrees clockwise from north: CAB FRONT points upper left/northwest, exact screen travel bearing 315°. Rotate VEHICLE YAW in 3D, never merely spin a 2D image. Fixed elevated orthographic camera 45 degrees above ground, same camera throughout set, upper-left studio light, centered ground contact and vehicle, square 1254x1254 canvas, same scale fitting length in 1000 pixels. Keep bright green cab/rectangular body, plain framed green roof, yellow rear compactor hydraulic assembly ONLY AT REAR, blue glass, white recycling symbols on sides, black chassis, FOUR total wheels on TWO axles with silver rims, amber roof lights, exact same glossy cartoon3D materials/proportions. Rear is opposite direction from cab. No redesign, no duplicated cab, no extra/missing wheels/parts, no mirrored mechanical errors. No road, text, scenery, labels, borders, people or objects. Transparent background, compact contact shadow only. True angle-specific view; visible parts must be consistent with heading, don''t expose front windshield in a direct rear view.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-4eb805c4-3d1a-4780-aa1b-13db627d7f10.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-4eb805c4-3d1a-4780-aa1b-13db627d7f10.png",
+      "file": "truck_315.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 101,
+        "top": 154,
+        "right": 1186,
+        "bottom": 1094
+      },
+      "transparentPixels": 853207,
+      "illustratedBearing": 296.6027080975606
+    },
+    {
+      "angle": 337.5,
+      "prompt": "Precise object edit. Generate ONE transparent PNG of EXACT truck reference at a NEW YAW. Required cab front direction: UP AND A LITTLE LEFT. Cab at (x=490,y=260), yellow rear at (x=760,y=960). Mostly REAR view with a little side, NOT broad side view. This screen orientation is mandatory; do NOT copy reference orientation. Heading 337.5 degrees clockwise from screen up. Camera orthographic at fixed 45-degree elevation. Preserve bright green body/cab, yellow hydraulic rear compactor, plain framed green roof, blue windshield, side white recycling emblems, FOUR wheels TWO axles black rubber silver rims, black chassis, amber cab lights. Same geometry, compact cartoon glossy3D style and studio upper-left lighting. Centered square1254px canvas, approximately1000px vehicle length, all visible fully. True3D viewpoint around this one same truck, not duplicate cab, no mirrored mechanical design, no other objects, labels, road or text. Transparent background, no long shadow.",
+      "output_hint": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608 as C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-b8043185-0846-414a-89bc-b7fa73f969b7.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+      "source": "C:\\Users\\User\\.codex\\generated_images\\01a106ac-6cd6-7d41-bfbd-0dfebfc80608\\exec-b8043185-0846-414a-89bc-b7fa73f969b7.png",
+      "file": "truck_338.png",
+      "width": 1254,
+      "height": 1254,
+      "bounds": {
+        "left": 136,
+        "top": 170,
+        "right": 1159,
+        "bottom": 1107
+      },
+      "transparentPixels": 943577,
+      "illustratedBearing": 299.41746594508567
+    }
+  ]
+}

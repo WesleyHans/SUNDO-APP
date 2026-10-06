@@ -2,24 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/sundo_graphics.dart';
-
-/// The supplied truck artwork faces southeast in its unrotated image.
-/// Actual telemetry headings are clockwise from north; account for the asset's
-/// intrinsic bearing before applying the map canvas rotation.
-const sundoMapTruckIntrinsicHeading = 136.0;
-
-/// A missing heading leaves the illustration upright, rather than inventing a
-/// north-facing fix. The marker's semantics explicitly mark that heading unknown.
-double sundoMapTruckRotationRadians(double? headingDegrees,
-    {double mapRotationDegrees = 0}) {
-  if (headingDegrees == null || !headingDegrees.isFinite) return 0;
-  return (_finiteAngle(headingDegrees) +
-          _finiteAngle(mapRotationDegrees) -
-          sundoMapTruckIntrinsicHeading) *
-      math.pi /
-      180;
-}
+import '../../../shared/widgets/directional_truck.dart';
 
 /// The resident's supplied isometric truck, anchored at the same GPS point and
 /// controlled by the existing map animation phase. No autonomous timers or
@@ -61,19 +44,12 @@ class SundoMapTruckMarker extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(4),
-              child: Transform.rotate(
-                key: const ValueKey('supplied-truck-bearing'),
-                angle: sundoMapTruckRotationRadians(headingDegrees,
-                    mapRotationDegrees: mapRotationDegrees),
-                child: Opacity(
-                  opacity: fresh ? 1 : .58,
-                  child: SundoVehicleGraphic(
-                    mapView: true,
-                    width: 100,
-                    height: 100,
-                    moving: rolling,
-                    wheelPhase: rolling ? _phase(pulse) : 0,
-                  ),
+              child: Opacity(
+                opacity: fresh ? 1 : .58,
+                child: SundoDirectionalTruck(
+                  headingDegrees: headingDegrees,
+                  mapRotationDegrees: mapRotationDegrees,
+                  animate: rolling,
                 ),
               ),
             ),
@@ -145,7 +121,6 @@ class SundoResidentBeacon extends StatelessWidget {
       );
 }
 
-double _finiteAngle(double value) => value.isFinite ? value % 360 : 0;
 double _phase(double value) => value.isFinite ? value.clamp(0, 1) : 0;
 
 class _TruckGroundPainter extends CustomPainter {
