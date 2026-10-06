@@ -14,11 +14,13 @@ import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
+import 'location_platform_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   setUp(() {
+    mockUnavailableDeviceLocation();
     SharedPreferences.setMockInitialValues({});
     AppStore.setIdentity(null);
   });
@@ -76,6 +78,7 @@ void main() {
       await tester.tap(find.text('Schedule').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
+      await tester.pumpAndSettle();
       await tester.runAsync(() => precacheImage(
           const AssetImage(sundoLeafSprigAsset),
           tester.element(find.byType(SundoResidentLeaves).first)));

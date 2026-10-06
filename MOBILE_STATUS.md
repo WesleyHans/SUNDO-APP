@@ -1,5 +1,37 @@
 # SUNDO mobile status
 
+## Version 1.5.5 screen and scenery motion
+
+Login, Create Account and page navigation now use gentle fades. One shared
+background remains mounted across inner routes and tabs; leaving Splash or Welcome
+reveals that scenery together with the new content. A late decoded image fades in,
+including full-scene artwork, while weather scene handoffs retain their 900 ms
+transition. Reduced-motion settings show ready content immediately. Report
+push/pop also fades the departing page instead of removing it abruptly.
+Resident tabs retain their scroll/form/map state through a 140 ms fade-out and
+260 ms fade-in; rapid selections settle on the last requested tab.
+
+The fixed empty 88/120 px top bands are removed from Profile, Schedule, Alerts and
+Report. Actions and filters scroll with the content. Corner leaves keep their
+existing asset, sizes and positions; Live Map stays leaf-free. Splash and Welcome
+artwork, branding and source layout remain unchanged.
+
+Home adds a compact announcement for tomorrow's collection in the resident's area,
+using Philippine calendar dates and the schedule repository. Demo schedules stay
+explicitly labeled. Its small map uses an already permitted foreground GPS fix;
+it never opens a new permission prompt. Current markers expire after one minute.
+Saved-area views are labeled as not current GPS and have no current-location pin.
+GPS refreshes pause off Home/in the background, reject retired results, and reuse
+a pending native request across quick tab changes. Scenery and mini-map tiles fade
+without changing their final geometry.
+
+Android version 1.5.5+13 retains the existing package and signing configuration.
+Validation: Flutter analysis is clean, all 260 regression tests passed, and 69
+native preview checks passed for auth, Splash, day/night layouts, larger text,
+keyboard editors, scrolling controls and leaf-free maps. Installer TypeScript
+checks and the production build pass. Native previews use controlled data and do
+not certify physical phone GPS or remote city services.
+
 ## Version 1.5.4 reference leaf placement
 
 This release builds on the restored 1.5.1 checkpoint. It reuses the original

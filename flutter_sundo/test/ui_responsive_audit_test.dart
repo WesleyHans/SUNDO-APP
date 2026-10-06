@@ -197,6 +197,8 @@ void main() {
       tester.view.viewInsets = const FakeViewPadding();
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('My Reports'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('My Reports'));
       await tester.pumpAndSettle();
       expect(find.text('No reports yet'), findsOneWidget);
@@ -249,6 +251,14 @@ void main() {
       await _reach(tester, find.text('Close'));
       _expectNoError(tester);
       await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+          find.byTooltip('Notification settings'), -180,
+          scrollable: find
+              .descendant(
+                  of: find.byType(NotificationsScreen),
+                  matching: find.byType(Scrollable))
+              .first);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Notification settings'));
       await tester.pumpAndSettle();

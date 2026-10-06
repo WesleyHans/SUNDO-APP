@@ -150,6 +150,9 @@ void main() {
     await tester.scrollUntilVisible(find.text('Special Collection'), 200,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Special Collection'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Announcements'), -180,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Announcements'));
     await tester.pumpAndSettle();
     expect(find.byType(SundoNotificationCard), findsOneWidget);
@@ -257,9 +260,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
     final keyboardFilters = tester.getRect(find.byType(SundoSegmentedTabs));
-    expect(keyboardFilters.top, lessThan(initialFilters.top - 40),
+    expect(keyboardFilters.top, initialFilters.top,
         reason:
-            'The report leaves room for text entry when the keyboard opens.');
+            'Compact scrolling controls stay stable when the keyboard opens.');
     final field = find.byType(TextFormField);
     await tester.ensureVisible(field);
     const text =
@@ -275,12 +278,19 @@ void main() {
     expect(
         tester.widget<EditableText>(find.byType(EditableText)).controller.text,
         text);
+    await tester.ensureVisible(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Back'));
     expect(backs, 1);
     tester.view.viewInsets = const FakeViewPadding();
     tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
+    tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position
+        .jumpTo(0);
+    await tester.pump();
     expect(tester.getRect(find.byType(SundoSegmentedTabs)).top,
         initialFilters.top);
     expect(tester.takeException(), isNull);

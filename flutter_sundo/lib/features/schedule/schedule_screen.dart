@@ -65,30 +65,32 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
     return SundoResidentContent(
-      actions: [
-        if (widget.onBack != null)
-          IconButton(
-              tooltip: 'Back',
-              onPressed: widget.onBack,
-              icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
-        IconButton(
-            tooltip: 'Refresh schedules',
-            onPressed: _loading ? null : _load,
-            icon: Icon(Icons.refresh_rounded, size: 20, color: mood.accent))
-      ],
-      filters: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-          child: SundoSegmentedTabs(
-              labels: const ['Today', 'This Week', 'Calendar'],
-              selected: _activeTab,
-              onSelected: (tab) => setState(() => _activeTab = tab))),
       body: RefreshIndicator(
           onRefresh: _load,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SundoResidentInlineControls(
+                  actions: [
+                    if (widget.onBack != null)
+                      IconButton(
+                          tooltip: 'Back',
+                          onPressed: widget.onBack,
+                          icon: Icon(Icons.chevron_left_rounded,
+                              color: mood.textColor)),
+                    IconButton(
+                        tooltip: 'Refresh schedules',
+                        onPressed: _loading ? null : _load,
+                        icon: Icon(Icons.refresh_rounded,
+                            size: 20, color: mood.accent))
+                  ],
+                  filters: SundoSegmentedTabs(
+                      labels: const ['Today', 'This Week', 'Calendar'],
+                      selected: _activeTab,
+                      onSelected: (tab) => setState(() => _activeTab = tab))),
+              const SizedBox(height: 14),
               if (_repository.isDemo)
                 Padding(
                     padding: const EdgeInsets.only(bottom: 14),

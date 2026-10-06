@@ -197,33 +197,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             (item) => _activeFilter == 'All' || item.category == _activeFilter)
         .toList();
     return SundoResidentContent(
-      actions: [
-        if (widget.onBack != null)
-          IconButton(
-              tooltip: 'Back',
-              onPressed: widget.onBack,
-              icon: Icon(Icons.chevron_left_rounded, color: mood.textColor)),
-        IconButton(
-            tooltip: 'Mark all read',
-            onPressed: _notifications.isEmpty ? null : _markAllRead,
-            icon: Icon(Icons.done_all_rounded, size: 20, color: mood.accent)),
-        IconButton(
-            tooltip: 'Notification settings',
-            onPressed: _settings,
-            icon: Icon(Icons.tune_rounded, size: 20, color: mood.accent))
-      ],
-      filters: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-          child: SundoSegmentedTabs(
-              labels: const ['All', 'Alerts', 'Announcements'],
-              selected: _activeFilter,
-              onSelected: (tab) => setState(() => _activeFilter = tab))),
       body: RefreshIndicator(
           onRefresh: _load,
           child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
               children: [
+                SundoResidentInlineControls(
+                    actions: [
+                      if (widget.onBack != null)
+                        IconButton(
+                            tooltip: 'Back',
+                            onPressed: widget.onBack,
+                            icon: Icon(Icons.chevron_left_rounded,
+                                color: mood.textColor)),
+                      IconButton(
+                          tooltip: 'Mark all read',
+                          onPressed:
+                              _notifications.isEmpty ? null : _markAllRead,
+                          icon: Icon(Icons.done_all_rounded,
+                              size: 20, color: mood.accent)),
+                      IconButton(
+                          tooltip: 'Notification settings',
+                          onPressed: _settings,
+                          icon: Icon(Icons.tune_rounded,
+                              size: 20, color: mood.accent))
+                    ],
+                    filters: SundoSegmentedTabs(
+                        labels: const ['All', 'Alerts', 'Announcements'],
+                        selected: _activeFilter,
+                        onSelected: (tab) =>
+                            setState(() => _activeFilter = tab))),
+                const SizedBox(height: 14),
                 if (_repository.isDemo)
                   Padding(
                       padding: const EdgeInsets.only(bottom: 14),

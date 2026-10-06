@@ -674,7 +674,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     final colors = Theme.of(context).colorScheme;
     final night = Theme.of(context).brightness == Brightness.dark;
     return SundoResidentContent(
-      topClearance: 88,
       body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
           child:
@@ -684,41 +683,46 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(children: [
-                      CircleAvatar(
-                          radius: 30,
-                          backgroundColor: colors.primaryContainer,
-                          child: Text(_initials.isEmpty ? 'R' : _initials,
-                              style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.onPrimaryContainer))),
-                      const SizedBox(width: 14),
-                      Expanded(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                            Text(_name,
-                                style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 18,
-                                    color: colors.onSurface)),
-                            const SizedBox(height: 4),
-                            Text(_email,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: colors.onSurfaceVariant)),
-                            const SizedBox(height: 4),
-                            Text(_phone,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: colors.onSurfaceVariant)),
-                          ])),
-                      IconButton(
-                          tooltip: 'Edit profile',
-                          onPressed: _editProfile,
-                          icon: const Icon(Icons.edit_outlined, size: 18)),
-                    ]))),
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                              radius: 30,
+                              backgroundColor: colors.primaryContainer,
+                              child: Text(_initials.isEmpty ? 'R' : _initials,
+                                  style: TextStyle(
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w800,
+                                      color: colors.onPrimaryContainer))),
+                          const SizedBox(width: 14),
+                          Expanded(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                Text(_name,
+                                    style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18,
+                                        color: colors.onSurface)),
+                                const SizedBox(height: 4),
+                                Text(_email,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: colors.onSurfaceVariant)),
+                                const SizedBox(height: 4),
+                                Text(_phone,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: colors.onSurfaceVariant)),
+                                Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: IconButton(
+                                        tooltip: 'Edit profile',
+                                        onPressed: _editProfile,
+                                        icon: const Icon(Icons.edit_outlined,
+                                            size: 18))),
+                              ])),
+                        ]))),
             const SizedBox(height: 20),
             Container(
                 decoration: night

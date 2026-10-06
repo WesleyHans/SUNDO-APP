@@ -1,39 +1,32 @@
 import 'package:flutter/material.dart';
 import 'scenic_backdrop.dart';
 
-/// Screen controls belong to the open content area, without a painted title bar.
+/// Transparent resident frame. Its body owns the complete scrolling content.
 class SundoResidentContent extends StatelessWidget {
-  final List<Widget> actions;
-  final Widget? filters;
   final Widget body;
-  final double topClearance;
-  const SundoResidentContent(
-      {super.key,
-      this.actions = const [],
-      this.filters,
-      required this.body,
-      this.topClearance = 120});
+  const SundoResidentContent({super.key, required this.body});
 
   @override
   Widget build(BuildContext context) => Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-          child: SundoResidentLeaves(
-              child: Column(children: [
-        AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            height: topClearance,
-            width: double.infinity,
-            child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 20, 124, 0),
-                    child: Row(
-                        mainAxisSize: MainAxisSize.min, children: actions)))),
+      body: SafeArea(child: SundoResidentLeaves(child: body)));
+}
+
+/// Compact actions and filters scroll together with the screen's cards/form.
+/// The right inset keeps action hit targets away from the decorative leaves.
+class SundoResidentInlineControls extends StatelessWidget {
+  final List<Widget> actions;
+  final Widget? filters;
+  const SundoResidentInlineControls(
+      {super.key, this.actions = const [], this.filters});
+
+  @override
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (actions.isNotEmpty)
+          Padding(
+              padding: const EdgeInsets.only(right: 106, bottom: 12),
+              child: Wrap(children: actions)),
         if (filters != null) filters!,
-        Expanded(child: body),
-      ]))));
+      ]);
 }

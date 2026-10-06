@@ -6,6 +6,7 @@ import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/operations/operations_screen.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'package:sundo_sipalay/shared/widgets/screen_transition.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +33,7 @@ void main() {
         'Home'
       ]) {
         await tester.tap(find.widgetWithText(NavigationDestination, label));
-        await tester.pump();
+        await _finishTabTransition(tester);
         if (label == 'Live Map') expect(find.byType(LeafSprig), findsNothing);
         if (label == 'Profile') {
           expect(
@@ -97,6 +98,16 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+}
+
+Future<void> _finishTabTransition(WidgetTester tester) async {
+  await tester.pump();
+  // Advance both phases independently: the incoming fade starts only after
+  // the outgoing tab has completed its fade, on the next elapsed frame.
+  await tester.pump(
+      SundoFadeThrough.fadeOutDuration + const Duration(milliseconds: 16));
+  await tester
+      .pump(SundoFadeThrough.fadeInDuration + const Duration(milliseconds: 16));
 }
 
 Future<void> _mount(WidgetTester tester, Widget child, {int hour = 20}) async {
