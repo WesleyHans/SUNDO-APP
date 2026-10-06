@@ -8,6 +8,7 @@ import '../report_concern/report_concern_screen.dart';
 import '../../core/theme/clay_theme.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import '../../shared/widgets/sundo_graphics.dart';
+import '../../app/screen_transitions.dart';
 
 class OperationsScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -360,8 +361,9 @@ class _OperationsScreenState extends State<OperationsScreen> {
               onPressed: () async {
                 await Navigator.push(
                     context,
-                    MaterialPageRoute<void>(
-                        builder: (_) => ReportGarbageScreen(
+                    sundoScreenRoute<void>(
+                        context,
+                        (_) => ReportGarbageScreen(
                             onBack: () => Navigator.pop(context))));
                 await _refresh();
               },

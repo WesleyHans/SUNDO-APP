@@ -1,3 +1,4 @@
+import '../../shared/widgets/resident_header.dart';
 import '../../shared/widgets/scenic_backdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -672,7 +673,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final night = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
+    return sundoResidentScreen(
+      context,
       backgroundColor: Colors.transparent,
       appBar: AppBar(
           flexibleSpace: const SundoHeaderLeaves(),

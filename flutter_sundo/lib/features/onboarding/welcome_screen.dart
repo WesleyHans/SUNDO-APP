@@ -5,6 +5,7 @@ import '../../core/theme/clay_theme.dart';
 import '../../shared/widgets/sundo_graphics.dart';
 import '../../core/theme/time_theme.dart';
 import '../../shared/widgets/time_based_background.dart';
+import '../../shared/widgets/scenic_backdrop.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final FutureOr<void> Function() onGetStarted;
@@ -84,6 +85,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                             color: SundoTimeScope.of(context)
                                                 .textColor)),
                                   ]),
+                                  const Expanded(
+                                      child:
+                                          Center(child: LeafSprig(size: 40))),
                                   TextButton(
                                       onPressed:
                                           _startingDemo ? null : _getStarted,

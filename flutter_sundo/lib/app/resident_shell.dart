@@ -8,6 +8,8 @@ import '../services/backend_service.dart';
 import '../repositories/notification_repository.dart';
 import '../shared/widgets/resident_components.dart';
 import '../core/theme/time_theme.dart';
+import '../shared/widgets/sundo_tab_stack.dart';
+import '../shared/widgets/resident_header.dart';
 
 class MainNavigationShell extends StatefulWidget {
   final VoidCallback onLogout;
@@ -20,6 +22,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _index = 0;
   int _unread = 0;
   final Set<int> _visited = {0};
+  final _headerController = ResidentHeaderController();
   late final NotificationRepository _notifications;
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   void dispose() {
+    _headerController.dispose();
     _notifications.revision.removeListener(_refreshUnread);
     super.dispose();
   }
@@ -68,11 +72,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ];
     return Scaffold(
         backgroundColor: Colors.transparent,
-        body: Column(children: [
-          if (!BackendService.live)
-            SafeArea(
-                bottom: false,
-                child: Container(
+        body: SafeArea(
+            bottom: false,
+            child: Column(children: [
+              if (!BackendService.live)
+                Container(
                     width: double.infinity,
                     color: mood.isNight
                         ? const Color(0xFF34402A)
@@ -86,9 +90,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                             fontSize: 9,
                             color: mood.isNight
                                 ? const Color(0xFFD7E5B9)
-                                : const Color(0xFF427045))))),
-          Expanded(child: IndexedStack(index: _index, children: screens))
-        ]),
+                                : const Color(0xFF427045)))),
+              SundoResidentHeader(controller: _headerController, index: _index),
+              Expanded(
+                  child: SundoTabStack(index: _index, children: [
+                for (var i = 0; i < screens.length; i++)
+                  ResidentHeaderScope(
+                      controller: _headerController,
+                      index: i,
+                      active: i == _index,
+                      child: screens[i])
+              ]))
+            ])),
         bottomNavigationBar: SundoBottomNavigation(
             index: _index, onChanged: _navigate, unread: _unread));
   }

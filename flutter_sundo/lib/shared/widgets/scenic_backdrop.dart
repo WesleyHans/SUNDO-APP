@@ -3,7 +3,7 @@ import './time_based_background.dart';
 
 // Retained for the operations illustration and existing asset preloading.
 const clayHeroAsset = 'assets/images/clay-city-hero.png';
-const sundoLeafSprigAsset = 'assets/images/sundo-leaf-sprig.png';
+const sundoLeafSprigAsset = 'assets/images/sundo-leaf-sprig-clean.png';
 
 class ScenicBackdrop extends StatelessWidget {
   final Widget child;
@@ -28,6 +28,25 @@ class SundoHeaderLeaves extends StatelessWidget {
                 padding: EdgeInsets.only(top: 2, right: 6),
                 child: Opacity(opacity: .24, child: LeafSprig(size: 48)))),
       );
+}
+
+/// Existing auth decorations remain independent of form scrolling.
+class SundoLeafFrame extends StatelessWidget {
+  final Widget child;
+  final double size;
+  const SundoLeafFrame({super.key, required this.child, this.size = 76});
+  @override
+  Widget build(BuildContext context) => Stack(fit: StackFit.expand, children: [
+        Positioned.fill(
+            child: SafeArea(
+                bottom: false,
+                child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                        padding: const EdgeInsets.only(top: 4, right: 8),
+                        child: LeafSprig(size: size))))),
+        child,
+      ]);
 }
 
 /// A detailed natural leaf asset preserves the existing decorative footprint.

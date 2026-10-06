@@ -1,5 +1,32 @@
 # SUNDO mobile status
 
+## Version 1.5.2 smooth transitions and shared resident header
+
+Welcome, Login, Register, the account shell and Report Concern share a 600 ms
+ease-in-out fade. Each route paints its scenery inside the fading surface, keeping
+the outgoing illustration visible on the first incoming frame instead of exposing
+the shared root backdrop abruptly. Native Report Concern navigation uses the same
+transition. Reduced-motion settings switch routes immediately.
+
+Resident tabs use a 420 ms fade while preserving their mounted elements, scroll
+positions and form state. Rapid switches continue from the current opacity.
+Outgoing tabs cannot receive pointer, focus or accessibility interaction, and their
+visual tickers pause. Live-map activity still follows the selected tab immediately.
+
+The main resident tabs share one 56 px header below a single system safe area,
+removing the repeated blank top space. Each screen retains its existing actions
+and filters. Header actions occupy the left side, leaving the previous top-right
+leaf frame unchanged (48 px, 2 px top and 6 px right inset). Splash, Login and
+Welcome leaf placements remain intact. The transparent natural-leaf asset contains
+only the three leaves and stem; the stray green logo fragment has been removed.
+
+Validation: Flutter analysis clean, 202 tests passed. Native day/night Login
+midpoint and completion previews inspected; pixel checks cover first-frame scenery
+continuity and gradual blending. Tab checks cover retained input/state, rapid
+navigation, outgoing input exclusion and reduced motion. Narrow-phone checks cover
+the shared header, unchanged leaf frame, large text and working Profile/Alerts
+actions. Android version 1.5.2+10.
+
 ## Version 1.5.1 weather, scenery and Philippine time fixes
 
 Production greetings and scenery use Philippine Standard Time (UTC+8), independent
