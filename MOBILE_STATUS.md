@@ -40,6 +40,12 @@ with minimum API 24 and includes ARM64, ARMv7 and x86_64 libraries.
 PR #8 is merged at `2d16b76189838e9808f68bf8b882e412e22d1e83`.
 GitHub release `v1.5.5` contains the APK with the matching uploaded checksum.
 Installer labels and all APK redirects now target that verified release.
+Independent GitHub Actions run `37460889887` completed successfully for the
+merged mobile source. Vercel production deployment
+`dpl_4ikfnrbxKFgo9RQnXMEDhzVwiQxd` is ready and aliased to
+`https://sundo-app.vercel.app`. Public HTTP checks return 200 for the installer,
+confirm its bundle displays Version 1.5.5, and follow the download redirect to
+the 93,196,594-byte Android package named `SUNDO.apk`.
 
 ## Version 1.5.4 reference leaf placement
 
