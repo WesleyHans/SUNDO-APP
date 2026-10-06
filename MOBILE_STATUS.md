@@ -31,6 +31,15 @@ native preview checks passed for auth, Splash, day/night layouts, larger text,
 keyboard editors, scrolling controls and leaf-free maps. Installer TypeScript
 checks and the production build pass. Native previews use controlled data and do
 not certify physical phone GPS or remote city services.
+Verified APK: 1.5.5+13, 93,196,594 bytes, SHA-256
+`72d810774cc411b90401beb0c49f8670219e02977f54afb945b0babff6cc7e4f`.
+APK signature verification and 16 KB alignment checks pass. Certificate SHA-256
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`
+matches previous local SUNDO releases. Package `com.sundo.sipalay` targets API 36
+with minimum API 24 and includes ARM64, ARMv7 and x86_64 libraries.
+PR #8 is merged at `2d16b76189838e9808f68bf8b882e412e22d1e83`.
+GitHub release `v1.5.5` contains the APK with the matching uploaded checksum.
+Installer labels and all APK redirects now target that verified release.
 
 ## Version 1.5.4 reference leaf placement
 
