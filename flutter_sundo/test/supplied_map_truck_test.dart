@@ -1,117 +1,96 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sundo_sipalay/features/live_map/widgets/clay_map_markers.dart';
-import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
+import 'package:sundo_sipalay/shared/widgets/directional_truck.dart';
 
 void main() {
-  test('supplied truck front follows telemetry and rotated map compass', () {
-    // The original artwork faces southeast. Rotate its front vector and verify
-    // that it points along the actual geographic heading on the map canvas.
-    const intrinsic = sundoMapTruckIntrinsicHeading * math.pi / 180;
-    final front = Offset(math.sin(intrinsic), -math.cos(intrinsic));
-    for (final heading in [0.0, 90.0, 180.0, 270.0, 359.0, 1.0]) {
-      for (final mapRotation in [-18.0, 0.0, 30.0]) {
-        final rotation = sundoMapTruckRotationRadians(heading,
-            mapRotationDegrees: mapRotation);
-        final rotated = Offset(
-            front.dx * math.cos(rotation) - front.dy * math.sin(rotation),
-            front.dx * math.sin(rotation) + front.dy * math.cos(rotation));
-        final expected = (heading + mapRotation) * math.pi / 180;
-        expect(rotated.dx, closeTo(math.sin(expected), 1e-9));
-        expect(rotated.dy, closeTo(-math.cos(expected), 1e-9));
+  test('direction selection covers all sixteen headings and north wrap', () {
+    for (var i = 0; i < 16; i++) {
+      expect(truckDirectionIndex(i * 22.5), i);
+      expect(truckDirectionIndex(i * 22.5 + 360), i);
+      expect(truckDirectionIndex(i * 22.5 - 360), i);
+    }
+    expect(truckDirectionIndex(359), 0);
+    expect(truckDirectionIndex(1), 0);
+    expect(truckDirectionIndex(double.nan), 8);
+    expect(truckScreenHeading(270, 90), 0);
+    expect(truckScreenHeading(0, -90), 270);
+  });
+  test('calibrated front vector follows GPS on a rotated map', () {
+    for (final heading in [0.0, 23.0, 90.0, 180.0, 270.0, 359.0]) {
+      for (final camera in [-90.0, 0.0, 30.0, 360.0]) {
+        final screen = truckScreenHeading(heading, camera);
+        final index = truckDirectionIndex(screen);
+        final front = truckIllustratedBearings[index] * math.pi / 180;
+        final correction = truckDirectionCorrection(screen, index);
+        expect(math.sin(front + correction),
+            closeTo(math.sin(screen * math.pi / 180), 1e-9));
+        expect(math.cos(front + correction),
+            closeTo(math.cos(screen * math.pi / 180), 1e-9));
       }
     }
-    expect(sundoMapTruckRotationRadians(null, mapRotationDegrees: 30), 0);
-    expect(sundoMapTruckRotationRadians(double.nan), 0);
   });
-
-  Future<void> mount(WidgetTester tester,
-      {bool fresh = true,
-      bool moving = true,
-      bool reducedMotion = false,
-      double? heading = 90}) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (context) => MediaQuery(
-          data:
-              MediaQuery.of(context).copyWith(disableAnimations: reducedMotion),
-          child: Center(
-            child: SizedBox.square(
-              dimension: 84,
-              child: SundoMapTruckMarker(
-                headingDegrees: heading,
-                mapRotationDegrees: -18,
-                fresh: fresh,
-                moving: moving,
-                pulse: .4,
-              ),
-            ),
-          ),
-        ),
-      ),
-    ));
-    await tester.runAsync(() async {
-      await precacheImage(const AssetImage(sundoMapTruckAsset),
-          tester.element(find.byType(SundoMapTruckMarker)));
-    });
-    await tester.pump();
-  }
-
-  testWidgets('map uses supplied artwork within the existing GPS touch bounds',
+  testWidgets('turns select different artwork, keep GPS bounds and settle',
       (tester) async {
-    await mount(tester);
-    final vehicle =
-        tester.widget<SundoVehicleGraphic>(find.byType(SundoVehicleGraphic));
-    expect(vehicle.mapView, isTrue);
-    expect(vehicle.moving, isTrue);
-    expect(vehicle.wheelPhase, .4);
-    final body =
-        tester.widget<Image>(find.byKey(const ValueKey('sundo-truck-body')));
-    expect((body.image as AssetImage).assetName, sundoMapTruckAsset);
+    Future<void> mount(double? heading,
+        {bool fresh = true, bool reduced = false}) async {
+      await tester.pumpWidget(MaterialApp(
+          home: Builder(
+              builder: (context) => MediaQuery(
+                  data: MediaQuery.of(context)
+                      .copyWith(disableAnimations: reduced),
+                  child: Center(
+                      child: SizedBox.square(
+                          dimension: 84,
+                          child: SundoMapTruckMarker(
+                              headingDegrees: heading,
+                              fresh: fresh,
+                              moving: true)))))));
+      await tester.runAsync(() async {
+        final context = tester.element(find.byType(SundoMapTruckMarker));
+        for (var i = 0; i < 16; i++) {
+          await precacheImage(
+              ResizeImage(AssetImage(truckDirectionAsset(i)), width: 256),
+              context);
+        }
+      });
+      await tester.pumpAndSettle();
+    }
+
+    String asset() {
+      final image = tester.widget<Image>(find.descendant(
+          of: find.byType(SundoDirectionalTruck),
+          matching: find.byType(Image)));
+      return ((image.image as ResizeImage).imageProvider as AssetImage)
+          .assetName;
+    }
+
+    await mount(0);
+    expect(asset(), endsWith('truck_000.png'));
+    await mount(90);
+    expect(asset(), endsWith('truck_090.png'));
+    await mount(180, reduced: true);
+    expect(asset(), endsWith('truck_180.png'));
+    await mount(270, fresh: false);
+    expect(asset(), endsWith('truck_270.png'));
     expect(
         tester.getSize(find.byType(SundoMapTruckMarker)), const Size(84, 84));
-    expect(find.byKey(const ValueKey('sundo-truck-rim-0')), findsOneWidget);
-    expect(find.byKey(const ValueKey('sundo-truck-rim-1')), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
-    expect(tester.binding.hasScheduledFrame, isFalse,
-        reason: 'Truck artwork must use the caller phase, not its own ticker.');
+    expect(tester.binding.hasScheduledFrame, isFalse);
     await tester.pumpWidget(const SizedBox.shrink());
   });
-
-  testWidgets('stale, stationary and reduced-motion trucks keep wheels still',
-      (tester) async {
-    for (final mode in ['stale', 'stationary', 'reduced']) {
-      await mount(tester,
-          fresh: mode != 'stale',
-          moving: mode != 'stationary',
-          reducedMotion: mode == 'reduced');
-      final vehicle =
-          tester.widget<SundoVehicleGraphic>(find.byType(SundoVehicleGraphic));
-      expect(vehicle.moving, isFalse, reason: mode);
-      expect(vehicle.wheelPhase, 0, reason: mode);
-      expect(find.byKey(const ValueKey('sundo-truck-rim-0')), findsNothing);
-      expect(tester.takeException(), isNull);
-    }
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('unknown heading is visibly stationary and described as unknown',
+  testWidgets('missing heading remains described as unavailable',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    await mount(tester, heading: null, moving: false);
-    final transform = tester.widget<Transform>(
-        find.byKey(const ValueKey('supplied-truck-bearing')));
+    await tester.pumpWidget(const MaterialApp(home: SundoMapTruckMarker()));
     expect(
-        transform.transform.storage, orderedEquals(Matrix4.identity().storage));
+        find.bySemanticsLabel(RegExp('heading unavailable')), findsOneWidget);
     expect(
-        find.bySemanticsLabel(
-            RegExp('Collection truck, stopped, heading unavailable')),
-        findsOneWidget);
-    expect(tester.takeException(), isNull);
+        tester
+            .widget<SundoDirectionalTruck>(find.byType(SundoDirectionalTruck))
+            .headingDegrees,
+        isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     semantics.dispose();
   });

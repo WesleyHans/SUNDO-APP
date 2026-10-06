@@ -62,7 +62,7 @@ jobs:
       # must be signed with the existing local key before publication so
       # residents can upgrade without uninstalling the app.
       - name: Render native scene and truck previews
-        run: flutter test test/splash_environment_test.dart test/map_scene_preview_test.dart test/supplied_truck_graphics_test.dart test/weather_status_banner_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
+        run: flutter test test/splash_environment_test.dart test/map_scene_preview_test.dart test/supplied_truck_graphics_test.dart test/directional_truck_preview_test.dart test/weather_status_banner_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
 
       - name: Save native previews
         uses: actions/upload-artifact@v4

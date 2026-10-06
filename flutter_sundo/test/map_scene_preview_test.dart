@@ -12,6 +12,7 @@ import 'package:sundo_sipalay/features/live_map/live_map_screen.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
+import 'package:sundo_sipalay/shared/widgets/directional_truck.dart';
 
 import 'fixtures/map_tile_fixture.dart';
 
@@ -115,6 +116,11 @@ void main() {
         final context =
             tester.element(find.byKey(const ValueKey('map-scene-preview')));
         await precacheImage(const AssetImage(sundoMapTruckAsset), context);
+        for (var i = 0; i < 16; i++) {
+          await precacheImage(
+              ResizeImage(AssetImage(truckDirectionAsset(i)), width: 256),
+              context);
+        }
         await precacheImage(const AssetImage(sundoSideTruckAsset), context);
         await Future.wait([
           for (final image in tiles.requestedImages.toSet())
