@@ -42,6 +42,9 @@ preview checks. The installer passed TypeScript checks and its production build.
 Vercel deployment `dpl_2a4oqQfaxMPuXb26M8g4XCtBiFte` is ready under the
 `wesleyplatil20200244-7046` account, with `https://sundo-app.vercel.app` assigned
 as its production URL. All APK download redirects point to `v1.5.4`.
+Production is deployed through the authenticated CLI. Automatic GitHub linking
+remains pending: Vercel's project-link API requires installation of the Vercel
+GitHub App with access to `WesleyHans/SUNDO-APP` (`https://github.com/apps/vercel`).
 
 ## Version 1.5.3 restores the complete 1.5.1 checkpoint
 
