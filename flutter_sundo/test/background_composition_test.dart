@@ -12,7 +12,6 @@ import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
-import 'package:sundo_sipalay/shared/widgets/resident_header.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 
 void main() {
@@ -74,14 +73,13 @@ void main() {
                           child: MainNavigationShell(onLogout: () {})))))));
       await _waitForScene(tester, mood.environment);
       await tester.tap(find.text('Schedule').last);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 450));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.runAsync(() => precacheImage(
           const AssetImage(sundoLeafSprigAsset),
           tester.element(find.byType(SundoHeaderLeaves))));
       await tester.pump();
       final leaves = tester.getRect(find.byType(LeafSprig));
-      final header = tester.getRect(find.byType(SundoResidentHeader));
+      final header = tester.getRect(find.byType(AppBar));
       expect(leaves.top, greaterThanOrEqualTo(32));
       expect(leaves.left, greaterThanOrEqualTo(0));
       expect(leaves.right, lessThanOrEqualTo(320));
@@ -458,11 +456,9 @@ void main() {
       final greeting = tester.getRect(find.text('Good Morning,'));
       final firstName = tester.getRect(find.text('Juan!'));
       final collection = tester.getRect(find.text('Next Collection'));
-      final header = tester.getRect(find.byType(SundoResidentHeader));
       expect(banner.top, greaterThanOrEqualTo(24));
-      expect(header.top, banner.bottom + 5);
-      expect(greeting.top, greaterThan(header.bottom + 15));
-      expect(greeting.top, lessThan(header.bottom + 40));
+      expect(greeting.top, greaterThan(banner.bottom + 15));
+      expect(greeting.top, lessThan(banner.bottom + 40));
       expect(firstName.top, greaterThanOrEqualTo(greeting.bottom));
       expect(firstName.bottom, lessThan(collection.top));
       expect(tester.takeException(), isNull);
