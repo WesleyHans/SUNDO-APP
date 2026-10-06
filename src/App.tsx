@@ -1,16 +1,16 @@
 import { ArrowDownToLine, ArrowRight, Check, Leaf, Smartphone, Truck } from 'lucide-react';
 import { SundoTruckIcon } from './components/common/SundoLogo';
 
-const downloadUrl = '/download-apk?v=1.4.0';
+const downloadUrl = '/download-apk?v=1.5.0';
 export default function App() {
   return <div className="installer">
     <header className="site-header"><a className="brand" href="#" aria-label="SUNDO home"><SundoTruckIcon size={62} /><span>SUNDO<small>Sipalay City</small></span></a><a className="header-download" href={downloadUrl}><ArrowDownToLine size={17}/> Download APK</a></header>
     <main>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy"><span className="eyebrow"><Leaf size={15}/> A cleaner Sipalay starts with you</span><h1 id="hero-title">Clean city.<br/>One little <span>download.</span></h1><p className="intro">Meet SUNDO, your companion for waste collection in Sipalay. Get the Android app and help keep your neighborhood clean.</p>
-        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.4.0 · Free</small></span><ArrowRight size={22}/></a>
+        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.5.0 · Free</small></span><ArrowRight size={22}/></a>
         <p className="download-note"><Smartphone size={15}/> Android only. Open the downloaded APK to install.</p>
-        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.4.0 adds local weather and your new truck artwork. City accounts, reports and live truck tracking require the city service to be activated.</p></div>
+        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.5.0 adds sixteen directional map truck views and keeps local weather. City accounts, reports and live truck tracking require the city service to be activated.</p></div>
         </div>
         <div className="hero-art"><img src="/clay-city-hero.png" alt="A green recycling truck surrounded by clay trees and the city skyline" width="1024" height="1536" fetchPriority="high"/><div className="art-tag"><span className="tag-icon"><Truck size={24}/></span><span>Small steps.<strong>A cleaner Sipalay.</strong></span><Check size={19}/></div></div>
       </section>
@@ -19,3 +19,4 @@ export default function App() {
     </main><footer><span className="footer-brand"><SundoTruckIcon size={46}/> SUNDO</span><p>Smart Urban Navigation for Dynamic Waste Operations</p><a href="https://github.com/WesleyHans/SUNDO-APP/releases/latest" target="_blank" rel="noreferrer">Release details <ArrowRight size={14}/></a></footer>
   </div>;
 }
+
