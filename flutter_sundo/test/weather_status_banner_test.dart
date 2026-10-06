@@ -56,12 +56,19 @@ void main() {
         location: location,
       );
 
-  Widget banner(SipalayWeather? snapshot, {DateTime? clock}) {
+  Widget banner(SipalayWeather? snapshot,
+      {DateTime? clock,
+      bool enabled = false,
+      bool checking = false,
+      VoidCallback? refresh}) {
     final mood = SundoTimeMood(clock ?? now, weather: snapshot);
     return MaterialApp(
       theme: buildSundoTheme(mood),
       home: SundoTimeScope(
         mood: mood,
+        weatherEnabled: enabled,
+        checkingWeather: checking,
+        onWeatherRefresh: refresh,
         child: const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(18),
@@ -71,6 +78,30 @@ void main() {
       ),
     );
   }
+
+  testWidgets('enabled weather shows unavailable status and a working retry',
+      (tester) async {
+    await loadFonts(tester);
+    var requests = 0;
+    await tester
+        .pumpWidget(banner(null, enabled: true, refresh: () => requests++));
+    expect(find.textContaining('Weather unavailable'), findsOneWidget);
+    expect(find.textContaining('Rainy'), findsNothing);
+    expect(find.textContaining('Clear weather'), findsNothing);
+    await tester.tap(find.byTooltip('Refresh local weather'));
+    expect(requests, 1);
+    await tester.pumpWidget(
+        banner(null, enabled: true, checking: true, refresh: () => requests++));
+    expect(find.textContaining('Checking weather'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byTooltip('Refresh local weather'), findsNothing);
+    await tester.pumpWidget(
+        banner(weather(code: 3), enabled: true, refresh: () => requests++));
+    expect(find.text('Cloudy at your location'), findsOneWidget);
+    expect(find.textContaining('Weather unavailable'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('unavailable, stale, unknown and unlocated weather stays hidden',
       (tester) async {

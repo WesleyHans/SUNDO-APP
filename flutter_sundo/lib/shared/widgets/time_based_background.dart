@@ -29,9 +29,9 @@ class SundoTimeBasedBackground extends StatefulWidget {
     colors: [
       Colors.transparent,
       Color(0x08FFFFFF),
-      Color(0x1FFFFFFF),
-      Color(0x38FFFFFF),
-      Color(0x2CFFFFFF),
+      Color(0x14FFFFFF),
+      Color(0x24FFFFFF),
+      Color(0x18FFFFFF),
     ],
   );
 
@@ -44,6 +44,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
   SundoEnvironment? _displayedEnvironment;
   SundoTimeMood? _displayedMood;
   bool _displayedReady = false;
+  bool _suppressOldRain = false;
   SundoEnvironment? _pendingEnvironment;
   SundoTimeMood? _requestedMood;
   ImageStream? _pendingStream;
@@ -64,6 +65,12 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
 
   void _requestScene(SundoTimeMood mood) {
     final environment = mood.environment;
+    // An expired/cleared weather snapshot must never leave wet scenery stuck
+    // behind the UI while a dry image is loading or cannot decode.
+    if (_displayedMood?.raining == true && !mood.raining) {
+      _suppressOldRain = true;
+      _displayedMood = mood;
+    }
     if (_pendingEnvironment == environment) {
       _requestedMood = mood;
       return;
@@ -72,6 +79,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       // Returning to the current scene invalidates an in-flight other scene.
       _cancelPending();
       _displayedMood = mood;
+      _suppressOldRain = false;
       return;
     }
     _cancelPending();
@@ -88,12 +96,14 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       if (_displayedEnvironment == environment) {
         _displayedReady = true;
         _displayedMood = readyMood;
+        _suppressOldRain = false;
         return;
       }
       setState(() {
         _displayedEnvironment = environment;
         _displayedMood = readyMood;
         _displayedReady = true;
+        _suppressOldRain = false;
       });
     }, onError: (error, stack) {
       if (!mounted || generation != _requestGeneration) return;
@@ -310,9 +320,11 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       errorBuilder: (context, error, stack) => const SizedBox.expand(),
     );
     final lighting = _sceneLighting(mood);
-    final scene = lighting == null
-        ? image
-        : ColorFiltered(colorFilter: lighting, child: image);
+    final scene = _suppressOldRain
+        ? ColoredBox(color: mood.background)
+        : lighting == null
+            ? image
+            : ColorFiltered(colorFilter: lighting, child: image);
     return Stack(fit: StackFit.expand, children: [
       AnimatedContainer(
           duration:
@@ -332,22 +344,34 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
             stops: const [0, .72, 1],
           ))),
       IgnorePointer(
-          child: AnimatedSwitcher(
-        duration:
-            reducedMotion ? Duration.zero : const Duration(milliseconds: 900),
-        switchInCurve: Curves.easeInOut,
-        switchOutCurve: Curves.easeInOut,
-        layoutBuilder: (current, previous) => Stack(
-            fit: StackFit.expand,
-            children: [...previous, if (current != null) current]),
-        child: ShaderMask(
-            key: ValueKey(mood.sceneryIdentity),
-            blendMode: BlendMode.dstIn,
-            shaderCallback: widget.fullScene
-                ? _fullSceneMask
-                : SundoTimeBasedBackground.sceneryFeather.createShader,
-            child: scene),
-      )),
+          child: ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: widget.fullScene
+                  ? _fullSceneMask
+                  : SundoTimeBasedBackground.sceneryFeather.createShader,
+              child: AnimatedSwitcher(
+                duration: reducedMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 900),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                // Keep the outgoing layer opaque below the arriving image. Normal
+                // overlapping fades reduce combined alpha at midpoint, causing a flash.
+                transitionBuilder: (child, animation) => AnimatedBuilder(
+                    animation: animation,
+                    child: child,
+                    builder: (context, child) => Opacity(
+                        opacity: animation.status == AnimationStatus.reverse
+                            ? 1
+                            : animation.value,
+                        child: child)),
+                layoutBuilder: (current, previous) => Stack(
+                    fit: StackFit.expand,
+                    children: [...previous, if (current != null) current]),
+                child: KeyedSubtree(
+                    key: ValueKey((mood.sceneryIdentity, _suppressOldRain)),
+                    child: scene),
+              ))),
       if (widget.child != null) widget.child!,
     ]);
   }

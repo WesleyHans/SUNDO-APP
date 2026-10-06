@@ -12,6 +12,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
+    final scope = context.dependOnInheritedWidgetOfExactType<SundoTimeScope>();
     final weather = mood.weather;
     final location = weather?.location;
     if (weather == null ||
@@ -19,7 +20,25 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         weather.condition == WeatherCondition.unknown ||
         location == null ||
         location.label.trim().isEmpty) {
-      return const SizedBox.shrink();
+      if (scope?.weatherEnabled != true) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: SundoSurface(
+            radius: 16,
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Icon(Icons.cloud_outlined, size: 22, color: mood.mutedTextColor),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: Text(
+                      scope!.checkingWeather
+                          ? 'Checking weather for your area…'
+                          : 'Weather unavailable · Using time-based scenery',
+                      style:
+                          TextStyle(fontSize: 12, color: mood.mutedTextColor))),
+              _weatherRefresh(scope),
+            ])),
+      );
     }
 
     final place = location.isDeviceLocation
@@ -63,25 +82,28 @@ class SundoWeatherStatusBanner extends StatelessWidget {
       child: Semantics(
         container: true,
         liveRegion: true,
-        label: [headline, source, if (caution != null) caution].join('. '),
-        child: ExcludeSemantics(
-          child: SundoSurface(
-            radius: 16,
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: .12),
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
+        explicitChildNodes: true,
+        child: SundoSurface(
+          radius: 16,
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Semantics(
+                  excludeSemantics: true,
+                  label: [headline, source, if (caution != null) caution]
+                      .join('. '),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,11 +134,24 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              if (scope?.onWeatherRefresh != null) _weatherRefresh(scope!),
+            ],
           ),
         ),
       ),
     );
   }
+
+  Widget _weatherRefresh(SundoTimeScope scope) => scope.checkingWeather
+      ? const Padding(
+          padding: EdgeInsets.all(12),
+          child: SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, semanticsLabel: 'Checking local weather')))
+      : IconButton(
+          onPressed: scope.onWeatherRefresh,
+          tooltip: 'Refresh local weather',
+          icon: const Icon(Icons.refresh_rounded, size: 20));
 }

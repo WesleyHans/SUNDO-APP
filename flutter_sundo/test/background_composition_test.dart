@@ -22,6 +22,81 @@ void main() {
     AppStore.setIdentity(null);
   });
 
+  for (final condition in [
+    WeatherCondition.clear,
+    WeatherCondition.cloudy,
+    WeatherCondition.rain
+  ]) {
+    testWidgets(
+        'schedule header leaves fit below system inset for ${condition.name}',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 715);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final mood =
+          SundoTimeMood.fromInstant(DateTime.parse('2026-10-06T11:00:00+08:00'),
+              weather: SipalayWeather(
+                  validAt: DateTime.parse('2026-10-06T11:00:00+08:00'),
+                  fetchedAt: DateTime.parse('2026-10-06T11:00:00+08:00'),
+                  weatherCode: condition == WeatherCondition.rain
+                      ? 63
+                      : condition == WeatherCondition.cloudy
+                          ? 3
+                          : 0,
+                  precipitationMm: 0,
+                  rainMm: 0,
+                  showersMm: 0));
+      await tester.runAsync(() async {
+        for (final weight in FontWeight.values) {
+          GoogleFonts.outfit(fontWeight: weight);
+          GoogleFonts.plusJakartaSans(fontWeight: weight);
+        }
+        await GoogleFonts.pendingFonts();
+        final icons = FontLoader('MaterialIcons')
+          ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+        await icons.load();
+      });
+      await tester.pumpWidget(MaterialApp(
+          theme: buildSundoTheme(mood),
+          home: MediaQuery(
+              data: const MediaQueryData(
+                  size: Size(320, 715),
+                  padding: EdgeInsets.only(top: 32, bottom: 24),
+                  viewPadding: EdgeInsets.only(top: 32, bottom: 24),
+                  textScaler: TextScaler.linear(1.4)),
+              child: SundoTimeScope(
+                  mood: mood,
+                  child: RepaintBoundary(
+                      key: const ValueKey('schedule-weather-preview'),
+                      child: ScenicBackdrop(
+                          child: MainNavigationShell(onLogout: () {})))))));
+      await _waitForScene(tester, mood.environment);
+      await tester.tap(find.text('Schedule').last);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.runAsync(() => precacheImage(
+          const AssetImage(sundoLeafSprigAsset),
+          tester.element(find.byType(SundoHeaderLeaves))));
+      await tester.pump();
+      final leaves = tester.getRect(find.byType(LeafSprig));
+      final header = tester.getRect(find.byType(AppBar));
+      expect(leaves.top, greaterThanOrEqualTo(32));
+      expect(leaves.left, greaterThanOrEqualTo(0));
+      expect(leaves.right, lessThanOrEqualTo(320));
+      expect(leaves.bottom, lessThanOrEqualTo(header.bottom));
+      await tester.tap(find.byIcon(Icons.refresh_rounded));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
+        await expectLater(
+            find.byKey(const ValueKey('schedule-weather-preview')),
+            matchesGoldenFile(
+                'goldens/schedule_weather_${condition.name}.png'));
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   final moods = [
     SundoTimeMood(DateTime(2026, 10, 5, 8)),
     SundoTimeMood(DateTime(2026, 10, 5, 12)),
@@ -180,6 +255,34 @@ void main() {
 
     expect(luminance(nightPixels), lessThan(luminance(dayPixels) * .7));
     expect(_displayedScenes(tester), [SundoEnvironment.rainyNight]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('expired rain clears even if the dry scene cannot decode',
+      (tester) async {
+    final bundle = _DeferredSceneBundle();
+    final dryAsset = sundoEnvironmentArtwork(SundoEnvironment.noon);
+    bundle.defer(dryAsset);
+    await tester.pumpWidget(_surface(moods[4], bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.rainy);
+    await tester.pumpWidget(_surface(moods[1], bundle: bundle));
+    await tester.pump(const Duration(seconds: 1));
+    expect(_displayedScenes(tester), isEmpty);
+    await tester.runAsync(() async {
+      bundle.fail(dryAsset);
+      await precacheImage(AssetImage(dryAsset, bundle: bundle),
+          tester.element(find.byType(SundoTimeBasedBackground)),
+          onError: (error, stack) {});
+      await AssetImage(dryAsset, bundle: bundle).evict();
+    });
+    await tester.pump();
+    expect(_displayedScenes(tester), isEmpty);
+    await tester.pumpWidget(
+        _surface(SundoTimeMood(DateTime(2026, 10, 5, 12, 1)), bundle: bundle));
+    await _waitForScene(tester, SundoEnvironment.noon);
+    await tester.pump(const Duration(seconds: 1));
+    expect(_displayedScenes(tester), [SundoEnvironment.noon]);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

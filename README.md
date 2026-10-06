@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Version **1.5.0+8** adds sixteen transparent truck views with calibrated GPS/map heading selection and smooth fades. Local weather before login and rainy-night scenery remain available. [Download the APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.0/SUNDO.apk). See [sprite integration and artwork limits](TRUCK_SPRITES.md): these generated views approximate the supplied truck rather than guaranteeing identical 3D geometry.
+The resident redesign follows the supplied twelve-screen reference with green and cream clay cards, illustrated city scenery and the unchanged supplied SUNDO logo. Version **1.5.1+9** fixes weather classification, stale rainy scenery, clipped leaves and Philippine-time greetings. At 11 AM the greeting remains Good Morning; Good Afternoon begins at noon. Weather refreshes every five minutes with a manual retry on Home. Sixteen directional truck views, local weather before login and rainy-night scenery remain available. [Download the APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.1/SUNDO.apk). See [sprite integration and artwork limits](TRUCK_SPRITES.md): these generated views approximate the supplied truck rather than guaranteeing identical 3D geometry.
 
 ## Run the mobile app
 
