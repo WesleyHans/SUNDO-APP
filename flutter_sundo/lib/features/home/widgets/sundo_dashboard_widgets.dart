@@ -605,10 +605,14 @@ class SundoProgressTracker extends StatelessWidget {
                 ]));
           }
           final fontSize = constraints.maxWidth < 280 ? 8.5 : 9.5;
+          // Longer labels receive more room, while each node stays centered
+          // above its own label at both regular and compact phone widths.
+          const columnWeights = [12, 10, 14, 9, 12];
           return Column(mainAxisSize: MainAxisSize.min, children: [
             Row(children: [
               for (var index = 0; index < 5; index++)
                 Expanded(
+                    flex: columnWeights[index],
                     child: SizedBox(
                         height: 14,
                         child: Stack(alignment: Alignment.center, children: [
@@ -650,6 +654,7 @@ class SundoProgressTracker extends StatelessWidget {
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               for (final value in MapTrackingStage.values)
                 Expanded(
+                    flex: columnWeights[value.index],
                     child: Text(
                         switch (value) {
                           MapTrackingStage.notStarted

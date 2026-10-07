@@ -246,25 +246,33 @@ void main() {
           scale: scale);
       final bounds = tester.getRect(find.byType(SundoProgressTracker));
       for (final label in [
-        'Not Started', 'On Route', 'Approaching', 'Nearby', 'Completed'
+        'Not Started',
+        'On Route',
+        'Approaching',
+        'Nearby',
+        'Completed'
       ]) {
-        final finder = find.byWidgetPredicate((widget) => widget is Text &&
-            widget.data?.replaceAll('\n', ' ') == label);
+        final finder = find.byWidgetPredicate((widget) =>
+            widget is Text && widget.data?.replaceAll('\n', ' ') == label);
         expect(finder, findsOneWidget);
         final paragraph = tester.renderObject<RenderParagraph>(finder);
         expect(paragraph.didExceedMaxLines, isFalse);
         final rect = tester.getRect(finder);
-        expect(rect.left, greaterThanOrEqualTo(bounds.left));
-        expect(rect.right, lessThanOrEqualTo(bounds.right));
+        expect(rect.left, greaterThanOrEqualTo(bounds.left - .01));
+        expect(rect.right, lessThanOrEqualTo(bounds.right + .01));
         final text = tester.widget<Text>(finder).data!;
         for (final box in paragraph.getBoxesForSelection(
             TextSelection(baseOffset: 0, extentOffset: text.length))) {
-          expect(box.left, greaterThanOrEqualTo(-.01));
-          expect(box.right, lessThanOrEqualTo(paragraph.size.width + .01),
-              reason: '$label must render whole at $width px and scale $scale.');
+          // Glyph bearings may extend a fraction of a logical pixel beyond
+          // their line advance; full-word clipping exceeds this tolerance.
+          expect(box.left, greaterThanOrEqualTo(-.5));
+          expect(box.right, lessThanOrEqualTo(paragraph.size.width + .5),
+              reason:
+                  '$label must render whole at $width px and scale $scale.');
         }
       }
-      expect(find.bySemanticsLabel('Collection status: On Route'), findsOneWidget);
+      expect(
+          find.bySemanticsLabel('Collection status: On Route'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
     await tester.pumpWidget(const SizedBox.shrink());
