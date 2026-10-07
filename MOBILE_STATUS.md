@@ -29,6 +29,15 @@ with a moon, exact 5 PM sunset, sunrise/sunset lighting, retained resolved areas
 late lighting updates and safe scenery replacement. Installer TypeScript checks
 and production compilation pass. Android version is **1.5.7+15**.
 
+PR #10 merged at `9290dcb89a2f20fa46c6d1316d1e296db21d177f`.
+The verified local APK has **93,311,434 bytes** and SHA-256
+`b3167a7a05194912378dbe191c707dd025994ed9160ae3af60e59474ce28f3d4`.
+Its v2 signature and 16 KB alignment checks pass. Package `com.sundo.sipalay`
+uses version code 15, minimum API 24 and target API 36, with ARM64, ARMv7 and
+x86_64 libraries. Certificate SHA-256
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`
+matches the previously published APKs.
+
 ## Version 1.5.6 reference Home dashboard
 
 Home now follows the supplied soft green/cream clay dashboard: greeting and
