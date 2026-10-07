@@ -26,6 +26,13 @@ PR #11 merged at `26faaeeb0e5e095feae0c8580cc1ea8e99594704`.
 The published GitHub `v1.5.8` asset reports the same byte count and SHA-256
 as the verified local package.
 
+Production installer deployment `dpl_GToAf3iGwE6o7u5p8VoBe5me7d4A` is READY
+at `https://sundo-app.vercel.app`. Public checks return HTTP 200 for the site,
+the JavaScript bundle with Version 1.5.8, and both `/download-apk` and
+`/SUNDO.apk`. Both downloads return the complete 93,311,434-byte Android
+package with filename `SUNDO.apk`. Independent GitHub run `37604840056`
+succeeded for the merged mobile source, building the APK and native previews.
+
 ## Version 1.5.7 Philippine greeting and daylight
 
 Greetings use Philippine Standard Time independently of the phone timezone:
