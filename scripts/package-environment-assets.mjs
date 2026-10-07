@@ -9,9 +9,11 @@ const scenes = [
   ['morning', 'ChatGPT Image Oct 5, 2026, 07_07_06 PM-1.png'],
   ['noon', 'ChatGPT Image Oct 5, 2026, 07_07_09 PM-2.png'],
   ['sunset', 'ChatGPT Image Oct 5, 2026, 07_07_11 PM-3.png'],
-  ['night', 'ChatGPT Image Oct 5, 2026, 07_07_14 PM-4.png'],
+  ['twilight', 'ChatGPT Image Oct 5, 2026, 07_07_14 PM-4.png'],
   ['rainy', 'ChatGPT Image Oct 5, 2026, 07_07_15 PM-5.png'],
 ];
+// Optional full-night reference, supplied separately after the original set.
+if (process.argv[3]) scenes.push(['night', path.resolve(process.argv[3])]);
 for (const [name, filename] of scenes) {
   const input = path.resolve(sourceDirectory, filename);
   const metadata = await sharp(input).metadata();

@@ -1,5 +1,28 @@
 # SUNDO mobile status
 
+## Version 1.5.9 evening twilight and full night
+
+The former night image is preserved byte-for-byte as evening twilight and is
+still used at 6 PM. Clear/time-only scenery selects the new user-supplied
+blue moon-and-stars artwork from exactly 7 PM Philippine time until local
+sunrise. The original decode gating and 900 ms fade handle the change.
+Rain retains its existing rainy-night artwork and lighting.
+
+The new 1024 x 1536 image was packaged losslessly and verified against the
+source PNG's decoded pixels. Splash paints its extra small moon only during
+twilight, avoiding a duplicate moon over the new artwork. Branding, leaves,
+card and scenery framing remain fixed; the existing branding plate may cover
+the artwork's higher moon on compact phones. Greeting wording, the 5 PM warm
+inner surface, weather provider and functional map behavior are unchanged.
+
+Android version is **1.5.9+17**. The local Dart executable is blocked by this
+computer's Device Guard policy; validation and compilation use the existing
+GitHub workflow. Run `37633389830` succeeded: Flutter analysis reports no
+issues, all **305 tests passed**, the APK compiled and native previews rendered.
+The actual 6 PM and 7 PM Splash previews were reviewed with branding and leaf
+placements preserved. Installer TypeScript checks and production compilation
+pass. Publication uses local signing with the established update certificate.
+
 ## Version 1.5.8 inner sunset tint
 
 Inner-page backgrounds acquire a faint warm yellow/cream wash from 5 PM until

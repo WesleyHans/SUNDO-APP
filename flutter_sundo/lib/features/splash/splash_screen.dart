@@ -157,7 +157,8 @@ class _SplashScreenState extends State<SplashScreen> {
       ));
 }
 
-/// The supplied night scene already has stars and lights. This moon is placed
+/// Twilight uses the existing small moon. The supplied later-night scene has
+/// its own moon, so no extra moon is painted over it. This moon is placed
 /// in its sky coordinates, beneath the fixed branding plate, and never changes
 /// the truck, road, vegetation or camera framing.
 class _NightMoon extends StatelessWidget {
@@ -167,7 +168,7 @@ class _NightMoon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IgnorePointer(
       child: AnimatedOpacity(
-          opacity: environment == SundoEnvironment.night ? 1 : 0,
+          opacity: environment == SundoEnvironment.twilight ? 1 : 0,
           duration: MediaQuery.disableAnimationsOf(context)
               ? Duration.zero
               : const Duration(milliseconds: 900),

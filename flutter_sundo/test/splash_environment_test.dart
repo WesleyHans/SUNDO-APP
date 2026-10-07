@@ -21,6 +21,7 @@ final _environments = <String, SundoTimeMood>{
   'morning': SundoTimeMood(DateTime(2026, 10, 5, 8)),
   'noon': SundoTimeMood(DateTime(2026, 10, 5, 12, 30)),
   'sunset': SundoTimeMood(DateTime(2026, 10, 5, 17)),
+  'twilight': SundoTimeMood(DateTime(2026, 10, 5, 18)),
   'night': SundoTimeMood(DateTime(2026, 10, 5, 20)),
   'rainy': SundoTimeMood(DateTime(2026, 10, 5, 14), raining: true),
   'rainy-night': SundoTimeMood(DateTime(2026, 10, 5, 19, 10),
@@ -268,7 +269,7 @@ void main() {
       }
       return result;
     });
-    expect(dimensions, hasLength(5));
+    expect(dimensions, hasLength(6));
     expect(dimensions!.toSet(), hasLength(1));
     expect(dimensions.first.aspectRatio, closeTo(2 / 3, .001));
   });

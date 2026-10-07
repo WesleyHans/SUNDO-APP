@@ -65,14 +65,17 @@ void main() {
       (15, 0, SundoDayPeriod.afternoon, SundoEnvironment.noon),
       (16, 59, SundoDayPeriod.afternoon, SundoEnvironment.noon),
       (17, 0, SundoDayPeriod.afternoon, SundoEnvironment.sunset),
-      (18, 0, SundoDayPeriod.evening, SundoEnvironment.night),
+      (18, 0, SundoDayPeriod.evening, SundoEnvironment.twilight),
       (23, 59, SundoDayPeriod.evening, SundoEnvironment.night),
     ];
     for (final (hour, minute, period, environment) in cases) {
       final mood = SundoTimeMood(DateTime(2026, 10, 5, hour, minute));
       expect(mood.period, period, reason: '$hour:$minute');
       expect(mood.environment, environment, reason: '$hour:$minute');
-      expect(mood.isNight, environment == SundoEnvironment.night);
+      expect(
+          mood.isNight,
+          environment == SundoEnvironment.night ||
+              environment == SundoEnvironment.twilight);
       expect(
           mood.greeting,
           hour < 12
@@ -169,9 +172,149 @@ void main() {
         SundoEnvironment.sunset);
     final afterSunset = SundoTimeMood.fromInstant(sunset);
     expect(afterSunset.isNight, isTrue);
-    expect(afterSunset.environment, SundoEnvironment.night);
+    expect(afterSunset.environment, SundoEnvironment.twilight);
     // Local sunset can precede 6 PM: the afternoon greeting must not keep a sun.
     expect(afterSunset.greeting, 'Good Afternoon');
+  });
+
+  test('dark night starts at 7 PM and lasts until calculated sunrise', () {
+    final midnight = _phInstant(2026, 10, 7);
+    final sunrise =
+        midnight.add(SundoTimeMood.fromInstant(midnight).daylight.sunrise);
+    final cases = <(DateTime, bool)>[
+      (_phInstant(2026, 10, 7, 18), false),
+      (
+        _phInstant(2026, 10, 7, 18, 59, 59)
+            .add(const Duration(milliseconds: 999)),
+        false
+      ),
+      (_phInstant(2026, 10, 7, 19), true),
+      (_phInstant(2026, 10, 7, 23, 59, 59), true),
+      (midnight, true),
+      (sunrise.subtract(const Duration(microseconds: 1)), true),
+      (sunrise, false),
+      (_phInstant(2026, 10, 7, 12), false),
+      (_phInstant(2026, 10, 7, 17), false),
+    ];
+    for (final (instant, expected) in cases) {
+      final mood = SundoTimeMood.fromInstant(instant);
+      expect(mood.isDarkNight, expected,
+          reason: 'Philippine time ${mood.localTime}');
+      final rainy = SundoTimeMood(mood.now,
+          philippineTime: mood.localTime,
+          daylight: mood.daylight,
+          raining: true);
+      expect(rainy.isDarkNight, expected,
+          reason: 'Rain must retain the same dark-night timing.');
+    }
+    expect(
+        SundoTimeMood.fromInstant(_phInstant(2026, 10, 7, 18)).isNight, isTrue,
+        reason: 'The existing 6 PM scene is nighttime twilight.');
+    expect(SundoTimeMood.fromInstant(sunrise).isNight, isFalse);
+  });
+
+  test('7 PM dark-night boundary follows Philippine time in every timezone',
+      () {
+    for (final stamp in [
+      '2026-10-07T11:00:00Z',
+      '2026-10-07T19:00:00+08:00',
+      '2026-10-07T07:00:00-04:00',
+    ]) {
+      final mood = SundoTimeMood.fromInstant(DateTime.parse(stamp));
+      expect(mood.localTime.hour, 19);
+      expect(mood.localTime.day, 7);
+      expect(mood.isDarkNight, isTrue);
+    }
+    for (final stamp in [
+      '2026-10-07T10:59:59.999Z',
+      '2026-10-07T18:59:59.999+08:00',
+      '2026-10-07T06:59:59.999-04:00',
+    ]) {
+      final mood = SundoTimeMood.fromInstant(DateTime.parse(stamp));
+      expect(mood.localTime.hour, 18);
+      expect(mood.isNight, isTrue);
+      expect(mood.isDarkNight, isFalse);
+    }
+  });
+
+  test('scenery identity changes at 7 PM and stays stable across midnight',
+      () {
+    for (final raining in [false, true]) {
+      SundoTimeMood at(int day, int hour, [int minute = 0]) {
+        final mood = SundoTimeMood.fromInstant(
+            _phInstant(2026, 10, day, hour, minute));
+        return SundoTimeMood(mood.now,
+            philippineTime: mood.localTime,
+            daylight: mood.daylight,
+            raining: raining);
+      }
+
+      final twilight = at(7, 18);
+      final beforeDark = at(7, 18, 59);
+      final dark = at(7, 19);
+      final beforeMidnight = at(7, 23, 59);
+      final midnight = at(8, 0);
+      expect(beforeDark.sceneryIdentity, twilight.sceneryIdentity);
+      expect(dark.sceneryIdentity, isNot(twilight.sceneryIdentity));
+      expect(
+          twilight.environment,
+          raining ? SundoEnvironment.rainyNight : SundoEnvironment.twilight);
+      expect(dark.environment,
+          raining ? SundoEnvironment.rainyNight : SundoEnvironment.night);
+      expect(dark.period, twilight.period);
+      expect(dark.greeting, twilight.greeting);
+      expect(dark.weatherCondition, twilight.weatherCondition);
+      expect(midnight.sceneryIdentity, beforeMidnight.sceneryIdentity);
+      expect(midnight.sceneryIdentity, dark.sceneryIdentity);
+      expect(midnight.greeting, 'Good Morning');
+    }
+  });
+
+  testWidgets('minute ticker darkens at 7 PM without changing weather or greeting',
+      (tester) async {
+    var clock = _phInstant(2026, 10, 7, 18, 59, 55);
+    final weather = SipalayWeather(
+      validAt: clock,
+      fetchedAt: clock,
+      weatherCode: 0,
+      precipitationMm: 0,
+      rainMm: 0,
+      showersMm: 0,
+    );
+    final container = ProviderContainer(overrides: [
+      sundoClockProvider.overrideWithValue(() => clock),
+      sundoWeatherProvider.overrideWith(() => _FixedWeatherController(weather)),
+    ]);
+    addTearDown(container.dispose);
+    final previous = container.read(sundoDayNightThemeProvider);
+    expect(previous.isDarkNight, isFalse);
+    var updates = 0;
+    final subscription = container.listen(sundoDayNightThemeProvider,
+        (previous, next) => updates++);
+    clock = clock.add(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 4));
+    expect(container.read(sundoDayNightThemeProvider).isDarkNight, isFalse);
+    expect(updates, 0);
+    clock = clock.add(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    final dark = container.read(sundoDayNightThemeProvider);
+    expect(dark.localTime.hour, 19);
+    expect(dark.isDarkNight, isTrue);
+    expect(updates, 1);
+    expect(previous.environment, SundoEnvironment.twilight);
+    expect(dark.environment, SundoEnvironment.night);
+    expect(dark.isNight, previous.isNight);
+    expect(dark.greeting, previous.greeting);
+    expect(dark.weatherCondition, previous.weatherCondition);
+    expect(dark.weather, same(weather));
+    expect(dark.sceneryIdentity, isNot(previous.sceneryIdentity));
+    expect(
+        SundoTimeScope(mood: dark, child: const SizedBox.shrink())
+            .updateShouldNotify(SundoTimeScope(
+                mood: previous, child: const SizedBox.shrink())),
+        isTrue);
+    subscription.close();
+    container.dispose();
   });
 
   test('resolved solar area survives unavailable or expired weather', () {
