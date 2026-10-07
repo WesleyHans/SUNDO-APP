@@ -6,6 +6,7 @@ import '../../core/theme/time_theme.dart';
 import '../../core/utils/resident_area.dart';
 import '../../repositories/schedule_repository.dart';
 import '../../shared/widgets/resident_components.dart';
+import 'widgets/sundo_dashboard_widgets.dart';
 
 /// Match the next Philippine calendar day, rather than a rolling 24 hours.
 List<CollectionSchedule> tomorrowCollectionsForResidentArea(
@@ -36,6 +37,7 @@ class HomeCollectionNotice extends StatelessWidget {
     required this.loaded,
     required this.onOpenSchedule,
     this.failed = false,
+    this.dashboardStyle = false,
   });
 
   final List<CollectionSchedule> schedules;
@@ -44,6 +46,7 @@ class HomeCollectionNotice extends StatelessWidget {
   final bool loaded;
   final bool failed;
   final VoidCallback onOpenSchedule;
+  final bool dashboardStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +72,31 @@ class HomeCollectionNotice extends StatelessWidget {
             : area.trim().isEmpty
                 ? 'Set your barangay in Profile.'
                 : '${DateFormat('EEE, MMM d').format(tomorrow)} · $area';
+    if (dashboardStyle) {
+      final pickupDetails = loaded && !failed && matches.isNotEmpty
+          ? matches.take(2).map((entry) {
+              final time = isDemo
+                  ? entry.timeLabel
+                  : DateFormat('h:mm a').format(
+                      entry.pickupAt.toUtc().add(const Duration(hours: 8)));
+              return '$time · ${entry.wasteType}';
+            }).join('\n')
+          : null;
+      return SundoInfoCard(
+        title: heading,
+        subtitle: details,
+        icon: Icons.campaign_rounded,
+        onTap: onOpenSchedule,
+        footer: isDemo ? 'Sample schedule · Local demo' : null,
+        additionalDetails: pickupDetails == null
+            ? null
+            : [
+                pickupDetails,
+                if (matches.length > 2)
+                  '+${matches.length - 2} more · View schedule',
+              ].join('\n'),
+      );
+    }
     return InkWell(
       onTap: onOpenSchedule,
       borderRadius: BorderRadius.circular(18),

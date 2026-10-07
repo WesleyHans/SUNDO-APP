@@ -168,6 +168,7 @@ Future<void> _mount(WidgetTester tester, Widget screen,
       theme: buildSundoTheme(mood),
       home: MediaQuery(
           data: const MediaQueryData(
+              disableAnimations: true,
               size: Size(320, 640),
               padding: EdgeInsets.only(top: 24, bottom: 24),
               viewPadding: EdgeInsets.only(top: 24, bottom: 24),

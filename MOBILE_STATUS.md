@@ -1,5 +1,35 @@
 # SUNDO mobile status
 
+## Version 1.5.6 reference Home dashboard
+
+Home now follows the supplied soft green/cream clay dashboard: greeting and
+circular account controls, decorated weather card, two balanced collection
+cards, and a featured truck card with route scenery, progress and its primary
+action. The bottom navigation retains all five destinations with a rounded
+surface and green active pill. Existing location and shortcut cards remain
+below the main feature. Collection cards become full-width at larger text sizes
+instead of squeezing their content into narrow columns.
+
+Reusable Flutter widgets paint faint cloud/leaf/route decorations beneath real
+text and controls. A shared 18-second decorative clock pauses off Home, in
+background, when TickerMode is disabled and for reduced-motion preferences.
+Card entrances finish once; fleet/weather refreshes do not replay them. Buttons
+use a small press response, and the current-update chip has a gentle pulse.
+
+Philippine-time greeting, current weather freshness, resident-area schedules and
+fleet values remain connected to existing data. The demo notice and simulated
+collection label stay explicit; unavailable/stale data does not acquire invented
+metrics. Weather refresh still uses the existing consent and refresh callback.
+The truck and natural corner-leaf assets, Splash/Welcome composition and Live
+Map decoration rules are preserved.
+
+Flutter analysis reports no issues, and all 269 tests passed. Dedicated native
+dashboard tests cover 390/320 px, increased text, data states, navigation,
+entrance stability and lifecycle/reduced-motion pause behavior. Installer
+TypeScript checks and production compilation pass. All 22 existing day/night
+screen preview checks pass; three dedicated dashboard captures were visually
+reviewed at regular/narrow widths and increased text. Android version is 1.5.6+14.
+
 ## Version 1.5.5 screen and scenery motion
 
 Login, Create Account and page navigation now use gentle fades. One shared

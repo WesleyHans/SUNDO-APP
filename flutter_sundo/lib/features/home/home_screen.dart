@@ -11,12 +11,11 @@ import '../../core/storage/app_store.dart';
 import '../../services/backend_service.dart';
 import '../../core/theme/time_theme.dart';
 import '../../core/utils/resident_area.dart';
-import '../../shared/widgets/sundo_graphics.dart';
-import '../live_map/widgets/map_tracking_widgets.dart';
 import '../../shared/widgets/resident_components.dart';
 import '../../shared/widgets/weather_status_banner.dart';
 import 'home_collection_notice.dart';
 import 'home_location_card.dart';
+import 'widgets/sundo_dashboard_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int) onNavigate;
@@ -122,243 +121,187 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((part) => part[0])
             .join()
             .toUpperCase();
-    final next = nextCollectionForResidentArea(_schedules, _barangay, mood.now);
-    return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-            // The demo banner in the shell already reserves the status bar.
-            top: BackendService.live,
-            bottom: false,
-            child: RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(padding: EdgeInsets.zero, children: [
-                  Container(
-                      constraints: const BoxConstraints(minHeight: 138),
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                              colors: [
-                            mood.sky.withValues(alpha: .24),
-                            mood.sky.withValues(alpha: 0)
-                          ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter)),
-                      padding: const EdgeInsets.fromLTRB(20, 24, 18, 36),
-                      child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                                child: SundoDynamicGreeting(
-                                    firstName: firstName.isEmpty
-                                        ? 'Resident'
-                                        : firstName)),
-                            Semantics(
-                                label: 'Notifications, $_unread unread',
-                                button: true,
-                                child: IconButton(
-                                    onPressed: () => widget.onNavigate(3),
-                                    icon: Badge(
-                                        isLabelVisible: _unread > 0,
-                                        label: Text(_unread.toString()),
-                                        child: Icon(Icons.notifications_rounded,
-                                            color: mood.textColor)))),
-                            const SizedBox(width: 5),
-                            InkWell(
-                                onTap: () => widget.onNavigate(4),
-                                borderRadius: BorderRadius.circular(30),
-                                child: CircleAvatar(
-                                    radius: 22,
-                                    backgroundColor: const Color(0xFF0B8F3E),
-                                    foregroundColor: Colors.white,
-                                    child: Text(initials,
-                                        style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700))))
-                          ])),
-                  Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 22),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SundoWeatherStatusBanner(),
-                            if (_error != null)
-                              Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: Text(_error!,
-                                      style: TextStyle(
-                                          color: mood.accent, fontSize: 12))),
-                            HomeCollectionNotice(
-                                schedules: _schedules,
-                                area: _barangay,
-                                isDemo: !BackendService.live,
-                                loaded: _schedulesLoaded,
-                                failed: _schedulesFailed,
-                                onOpenSchedule: () => widget.onNavigate(2)),
-                            const SizedBox(height: 14),
-                            _nextCard(context, next),
-                            const SizedBox(height: 14),
-                            _truckCard(context),
-                            const SizedBox(height: 14),
-                            HomeLocationCard(
-                                isActive: widget.isActive,
-                                onOpenMap: () => widget.onNavigate(1)),
-                            const SizedBox(height: 20),
-                            Text('Quick Actions',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: mood.textColor)),
-                            const SizedBox(height: 12),
-                            Row(children: [
-                              Expanded(
-                                  child: SundoQuickActionCard(
-                                      title: 'Collection Schedule',
-                                      icon: Icons.calendar_month_rounded,
-                                      color: const Color(0xFFF4A623),
-                                      onTap: () => widget.onNavigate(2))),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                  child: SundoQuickActionCard(
-                                      title: 'Report Concern',
-                                      icon: Icons.error_outline_rounded,
-                                      color: const Color(0xFFDC3B3B),
-                                      onTap: () => context.push('/report')))
-                            ]),
-                            const SizedBox(height: 12),
-                            Row(children: [
-                              Expanded(
-                                  child: SundoQuickActionCard(
-                                      title: 'Notifications',
-                                      icon: Icons.notifications_rounded,
-                                      color: const Color(0xFF2F80ED),
-                                      onTap: () => widget.onNavigate(3))),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                  child: SundoQuickActionCard(
-                                      title: 'Waste Guide',
-                                      icon: Icons.menu_book_rounded,
-                                      color: const Color(0xFF25B84A),
-                                      onTap: () => _wasteGuide(context)))
-                            ]),
-                            const SizedBox(height: 22),
-                            SundoSurface(
-                                radius: 20,
-                                padding: const EdgeInsets.all(17),
-                                child: Row(children: [
-                                  Icon(Icons.eco_rounded,
-                                      size: 40, color: mood.accent),
+    final next = nextCollectionForResidentArea(_schedules, _barangay,
+        BackendService.live ? mood.now : mood.localTime);
+    return SundoDashboardMotion(
+        isActive: widget.isActive,
+        child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+                // The demo banner in the shell already reserves the status bar.
+                top: BackendService.live,
+                bottom: false,
+                child: RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView(padding: EdgeInsets.zero, children: [
+                      Container(
+                          constraints: const BoxConstraints(minHeight: 104),
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                  colors: [
+                                mood.sky.withValues(alpha: .24),
+                                mood.sky.withValues(alpha: 0)
+                              ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter)),
+                          padding: EdgeInsets.zero,
+                          child: SundoGreetingHeader(
+                              firstName:
+                                  firstName.isEmpty ? 'Resident' : firstName,
+                              initials: initials,
+                              unread: _unread,
+                              onNotifications: () => widget.onNavigate(3),
+                              onProfile: () => widget.onNavigate(4))),
+                      Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 22),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SundoDashboardEntrance(
+                                    key: const ValueKey('sundo-weather-entrance'),
+                                    isActive: widget.isActive,
+                                    child: const SundoWeatherStatusBanner(
+                                        dashboardStyle: true)),
+                                if (_error != null)
+                                  Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: Text(_error!,
+                                          style: TextStyle(
+                                              color: mood.accent,
+                                              fontSize: 12))),
+                                SundoDashboardEntrance(
+                                    key: const ValueKey('sundo-info-entrance'),
+                                    order: 1,
+                                    isActive: widget.isActive,
+                                    child: _collectionCards(context, next)),
+                                const SizedBox(height: 12),
+                                SundoDashboardEntrance(
+                                    key: const ValueKey('sundo-truck-entrance'),
+                                    order: 2,
+                                    isActive: widget.isActive,
+                                    child: SundoLiveTruckCard(
+                                        truck: _truck,
+                                        onViewMap: () => widget.onNavigate(1))),
+                                const SizedBox(height: 14),
+                                HomeLocationCard(
+                                    key: const ValueKey('sundo-home-location'),
+                                    isActive: widget.isActive,
+                                    onOpenMap: () => widget.onNavigate(1)),
+                                const SizedBox(height: 20),
+                                Text('Quick Actions',
+                                    style: GoogleFonts.outfit(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: mood.textColor)),
+                                const SizedBox(height: 12),
+                                Row(children: [
+                                  Expanded(
+                                      child: SundoQuickActionCard(
+                                          title: 'Collection Schedule',
+                                          icon: Icons.calendar_month_rounded,
+                                          color: const Color(0xFFF4A623),
+                                          onTap: () => widget.onNavigate(2))),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                      child: Text(
-                                          'Together for a\nCleaner Sipalay',
-                                          style: GoogleFonts.outfit(
-                                              fontSize: 19,
-                                              height: 1.15,
-                                              fontWeight: FontWeight.w800,
-                                              color: mood.textColor)))
-                                ])),
-                          ])),
-                ]))));
+                                      child: SundoQuickActionCard(
+                                          title: 'Report Concern',
+                                          icon: Icons.error_outline_rounded,
+                                          color: const Color(0xFFDC3B3B),
+                                          onTap: () => context.push('/report')))
+                                ]),
+                                const SizedBox(height: 12),
+                                Row(children: [
+                                  Expanded(
+                                      child: SundoQuickActionCard(
+                                          title: 'Notifications',
+                                          icon: Icons.notifications_rounded,
+                                          color: const Color(0xFF2F80ED),
+                                          onTap: () => widget.onNavigate(3))),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                      child: SundoQuickActionCard(
+                                          title: 'Waste Guide',
+                                          icon: Icons.menu_book_rounded,
+                                          color: const Color(0xFF25B84A),
+                                          onTap: () => _wasteGuide(context)))
+                                ]),
+                                const SizedBox(height: 22),
+                                SundoSurface(
+                                    radius: 20,
+                                    padding: const EdgeInsets.all(17),
+                                    child: Row(children: [
+                                      Icon(Icons.eco_rounded,
+                                          size: 40, color: mood.accent),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                          child: Text(
+                                              'Together for a\nCleaner Sipalay',
+                                              style: GoogleFonts.outfit(
+                                                  fontSize: 19,
+                                                  height: 1.15,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: mood.textColor)))
+                                    ])),
+                              ])),
+                    ])))));
+  }
+
+  Widget _collectionCards(BuildContext context, CollectionSchedule? next) {
+    final notice = HomeCollectionNotice(
+        schedules: _schedules,
+        area: _barangay,
+        isDemo: !BackendService.live,
+        loaded: _schedulesLoaded,
+        failed: _schedulesFailed,
+        dashboardStyle: true,
+        onOpenSchedule: () => widget.onNavigate(2));
+    final collection = _nextCard(context, next);
+    return LayoutBuilder(builder: (context, constraints) {
+      // Preserve the reference row at phone widths. Large accessibility text
+      // gets full-width cards instead of cramped columns or clipped labels.
+      final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+      if (constraints.maxWidth / scale < 245) {
+        return Column(
+            key: const ValueKey('sundo-home-info-stack'),
+            children: [notice, const SizedBox(height: 12), collection]);
+      }
+      return IntrinsicHeight(
+          child: Row(
+              key: const ValueKey('sundo-home-info-row'),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+            Expanded(child: notice),
+            const SizedBox(width: 10),
+            Expanded(child: collection)
+          ]));
+    });
   }
 
   Widget _nextCard(BuildContext context, CollectionSchedule? next) {
-    final mood = SundoTimeScope.of(context);
-    return InkWell(
-        onTap: () => widget.onNavigate(2),
-        borderRadius: BorderRadius.circular(18),
-        child: SundoSurface(
-            child: Row(children: [
-          Container(
-              width: 47,
-              height: 47,
-              decoration: BoxDecoration(
-                  color: const Color(0xFF25B84A),
-                  borderRadius: BorderRadius.circular(13)),
-              child: const Icon(Icons.calendar_month_rounded,
-                  color: Colors.white, size: 28)),
-          const SizedBox(width: 13),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text('Next Collection',
-                    style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: mood.textColor)),
-                const SizedBox(height: 3),
-                Text(
-                    next == null
-                        ? (BackendService.live
-                            ? 'No schedule published yet'
-                            : 'No sample pickup for your area')
-                        : DateFormat('EEEE, MMM d, yyyy').format(next.pickupAt),
-                    style: TextStyle(fontSize: 11, color: mood.mutedTextColor)),
-                if (next != null)
-                  Text(next.timeLabel,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: mood.accent,
-                          fontWeight: FontWeight.w700))
-              ])),
-          Icon(Icons.chevron_right_rounded, color: mood.mutedTextColor)
-        ])));
-  }
-
-  Widget _truckCard(BuildContext context) {
-    final mood = SundoTimeScope.of(context);
-    final truck = _truck;
-    final fresh = truck?.freshAt(DateTime.now()) ?? false;
-    final label = truck == null
-        ? 'Awaiting fleet data'
-        : fresh && (truck.active || truck.stage == MapTrackingStage.completed)
-            ? switch (truck.stage) {
-                MapTrackingStage.approaching => 'APPROACHING',
-                MapTrackingStage.nearby => 'NEARBY',
-                MapTrackingStage.completed => 'COMPLETED',
-                MapTrackingStage.notStarted => 'NOT STARTED',
-                _ => 'ON ROUTE'
-              }
-            : 'OFFLINE';
-    final distance = truck?.distanceKm;
-    final eta = truck?.etaMinutes;
-    return SundoSurface(
-        child: Column(children: [
-      Row(children: [
-        const SundoTruckGraphic(width: 45, height: 35),
-        const SizedBox(width: 12),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Truck is $label',
-              style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: mood.accent)),
-          const SizedBox(height: 4),
-          Text(
-              truck == null
-                  ? (BackendService.live
-                      ? 'No position has been received.'
-                      : 'Starting the sample route…')
-                  : !fresh
-                      ? 'Waiting for a current truck position.'
-                      : '${distance == null ? 'Distance unavailable' : '${distance.toStringAsFixed(1)} km away'} · ${eta == null ? 'ETA unavailable' : 'ETA: $eta minutes'}',
-              style: TextStyle(fontSize: 10, color: mood.mutedTextColor)),
-          if (truck?.simulated ?? false)
-            Text('Simulated collection · ${truck!.route.name}',
-                style: TextStyle(fontSize: 9, color: mood.mutedTextColor))
-        ]))
-      ]),
-      const SizedBox(height: 16),
-      SundoRouteProgress(
-          stage: truck?.stage ?? MapTrackingStage.notStarted,
-          available: truck != null && fresh),
-      const SizedBox(height: 16),
-      SundoPrimaryButton(
-          label: 'View Live Truck',
-          icon: Icons.arrow_forward_rounded,
-          onPressed: () => widget.onNavigate(1))
-    ]));
+    final pickup = next == null
+        ? null
+        : BackendService.live
+            ? next.pickupAt.toUtc().add(const Duration(hours: 8))
+            : next.pickupAt;
+    return SundoInfoCard(
+        title: 'Next Collection',
+        subtitle: _schedulesFailed
+            ? 'Schedule unavailable. Pull down to retry.'
+            : !_schedulesLoaded
+                ? 'Checking your collection schedule…'
+                : next == null
+                    ? (BackendService.live
+                        ? 'No schedule published yet'
+                        : 'No sample pickup for your area')
+                    : DateFormat('EEEE, MMM d, yyyy').format(pickup!),
+        icon: Icons.calendar_month_rounded,
+        timeLabel: next == null
+            ? null
+            : BackendService.live
+                ? DateFormat('h:mm a').format(pickup!)
+                : next.timeLabel,
+        onTap: () => widget.onNavigate(2));
   }
 
   void _wasteGuide(BuildContext context) {

@@ -64,6 +64,7 @@ void main() {
           theme: buildSundoTheme(mood),
           home: MediaQuery(
               data: const MediaQueryData(
+                  disableAnimations: true,
                   size: Size(320, 715),
                   padding: EdgeInsets.only(top: 32, bottom: 24),
                   viewPadding: EdgeInsets.only(top: 32, bottom: 24),

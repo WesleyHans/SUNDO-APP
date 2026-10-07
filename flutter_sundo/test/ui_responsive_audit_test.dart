@@ -369,8 +369,9 @@ Future<void> _mount(WidgetTester tester, Widget screen,
           builder: (context, child) => RepaintBoundary(
               key: const ValueKey('responsive-audit'),
               child: MediaQuery(
-                  data: MediaQuery.of(context)
-                      .copyWith(textScaler: TextScaler.linear(scale)),
+                  data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(scale),
+                      disableAnimations: true),
                   child: SundoTimeScope(
                       mood: mood, child: ScenicBackdrop(child: child!)))),
           home: screen)));

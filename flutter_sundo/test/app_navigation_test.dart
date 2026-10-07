@@ -56,7 +56,7 @@ void main() {
         child: SundoBootstrap(initialize: () async {
           if (++attempts == 1) throw StateError('test storage error');
         })));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     expect(find.text('SUNDO could not start.'), findsOneWidget);
     await tester.tap(find.text('Retry'));
     await tester.pump();
@@ -95,11 +95,11 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
         container: container, child: const SundoApp()));
     await tester.pump(const Duration(milliseconds: 2900));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     container.read(sundoRouterProvider).go('/welcome');
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     await tester.tap(find.text('Get Started'));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     expect(AppStore.identity, 'guest');
     expect(MockAuthRepository.hasSession, isFalse);
     expect(find.textContaining('Private Resident'), findsNothing);
@@ -113,14 +113,14 @@ void main() {
     await tester.tap(find.descendant(
         of: find.byType(SundoBottomNavigation),
         matching: find.text('Schedule')));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('Collection Schedule'), findsNothing);
     expect(find.byType(LeafSprig), findsNWidgets(2));
     expect(find.text('This Week'), findsOneWidget);
     await tester.tap(find.descendant(
         of: find.byType(SundoBottomNavigation), matching: find.text('Alerts')));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('Notifications'), findsNothing);
     expect(find.byType(LeafSprig), findsNWidgets(2));
@@ -128,13 +128,21 @@ void main() {
     await tester.tap(find.descendant(
         of: find.byType(SundoBottomNavigation),
         matching: find.text('Profile')));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     await tester.ensureVisible(find.text('Logout'));
     await tester.tap(find.text('Logout'));
-    await tester.pumpAndSettle();
+    await _finishNavigation(tester);
     expect(find.text('Get Started'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     disposeContainer();
   });
+}
+
+// Dashboard decorations repeat while Home is active; await only page motion.
+Future<void> _finishNavigation(WidgetTester tester) async {
+  await tester.pump();
+  for (var frame = 0; frame < 6; frame++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
 }
