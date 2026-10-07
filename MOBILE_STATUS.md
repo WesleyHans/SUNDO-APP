@@ -22,6 +22,10 @@ APK v2 signing verifies with the same published certificate
 16 KB ZIP alignment passes. Package `com.sundo.sipalay`, minimum API 24,
 target API 36, and ARM64/ARMv7/x86_64 support remain unchanged.
 
+PR #11 merged at `26faaeeb0e5e095feae0c8580cc1ea8e99594704`.
+The published GitHub `v1.5.8` asset reports the same byte count and SHA-256
+as the verified local package.
+
 ## Version 1.5.7 Philippine greeting and daylight
 
 Greetings use Philippine Standard Time independently of the phone timezone:
