@@ -38,6 +38,13 @@ x86_64 libraries. Certificate SHA-256
 `9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`
 matches the previously published APKs.
 
+GitHub release `v1.5.7` contains `SUNDO.apk` with the identical uploaded
+SHA-256. Vercel production deployment `dpl_DsZiwaCkUPwWDy2BFdMVuh6rP3hH`
+is ready and aliased to `https://sundo-app.vercel.app`. Public HTTP checks on
+7 October 2026 return 200, confirm the installer bundle displays Version 1.5.7,
+and follow `/download-apk?v=1.5.7` to the complete 93,311,434-byte APK with the
+Android package content type and `SUNDO.apk` attachment filename.
+
 ## Version 1.5.6 reference Home dashboard
 
 Home now follows the supplied soft green/cream clay dashboard: greeting and
