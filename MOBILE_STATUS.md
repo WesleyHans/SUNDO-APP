@@ -41,6 +41,15 @@ with ARM64, ARMv7 and x86_64 libraries. Its certificate SHA-256
 `9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`
 matches the previous locally published releases.
 
+GitHub release `v1.5.6` contains the APK with the matching uploaded SHA-256.
+Independent GitHub Actions run `37570204039` completed successfully for the
+merged mobile source. Vercel production deployment
+`dpl_HkE2dRLas2D67MR2fPCzJzeByj5t` is ready and aliased to
+`https://sundo-app.vercel.app`. Public HTTP checks return 200, confirm the bundle
+displays Version 1.5.6, and follow the installer download to the complete
+93,229,514-byte `SUNDO.apk`. Deployment used Vercel CLI 62.4.0 with the existing
+configured account after verifying its SUNDO project access.
+
 ## Version 1.5.5 screen and scenery motion
 
 Login, Create Account and page navigation now use gentle fades. One shared
