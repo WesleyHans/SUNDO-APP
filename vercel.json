@@ -8,12 +8,12 @@
     { "source": "/SUNDO.apk", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
   ],
   "redirects": [
-    { "source": "/download-apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false },
-    { "source": "/SUNDO.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false },
-    { "source": "/SUNDO-v1.0.0-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false },
-    { "source": "/sundo-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false },
-    { "source": "/sundo.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false },
-    { "source": "/app-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk", "permanent": false }
+    { "source": "/download-apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false },
+    { "source": "/SUNDO.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false },
+    { "source": "/SUNDO-v1.0.0-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false },
+    { "source": "/sundo-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false },
+    { "source": "/sundo.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false },
+    { "source": "/app-release.apk", "destination": "https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk", "permanent": false }
   ],
   "rewrites": [
     { "source": "/((?!assets/|.*\\.).*)", "destination": "/index.html" }

@@ -23,6 +23,20 @@ The actual 6 PM and 7 PM Splash previews were reviewed with branding and leaf
 placements preserved. Installer TypeScript checks and production compilation
 pass. Publication uses local signing with the established update certificate.
 
+PR #12 merged at `5b49e34bf7dea738e130409d5d0f180e154e3915`.
+The locally signed APK has **94,689,653 bytes** and SHA-256
+`19c6da9031e559bb352621f141a21ed158e0bc08f044cfc0039c2ef5ea93c2ed`.
+APK v2 signing verifies with certificate
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`,
+matching previous releases. 16 KB ZIP alignment passes; package
+`com.sundo.sipalay`, version code 17, minimum API 24, target API 36 and
+ARM64/ARMv7/x86_64 support are verified. Both backend build variables were
+empty, retaining the existing local demo configuration.
+
+The published GitHub `v1.5.9` release asset reports the same **94,689,653-byte**
+size and SHA-256 as the verified local package. Its downloadable filename is
+`SUNDO.apk`: [release and APK](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.5.9).
+
 ## Version 1.5.8 inner sunset tint
 
 Inner-page backgrounds acquire a faint warm yellow/cream wash from 5 PM until

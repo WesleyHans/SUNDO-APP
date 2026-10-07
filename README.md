@@ -2,7 +2,7 @@
 
 SUNDO is a Flutter mobile app for residents, with connected driver and city staff workflows. The website is an Android APK installer: download, installation steps and a short FAQ. It does not run the mobile app in the browser.
 
-The resident dashboard follows the supplied green and cream clay reference, with balanced collection cards, featured truck, gentle decorative motion and the unchanged SUNDO logo. Version **1.5.8+16** adds a faint warm yellow/cream inner-page background that fades in from **5 PM** Philippine time. Good Morning starts at midnight while scenery stays dark until local sunrise; night begins at calculated local sunset. Existing leaf placements, Splash/Welcome/Login composition, smooth navigation and Open-Meteo weather remain; Live Map has no leaf decorations and retains its original surface. Weather refreshes every five minutes with a manual retry on Home. [Download the APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.8/SUNDO.apk). See [sprite integration and artwork limits](TRUCK_SPRITES.md): the generated directional trucks approximate the supplied truck rather than guaranteeing identical 3D geometry.
+The resident dashboard follows the supplied green and cream clay reference, with balanced collection cards, featured truck, gentle decorative motion and the unchanged SUNDO logo. Version **1.5.9+17** preserves the existing twilight scenery at **6 PM** and fades to the supplied darker blue moon-and-stars scene from **7 PM** Philippine time until local sunrise. Good Morning starts at midnight independently of the dark scenery. Inner-page backgrounds retain their faint warm yellow/cream tint from **5 PM** until calculated local sunset. Existing leaf placements, Splash/Welcome/Login composition, smooth navigation and Open-Meteo weather remain; Live Map has no leaf decorations and retains its original surface. Weather refreshes every five minutes with a manual retry on Home. [Download the APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.9/SUNDO.apk). See [sprite integration and artwork limits](TRUCK_SPRITES.md): the generated directional trucks approximate the supplied truck rather than guaranteeing identical 3D geometry.
 
 ## Run the mobile app
 
@@ -38,20 +38,21 @@ Cached base maps do not make GPS or truck updates current. Live mode still requi
 
 ## Time and local weather scenery
 
-The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corner leaf frames and bottom **Track. Prepare. Collect.** card fixed. Branding colors and positions remain constant when the environment changes. Five supplied illustrations use the same truck model, orientation, road, city layout and foreground plants; they are bundled as lossless WebP assets rather than generating a new truck for each condition.
+The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corner leaf frames and bottom **Track. Prepare. Collect.** card fixed. Branding colors and positions remain constant when the environment changes. Six supplied scenery illustrations are bundled as lossless WebP assets. The former night illustration remains the twilight asset; the new night illustration uses the user's supplied artwork. On compact phones, the fixed branding plate can cover the new artwork's higher moon.
 
 | Philippine time (UTC+8) | Scene |
 | --- | --- |
 | Calculated local sunrise–10:59 | Morning |
 | 11:00–16:59 while daylight | Noon / afternoon |
 | 17:00–calculated local sunset | Sunset |
-| After calculated sunset until next sunrise | Night |
+| After calculated sunset–18:59 | Evening twilight, including 6 PM |
+| 19:00 until next local sunrise | Dark blue night |
 | Fresh rain, drizzle or thunderstorms during daytime | Rainy atmosphere matched to the time period |
 | Fresh rain, drizzle or thunderstorms at night | Dark rainy night atmosphere |
 
 Scene changes fade over 900 ms; system reduced-motion settings select the new scene immediately. Other resident screens use a continuous, softly masked backdrop rather than separate illustration bands. Home's greeting no longer receives a second status-bar inset in the demo shell. Detailed transparent natural leaves replace the painted leaves within their existing frames.
 
-Version 1.5.7 separates greetings from daylight: **Good Morning starts at midnight, Good Afternoon at noon, and Good Evening at 6 PM**. The moon and dark scenery remain until calculated sunrise. Offline solar calculations use the permitted resolved location, or Sipalay otherwise, and track seasonal sunrise/sunset without a new API or permission. Sunset artwork begins at **5 PM**; night begins at calculated sunset. Missing or delayed artwork uses a neutral current-time surface rather than stale daylight.
+Version 1.5.7 separates greetings from daylight: **Good Morning starts at midnight, Good Afternoon at noon, and Good Evening at 6 PM**. The dark scenery remains until calculated sunrise. Offline solar calculations use the permitted resolved location, or Sipalay otherwise, and track seasonal sunrise/sunset without a new API or permission. Sunset artwork begins at **5 PM**; version 1.5.9 retains twilight after calculated sunset and selects full night from **7 PM**. Missing or delayed artwork uses a neutral current-time surface rather than stale daylight.
 
 On first launch, before account creation or login, an explanation offers **Enable local weather** or **Use time only**. Enabling weather requests foreground device location permission and offers phone Location settings when the switch is off. Valid, recent coordinates are rounded to approximately 0.01 degrees before being sent to [Open-Meteo current model conditions](https://open-meteo.com/en/docs). Coordinates are not saved. A genuinely saved Sipalay address can provide explicitly labeled city-level weather if device location is unavailable; a new guest without an address uses time only. The preference remains available through Profile → Location Permission.
 
@@ -94,7 +95,7 @@ npm run build
 npm run dev
 ```
 
-Vercel builds `dist`. `/download-apk?v=1.4.0` is pinned to the verified 1.4.0 GitHub Release asset named `SUNDO.apk`, so binaries are kept outside Git and the web bundle. Download redirects use no-store headers. The previous PWA worker is retired to remove the browser simulation. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). A successful local build does not itself confirm a new production deployment.
+Vercel builds `dist`. `/download-apk?v=1.5.9` is pinned to the verified 1.5.9 GitHub Release asset named `SUNDO.apk`, so binaries are kept outside Git and the web bundle. Download redirects use no-store headers. The previous PWA worker is retired to remove the browser simulation. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). A successful local build does not itself confirm a new production deployment.
 
 The [Android workflow](.github/workflows/build-apk.yml) runs analysis/tests and retains APK/preview artifacts on mobile changes to `main`. Its public Supabase values come from Actions variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Builds now run under WesleyHans after the repository transfer. Before release publication, sign the artifact with the existing local app key and verify its signature, version and checksum; runner-signed builds are never automatically published.
 
