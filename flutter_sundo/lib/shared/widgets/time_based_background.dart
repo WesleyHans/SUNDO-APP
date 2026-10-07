@@ -44,7 +44,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
   SundoEnvironment? _displayedEnvironment;
   SundoTimeMood? _displayedMood;
   bool _displayedReady = false;
-  bool _suppressOldRain = false;
+  bool _suppressOldScene = false;
   SundoEnvironment? _pendingEnvironment;
   SundoTimeMood? _requestedMood;
   ImageStream? _pendingStream;
@@ -65,10 +65,11 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
 
   void _requestScene(SundoTimeMood mood) {
     final environment = mood.environment;
-    // An expired/cleared weather snapshot must never leave wet scenery stuck
-    // behind the UI while a dry image is loading or cannot decode.
-    if (_displayedMood?.raining == true && !mood.raining) {
-      _suppressOldRain = true;
+    // Expired rain and a daylight boundary must not leave obsolete scenery
+    // behind the UI while its replacement is loading or cannot decode.
+    if ((_displayedMood?.raining == true && !mood.raining) ||
+        _displayedMood?.isNight != mood.isNight) {
+      _suppressOldScene = true;
       _displayedMood = mood;
     }
     if (_pendingEnvironment == environment) {
@@ -79,7 +80,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       // Returning to the current scene invalidates an in-flight other scene.
       _cancelPending();
       _displayedMood = mood;
-      _suppressOldRain = false;
+      _suppressOldScene = false;
       return;
     }
     _cancelPending();
@@ -88,27 +89,29 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
     _requestedMood = mood;
     final stream = AssetImage(sundoEnvironmentArtwork(environment))
         .resolve(createLocalImageConfiguration(context));
-    final listener = ImageStreamListener((info, _) {
+    final listener = ImageStreamListener((info, synchronousCall) {
       info.dispose();
       if (!mounted || generation != _requestGeneration) return;
       final readyMood = _requestedMood!;
       _handoffReadyScene();
-      if (_displayedEnvironment == environment) {
-        _displayedReady = true;
-        _displayedMood = readyMood;
-        _suppressOldRain = false;
-        return;
-      }
-      setState(() {
+      void displayReadyScene() {
         _displayedEnvironment = environment;
         _displayedMood = readyMood;
         _displayedReady = true;
-        _suppressOldRain = false;
-      });
+        _suppressOldScene = false;
+      }
+
+      // A cached frame arrives inside didChangeDependencies, before its build.
+      // A late first frame also needs a rebuild for the latest scene lighting.
+      if (synchronousCall) {
+        displayReadyScene();
+      } else {
+        setState(displayReadyScene);
+      }
     }, onError: (error, stack) {
       if (!mounted || generation != _requestGeneration) return;
-      // Keep the last available scene. A later mood/dependency refresh can
-      // retry this requested asset instead of displaying an empty transition.
+      // Keep safe existing scenery or the current mood's neutral fallback.
+      // A later mood/dependency refresh can retry the requested asset.
       _cancelPending();
     });
     _pendingStream = stream;
@@ -230,7 +233,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
         0,
       ]);
     }
-    if (mood.raining && mood.period == SundoDayPeriod.afternoon) {
+    if (mood.raining && mood.isSunset) {
       return const ColorFilter.matrix([
         .94,
         0,
@@ -334,7 +337,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
       },
     );
     final lighting = _sceneLighting(mood);
-    final scene = _suppressOldRain
+    final scene = _suppressOldScene
         ? ColoredBox(color: mood.background)
         : lighting == null
             ? image
@@ -383,7 +386,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
                     fit: StackFit.expand,
                     children: [...previous, if (current != null) current]),
                 child: KeyedSubtree(
-                    key: ValueKey((mood.sceneryIdentity, _suppressOldRain)),
+                    key: ValueKey((mood.sceneryIdentity, _suppressOldScene)),
                     child: scene),
               ))),
       if (widget.child != null) widget.child!,

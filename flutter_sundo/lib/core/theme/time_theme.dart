@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../repositories/weather_repository.dart';
+import 'solar_daylight.dart';
 
 enum SundoDayPeriod { morning, noon, afternoon, evening }
 
@@ -10,6 +11,7 @@ enum SundoEnvironment { morning, noon, sunset, night, rainy, rainyNight }
 class SundoTimeMood {
   final DateTime now;
   final DateTime? _philippineTime;
+  final SolarDaylight? _daylight;
 
   /// UI clock fields in Philippine Standard Time. `now` remains the actual
   /// instant for freshness/elapsed time; wall-clock offsets must not age weather.
@@ -23,18 +25,37 @@ class SundoTimeMood {
       {bool raining = false,
       WeatherCondition weatherCondition = WeatherCondition.unknown,
       DateTime? philippineTime,
+      SolarDaylight? daylight,
       this.weather})
       : _raining = raining,
         _philippineTime = philippineTime,
+        _daylight = daylight,
         _weatherCondition = weatherCondition;
 
   /// Production clocks use an absolute instant, independent of device timezone.
   /// The original constructor also supports explicit wall-clock preview scenes.
   factory SundoTimeMood.fromInstant(DateTime instant,
-          {SipalayWeather? weather}) =>
-      SundoTimeMood(instant,
-          weather: weather,
-          philippineTime: instant.toUtc().add(const Duration(hours: 8)));
+      {SipalayWeather? weather, WeatherLocation? location}) {
+    final localTime = instant.toUtc().add(const Duration(hours: 8));
+    final area = location ??
+        (weather?.isFreshAt(instant) == true ? weather?.location : null);
+    final daylight = area?.isValid == true
+        ? SolarDaylight.forDate(localTime,
+            latitude: area!.latitude, longitude: area.longitude)
+        : SolarDaylight.forDate(localTime);
+    return SundoTimeMood(instant,
+        weather: weather, philippineTime: localTime, daylight: daylight);
+  }
+
+  /// Greeting wording and sunlight are independent. The estimated local solar
+  /// times work offline, using Sipalay when no permitted area is available.
+  SolarDaylight get daylight => _daylight ?? SolarDaylight.forDate(localTime);
+  Duration get _timeOfDay => Duration(
+      hours: localTime.hour,
+      minutes: localTime.minute,
+      seconds: localTime.second,
+      milliseconds: localTime.millisecond,
+      microseconds: localTime.microsecond);
   WeatherCondition get weatherCondition => weather == null
       ? _weatherCondition
       : weather!.isFreshAt(now)
@@ -45,23 +66,26 @@ class SundoTimeMood {
       weatherCondition == WeatherCondition.rain ||
       weatherCondition == WeatherCondition.drizzle ||
       weatherCondition == WeatherCondition.thunderstorm;
-  SundoDayPeriod get period => localTime.hour >= 5 && localTime.hour < 11
-      ? SundoDayPeriod.morning
-      : localTime.hour >= 11 && localTime.hour < 15
-          ? SundoDayPeriod.noon
-          : localTime.hour >= 15 && localTime.hour < 18
-              ? SundoDayPeriod.afternoon
-              : SundoDayPeriod.evening;
+  SundoDayPeriod get period => isNight
+      ? SundoDayPeriod.evening
+      : localTime.hour < 11
+          ? SundoDayPeriod.morning
+          : localTime.hour < 15
+              ? SundoDayPeriod.noon
+              : SundoDayPeriod.afternoon;
+  bool get isSunset => !isNight && localTime.hour >= 17;
   SundoEnvironment get environment => raining
       ? (isNight ? SundoEnvironment.rainyNight : SundoEnvironment.rainy)
-      : switch (period) {
-          SundoDayPeriod.morning => SundoEnvironment.morning,
-          SundoDayPeriod.noon => SundoEnvironment.noon,
-          SundoDayPeriod.afternoon => SundoEnvironment.sunset,
-          SundoDayPeriod.evening => SundoEnvironment.night,
-        };
-  bool get isNight => period == SundoDayPeriod.evening;
-  String get greeting => localTime.hour < 12 && localTime.hour >= 5
+      : isNight
+          ? SundoEnvironment.night
+          : isSunset
+              ? SundoEnvironment.sunset
+              : period == SundoDayPeriod.morning
+                  ? SundoEnvironment.morning
+                  : SundoEnvironment.noon;
+  bool get isNight =>
+      _timeOfDay < daylight.sunrise || _timeOfDay >= daylight.sunset;
+  String get greeting => localTime.hour < 12
       ? 'Good Morning'
       : localTime.hour >= 12 && localTime.hour < 18
           ? 'Good Afternoon'
@@ -83,13 +107,15 @@ class SundoTimeMood {
       : switch (period) {
           SundoDayPeriod.morning => const Color(0xFFA9E4F5),
           SundoDayPeriod.noon => const Color(0xFF78C8F6),
-          SundoDayPeriod.afternoon => const Color(0xFFF6EBC4),
+          SundoDayPeriod.afternoon =>
+            isSunset ? const Color(0xFFF6EBC4) : const Color(0xFF78C8F6),
           SundoDayPeriod.evening => const Color(0xFF18344A),
         };
 
   // Lighting is part of the scene identity, including cloudy-to-clear changes
   // that use the same illustration and rainy changes at a time boundary.
-  Object get sceneryIdentity => (environment, period, weatherCondition);
+  Object get sceneryIdentity =>
+      (environment, period, isSunset, weatherCondition);
 }
 
 final sundoClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
@@ -104,6 +130,7 @@ class SundoDayNightThemeController extends Notifier<SundoTimeMood> {
   SundoTimeMood build() {
     final clock = ref.watch(sundoClockProvider);
     final weather = ref.watch(sundoWeatherProvider);
+    ref.watch(environmentLocationStatusProvider);
     Timer? timer;
     void scheduleMinuteBoundary() {
       final now = clock();
@@ -122,6 +149,7 @@ class SundoDayNightThemeController extends Notifier<SundoTimeMood> {
     ref.onDispose(() => timer?.cancel());
     final now = clock();
     return SundoTimeMood.fromInstant(now,
+        location: ref.read(sundoWeatherProvider.notifier).location,
         weather: weather != null && weather.isFreshAt(now) ? weather : null);
   }
 
@@ -129,6 +157,7 @@ class SundoDayNightThemeController extends Notifier<SundoTimeMood> {
     final now = ref.read(sundoClockProvider)();
     final weather = ref.read(sundoWeatherProvider);
     state = SundoTimeMood.fromInstant(now,
+        location: ref.read(sundoWeatherProvider.notifier).location,
         weather: weather != null && weather.isFreshAt(now) ? weather : null);
   }
 }
@@ -152,6 +181,7 @@ class SundoTimeScope extends InheritedWidget {
   bool updateShouldNotify(SundoTimeScope oldWidget) =>
       oldWidget.mood.now != mood.now ||
       oldWidget.mood.localTime != mood.localTime ||
+      oldWidget.mood.sceneryIdentity != mood.sceneryIdentity ||
       oldWidget.checkingWeather != checkingWeather ||
       oldWidget.weatherEnabled != weatherEnabled ||
       oldWidget.mood.raining != mood.raining ||

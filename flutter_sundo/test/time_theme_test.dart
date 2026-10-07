@@ -21,6 +21,9 @@ void main() {
       expect(mood.now.toUtc(), DateTime.utc(2026, 10, 6, 3));
     }
     for (final entry in {
+      '00:00': 'Good Morning',
+      '04:59': 'Good Morning',
+      '05:00': 'Good Morning',
       '11:59': 'Good Morning',
       '12:00': 'Good Afternoon',
       '17:59': 'Good Afternoon',
@@ -49,16 +52,19 @@ void main() {
     expect(mood.raining, isTrue);
     expect(weather.isFreshAt(mood.now), isTrue);
   });
-  test('all four periods switch at the exact requested minute boundaries', () {
+  test('daylight stays dark before sunrise and sunset artwork starts at 17:00',
+      () {
     final cases = <(int, int, SundoDayPeriod, SundoEnvironment)>[
       (0, 0, SundoDayPeriod.evening, SundoEnvironment.night),
       (4, 59, SundoDayPeriod.evening, SundoEnvironment.night),
-      (5, 0, SundoDayPeriod.morning, SundoEnvironment.morning),
+      (5, 0, SundoDayPeriod.evening, SundoEnvironment.night),
+      (6, 0, SundoDayPeriod.morning, SundoEnvironment.morning),
       (10, 59, SundoDayPeriod.morning, SundoEnvironment.morning),
       (11, 0, SundoDayPeriod.noon, SundoEnvironment.noon),
       (14, 59, SundoDayPeriod.noon, SundoEnvironment.noon),
-      (15, 0, SundoDayPeriod.afternoon, SundoEnvironment.sunset),
-      (17, 59, SundoDayPeriod.afternoon, SundoEnvironment.sunset),
+      (15, 0, SundoDayPeriod.afternoon, SundoEnvironment.noon),
+      (16, 59, SundoDayPeriod.afternoon, SundoEnvironment.noon),
+      (17, 0, SundoDayPeriod.afternoon, SundoEnvironment.sunset),
       (18, 0, SundoDayPeriod.evening, SundoEnvironment.night),
       (23, 59, SundoDayPeriod.evening, SundoEnvironment.night),
     ];
@@ -66,17 +72,17 @@ void main() {
       final mood = SundoTimeMood(DateTime(2026, 10, 5, hour, minute));
       expect(mood.period, period, reason: '$hour:$minute');
       expect(mood.environment, environment, reason: '$hour:$minute');
-      expect(mood.isNight, hour < 5 || hour >= 18);
+      expect(mood.isNight, environment == SundoEnvironment.night);
       expect(
           mood.greeting,
-          hour >= 5 && hour < 12
+          hour < 12
               ? 'Good Morning'
               : hour >= 12 && hour < 18
                   ? 'Good Afternoon'
                   : 'Good Evening');
     }
   });
-  test('rain retains local time and uses dark rainy scenery after 18:00', () {
+  test('rain respects sunlight independently of the greeting', () {
     for (final hour in [4, 8, 12, 17, 20]) {
       final clear = SundoTimeMood(DateTime(2026, 10, 5, hour));
       final rain = SundoTimeMood(clear.now, raining: true);
@@ -102,7 +108,7 @@ void main() {
         expect(mood.raining, isTrue);
         expect(
             mood.environment,
-            hour < 5 || hour >= 18
+            hour < 6 || hour >= 18
                 ? SundoEnvironment.rainyNight
                 : SundoEnvironment.rainy);
       }
@@ -127,7 +133,7 @@ void main() {
   test(
       'theme controller refreshes after a local time change and disposes ticker',
       () {
-    var clock = _phInstant(2026, 10, 4, 17, 59);
+    var clock = _phInstant(2026, 10, 4, 17);
     final container = ProviderContainer(
         overrides: [sundoClockProvider.overrideWithValue(() => clock)]);
     addTearDown(container.dispose);
@@ -136,6 +142,107 @@ void main() {
     container.read(sundoDayNightThemeProvider.notifier).refresh();
     expect(container.read(sundoDayNightThemeProvider).isNight, isTrue);
     expect(container.read(sundoDayNightThemeProvider).greeting, 'Good Evening');
+  });
+
+  test('sunrise and sunset change lighting without changing greeting wording',
+      () {
+    final midnight = _phInstant(2026, 10, 7);
+    final night = SundoTimeMood.fromInstant(midnight);
+    expect(night.greeting, 'Good Morning');
+    expect(night.isNight, isTrue);
+    expect(night.environment, SundoEnvironment.night);
+    final sunrise = midnight.add(night.daylight.sunrise);
+    expect(
+        SundoTimeMood.fromInstant(
+                sunrise.subtract(const Duration(microseconds: 1)))
+            .isNight,
+        isTrue);
+    final day = SundoTimeMood.fromInstant(sunrise);
+    expect(day.isNight, isFalse);
+    expect(day.greeting, 'Good Morning');
+    expect(day.environment, SundoEnvironment.morning);
+    final sunset = midnight.add(night.daylight.sunset);
+    expect(
+        SundoTimeMood.fromInstant(
+                sunset.subtract(const Duration(microseconds: 1)))
+            .environment,
+        SundoEnvironment.sunset);
+    final afterSunset = SundoTimeMood.fromInstant(sunset);
+    expect(afterSunset.isNight, isTrue);
+    expect(afterSunset.environment, SundoEnvironment.night);
+    // Local sunset can precede 6 PM: the afternoon greeting must not keep a sun.
+    expect(afterSunset.greeting, 'Good Afternoon');
+  });
+
+  test('resolved solar area survives unavailable or expired weather', () {
+    final midnight = _phInstant(2026, 10, 7);
+    const area = WeatherLocation(
+        latitude: 7.07,
+        longitude: 125.61,
+        label: 'Your location',
+        isDeviceLocation: true);
+    final city = SundoTimeMood.fromInstant(midnight);
+    final areaMood = SundoTimeMood.fromInstant(midnight, location: area);
+    expect(areaMood.daylight.sunrise, lessThan(city.daylight.sunrise));
+    final instant = midnight.add(areaMood.daylight.sunrise);
+    final staleRain = SipalayWeather(
+        validAt: instant.subtract(const Duration(hours: 1)),
+        fetchedAt: instant.subtract(const Duration(hours: 1)),
+        weatherCode: 63,
+        precipitationMm: 1,
+        rainMm: 1,
+        showersMm: 0,
+        location: area);
+    final container = ProviderContainer(overrides: [
+      sundoClockProvider.overrideWithValue(() => instant),
+      sundoWeatherProvider
+          .overrideWith(() => _FixedWeatherController(staleRain, area: area)),
+    ]);
+    addTearDown(container.dispose);
+    final mood = container.read(sundoDayNightThemeProvider);
+    expect(mood.weather, isNull);
+    expect(mood.raining, isFalse);
+    expect(mood.daylight.sunrise, areaMood.daylight.sunrise);
+    expect(mood.isNight, isFalse);
+    expect(SundoTimeMood.fromInstant(instant).isNight, isTrue);
+    final oldScope = SundoTimeScope(
+        mood: SundoTimeMood.fromInstant(instant),
+        child: const SizedBox.shrink());
+    final newScope = SundoTimeScope(mood: mood, child: const SizedBox.shrink());
+    expect(newScope.updateShouldNotify(oldScope), isTrue,
+        reason: 'A new resolved area can change daylight at the same instant.');
+  });
+
+  testWidgets(
+      'minute ticker changes greeting at midnight while scenery is night',
+      (tester) async {
+    var clock = _phInstant(2026, 10, 6, 23, 59, 55);
+    final container = ProviderContainer(
+        overrides: [sundoClockProvider.overrideWithValue(() => clock)]);
+    addTearDown(container.dispose);
+    final previous = container.read(sundoDayNightThemeProvider);
+    expect(previous.greeting, 'Good Evening');
+    clock = _phInstant(2026, 10, 7);
+    await tester.pump(const Duration(seconds: 5));
+    final midnight = container.read(sundoDayNightThemeProvider);
+    expect(midnight.greeting, 'Good Morning');
+    expect(midnight.environment, SundoEnvironment.night);
+    expect(midnight.sceneryIdentity, previous.sceneryIdentity);
+    container.dispose();
+  });
+
+  testWidgets('minute ticker starts sunset at exactly 5 PM', (tester) async {
+    var clock = _phInstant(2026, 10, 7, 16, 59, 55);
+    final container = ProviderContainer(
+        overrides: [sundoClockProvider.overrideWithValue(() => clock)]);
+    addTearDown(container.dispose);
+    expect(container.read(sundoDayNightThemeProvider).environment,
+        SundoEnvironment.noon);
+    clock = _phInstant(2026, 10, 7, 17);
+    await tester.pump(const Duration(seconds: 5));
+    expect(container.read(sundoDayNightThemeProvider).environment,
+        SundoEnvironment.sunset);
+    container.dispose();
   });
   test('weather-only scope changes notify without moving the clock', () {
     final now = _phInstant(2026, 10, 5, 8);
@@ -236,8 +343,11 @@ void main() {
 }
 
 class _FixedWeatherController extends SundoWeatherController {
-  _FixedWeatherController(this.weather);
+  _FixedWeatherController(this.weather, {this.area});
   final SipalayWeather? weather;
+  final WeatherLocation? area;
+  @override
+  WeatherLocation? get location => area;
   @override
   SipalayWeather? build() => weather;
 }
