@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/time_theme.dart';
 import '../../repositories/weather_repository.dart';
 
-/// All five illustrations use the same camera, truck and city composition.
+/// All supplied illustrations use the same camera, truck and city composition.
 String sundoEnvironmentArtwork(SundoEnvironment environment) =>
     // The wet-night variant reuses the matching rainy scene. Its lighting is
     // applied to scenery alone, preserving the original truck and city pixels.

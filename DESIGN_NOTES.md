@@ -55,10 +55,11 @@ The user supplied five matching 1024 × 1536 PNG scenes. They are converted to l
 | Morning | `ChatGPT Image Oct 5, 2026, 07_07_06 PM-1.png` | `flutter_sundo/assets/images/environment-morning.webp` |
 | Noon | `ChatGPT Image Oct 5, 2026, 07_07_09 PM-2.png` | `flutter_sundo/assets/images/environment-noon.webp` |
 | Sunset | `ChatGPT Image Oct 5, 2026, 07_07_11 PM-3.png` | `flutter_sundo/assets/images/environment-sunset.webp` |
-| Night | `ChatGPT Image Oct 5, 2026, 07_07_14 PM-4.png` | `flutter_sundo/assets/images/environment-night.webp` |
+| Evening twilight | `ChatGPT Image Oct 5, 2026, 07_07_14 PM-4.png` | `flutter_sundo/assets/images/environment-twilight.webp` |
+| Full night, from 7 PM | `codex-clipboard-9db0f97a-1741-4cf9-8736-0a35eeb7f4b2.png` (user attachment) | `flutter_sundo/assets/images/environment-night.webp` |
 | Rainy | `ChatGPT Image Oct 5, 2026, 07_07_15 PM-5.png` | `flutter_sundo/assets/images/environment-rainy.webp` |
 
-Every variant uses the same fit and alignment. Splash uses `BoxFit.fitWidth` to retain the supplied truck's full cab and tail. On taller phones, the last 48 pixels of the illustration blend into the surrounding surface so the image cannot end in a hard horizontal cut beside the card. The fixed branding plate follows the existing text layout, including accessibility text scaling. A small night-only moon is drawn in the supplied sky coordinates beneath that plate; the truck image is not edited. The branding plate can cover that sky position on compact phones.
+Every variant uses the same fit and alignment. Splash uses `BoxFit.fitWidth` to retain the supplied truck's full cab and tail. On taller phones, the last 48 pixels of the illustration blend into the surrounding surface so the image cannot end in a hard horizontal cut beside the card. The fixed branding plate follows the existing text layout, including accessibility text scaling. Twilight retains its small painted moon beneath that plate. Full night uses only the moon already in the supplied artwork; no duplicate moon is added. The branding plate can cover the artwork's higher moon on compact phones.
 
 Other resident screens receive an edge-to-edge scene through a continuous alpha mask; the previous 220 px illustration band and duplicated Home header/footer image strips are removed. In the 1.4.0 release, this shared backdrop is softer, reaching approximately 22% illustration opacity at its strongest point, so forms, schedules, notifications, reports and profile content remain readable. Splash and welcome retain their stronger illustration treatment. Home's header is content-driven and the demo banner's status inset is not applied a second time. System-bar icon colors follow the time theme, with a fixed dark-icon override on the splash's light branding plate.
 
@@ -67,6 +68,8 @@ Version 1.5.7 uses **Philippine Standard Time (UTC+8)** independently of the pho
 The clock refreshes each minute and on resume. Decoded scenery and its underlay use the existing 900 ms fade; reduced-motion settings switch immediately. Pending/failed images retain suitable existing scenery, but obsolete daylight/night or expired rain falls back to the current mood's neutral surface until matching artwork decodes. Superseded image requests cannot replace the current scene, and delayed first frames apply the latest lighting.
 
 Version 1.5.8 gives inner-page backgrounds a faint yellow/cream sunset wash from **5 PM** until local sunset, with a muted warm variant for rain. The shared inner surface fades over 900 ms and updates from the current clock even if the next illustration is pending. Card surfaces, the functional map, and full-scene Splash/Welcome backgrounds retain their existing treatment.
+
+Version 1.5.9 preserves the former orange-horizon scene as evening twilight, including **6 PM**. At **7 PM Philippine time**, clear/time-only scenery fades to the user's new blue moon-and-stars image and keeps it until local sunrise. The new 1024 × 1536 asset is lossless: decoded RGBA SHA-256 `fa02eb390f4b8c912234107c23e6fa08714d8137485b03ff55e62565e1245385` matches the supplied PNG. The previous scene is retained byte-for-byte. Existing rainy-night lighting, greeting boundaries, 5 PM inner tint, logo/leaf/card placement and map behavior remain intact.
 
 The 1.4.0 release keeps rain and time together. Morning rain has a cool morning treatment; afternoon rain has a warmer treatment; evening/night rain uses dark blue wet scenery. Cloudy conditions use muted lighting, and thunderstorm conditions use the wet scene. These are native color filters over the same supplied rainy/day scenes, rather than newly generated trucks or different city compositions. The filter affects illustration pixels only; the logo, wordmark, subtitle, card, controls and actual map tiles are outside it.
 
@@ -82,7 +85,7 @@ Requests recur every 15 minutes while the app is in the foreground; backgroundin
 
 Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://open-meteo.com/en/licence). SUNDO transforms current conditions into an artwork/lighting choice; the keyless endpoint is subject to [noncommercial API terms](https://open-meteo.com/en/terms). Linked weather attribution sits in the existing space below the splash card and in Profile's About dialog; it does not move the slogan card.
 
-Run `node scripts/package-environment-assets.mjs C:/Users/User/Downloads` to package the five supplied files. The script validates their common dimensions and compares decoded RGBA pixels after conversion. Current asset checks confirm all five WebP files preserve the original decoded pixels and both logo files retain their original SHA-256.
+Run `node scripts/package-environment-assets.mjs C:/Users/User/Downloads` to package the original five supplied files, including twilight. Add the new full-night PNG path as the third argument to package all six. The script validates their common dimensions and compares decoded RGBA pixels after conversion. Both logo files retain their original SHA-256.
 
 ### Natural leaf asset provenance
 

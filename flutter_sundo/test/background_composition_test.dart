@@ -330,6 +330,72 @@ void main() {
     });
   }
 
+  testWidgets('six PM twilight fades to the supplied full night at seven',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final boundary = GlobalKey();
+    final twilight = SundoTimeMood(DateTime(2026, 10, 7, 18));
+    final night = SundoTimeMood(DateTime(2026, 10, 7, 19));
+    await tester.pumpWidget(_surface(twilight, boundary: boundary));
+    await _waitForScene(tester, twilight.environment);
+    await tester.pump(const Duration(milliseconds: 950));
+    final twilightImage = tester.widget<Image>(find.byType(Image));
+    final geometry = tester.getRect(find.byType(Image));
+    final before = await _capturePixels(tester, boundary);
+    await tester.pumpWidget(_surface(night, boundary: boundary));
+    await _waitForScene(tester, night.environment);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(_displayedScenes(tester),
+        [SundoEnvironment.twilight, SundoEnvironment.night]);
+    for (final image in tester.widgetList<Image>(find.byType(Image))) {
+      expect(tester.getRect(find.byWidget(image)), geometry);
+      expect(image.fit, twilightImage.fit);
+      expect(image.alignment, twilightImage.alignment);
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_displayedScenes(tester), [SundoEnvironment.night]);
+    final fullNightImage = tester.widget<Image>(find.byType(Image));
+    expect((twilightImage.image as AssetImage).assetName,
+        'assets/images/environment-twilight.webp');
+    expect((fullNightImage.image as AssetImage).assetName,
+        'assets/images/environment-night.webp');
+    final after = await _capturePixels(tester, boundary);
+    // Source horizon (450, 660) maps to (160, 363) with cover/bottomCenter.
+    // The former orange sunset glow must become blue night sky.
+    const offset = (363 * 390 + 160) * 4;
+    expect(before[offset], greaterThan(before[offset + 2]));
+    expect(after[offset + 2], greaterThan(after[offset] * 1.5));
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('late seven PM artwork decodes before replacing twilight',
+      (tester) async {
+    final twilight = SundoTimeMood(DateTime(2026, 10, 7, 18, 59));
+    final night = SundoTimeMood(DateTime(2026, 10, 7, 19));
+    final bundle = _DeferredSceneBundle();
+    final nightAsset = sundoEnvironmentArtwork(night.environment);
+    bundle.defer(nightAsset);
+    await tester.pumpWidget(_surface(twilight, bundle: bundle));
+    await _waitForScene(tester, twilight.environment);
+    await tester.pump(const Duration(milliseconds: 950));
+    await tester.pumpWidget(_surface(night, bundle: bundle));
+    await tester.pump(const Duration(seconds: 2));
+    expect(_displayedScenes(tester), [SundoEnvironment.twilight]);
+    await _releaseScene(tester, bundle, nightAsset);
+    await _waitForScene(tester, night.environment);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(_displayedScenes(tester),
+        [SundoEnvironment.twilight, SundoEnvironment.night]);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_displayedScenes(tester), [SundoEnvironment.night]);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('wet night is darker while retaining the exact wet-day image',
       (tester) async {
     tester.view.physicalSize = const Size(390, 844);

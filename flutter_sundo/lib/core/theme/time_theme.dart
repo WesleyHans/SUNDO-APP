@@ -6,7 +6,7 @@ import 'solar_daylight.dart';
 
 enum SundoDayPeriod { morning, noon, afternoon, evening }
 
-enum SundoEnvironment { morning, noon, sunset, night, rainy, rainyNight }
+enum SundoEnvironment { morning, noon, sunset, twilight, night, rainy, rainyNight }
 
 class SundoTimeMood {
   final DateTime now;
@@ -77,7 +77,7 @@ class SundoTimeMood {
   SundoEnvironment get environment => raining
       ? (isNight ? SundoEnvironment.rainyNight : SundoEnvironment.rainy)
       : isNight
-          ? SundoEnvironment.night
+          ? (isDarkNight ? SundoEnvironment.night : SundoEnvironment.twilight)
           : isSunset
               ? SundoEnvironment.sunset
               : period == SundoDayPeriod.morning
@@ -85,6 +85,11 @@ class SundoTimeMood {
                   : SundoEnvironment.noon;
   bool get isNight =>
       _timeOfDay < daylight.sunrise || _timeOfDay >= daylight.sunset;
+
+  /// Keep the supplied twilight artwork through 6 PM. The full-night image
+  /// starts at 7 PM and remains in use before the next local sunrise.
+  bool get isDarkNight =>
+      isNight && (localTime.hour >= 19 || _timeOfDay < daylight.sunrise);
   String get greeting => localTime.hour < 12
       ? 'Good Morning'
       : localTime.hour >= 12 && localTime.hour < 18
@@ -121,7 +126,7 @@ class SundoTimeMood {
   // Lighting is part of the scene identity, including cloudy-to-clear changes
   // that use the same illustration and rainy changes at a time boundary.
   Object get sceneryIdentity =>
-      (environment, period, isSunset, weatherCondition);
+      (environment, period, isSunset, isDarkNight, weatherCondition);
 }
 
 final sundoClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
