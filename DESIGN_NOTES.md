@@ -66,6 +66,8 @@ Version 1.5.7 uses **Philippine Standard Time (UTC+8)** independently of the pho
 
 The clock refreshes each minute and on resume. Decoded scenery and its underlay use the existing 900 ms fade; reduced-motion settings switch immediately. Pending/failed images retain suitable existing scenery, but obsolete daylight/night or expired rain falls back to the current mood's neutral surface until matching artwork decodes. Superseded image requests cannot replace the current scene, and delayed first frames apply the latest lighting.
 
+Version 1.5.8 gives inner-page backgrounds a faint yellow/cream sunset wash from **5 PM** until local sunset, with a muted warm variant for rain. The shared inner surface fades over 900 ms and updates from the current clock even if the next illustration is pending. Card surfaces, the functional map, and full-scene Splash/Welcome backgrounds retain their existing treatment.
+
 The 1.4.0 release keeps rain and time together. Morning rain has a cool morning treatment; afternoon rain has a warmer treatment; evening/night rain uses dark blue wet scenery. Cloudy conditions use muted lighting, and thunderstorm conditions use the wet scene. These are native color filters over the same supplied rainy/day scenes, rather than newly generated trucks or different city compositions. The filter affects illustration pixels only; the logo, wordmark, subtitle, card, controls and actual map tiles are outside it.
 
 ### Location and weather consent in the 1.4.0 release

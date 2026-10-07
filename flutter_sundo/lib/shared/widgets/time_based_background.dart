@@ -313,6 +313,9 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
     final mood = _displayedMood!;
     final environment = _displayedEnvironment!;
     final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final currentMood = SundoTimeScope.of(context);
+    final background =
+        widget.fullScene ? mood.background : currentMood.innerBackground;
     final image = Image.asset(
       sundoEnvironmentArtwork(environment),
       key: ValueKey(environment),
@@ -338,7 +341,7 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
     );
     final lighting = _sceneLighting(mood);
     final scene = _suppressOldScene
-        ? ColoredBox(color: mood.background)
+        ? ColoredBox(color: background)
         : lighting == null
             ? image
             : ColorFiltered(colorFilter: lighting, child: image);
@@ -352,11 +355,11 @@ class _SundoTimeBasedBackgroundState extends State<SundoTimeBasedBackground> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: widget.fullScene
-                ? [mood.background, mood.background, mood.background]
+                ? [background, background, background]
                 : [
-                    mood.background,
-                    mood.background,
-                    Color.lerp(mood.background, mood.sky, .18)!,
+                    background,
+                    background,
+                    Color.lerp(background, currentMood.sky, .18)!,
                   ],
             stops: const [0, .72, 1],
           ))),
