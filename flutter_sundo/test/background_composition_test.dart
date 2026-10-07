@@ -237,6 +237,99 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('late first frame applies weather changed during the decode',
+      (tester) async {
+    final now = DateTime(2026, 10, 5, 8);
+    final clear = SundoTimeMood(now, weatherCondition: WeatherCondition.clear);
+    final cloudy =
+        SundoTimeMood(now, weatherCondition: WeatherCondition.cloudy);
+    final bundle = _DeferredSceneBundle();
+    final asset = sundoEnvironmentArtwork(clear.environment);
+    bundle.defer(asset);
+    await tester.pumpWidget(_surface(clear, bundle: bundle));
+    final initialImage = tester.widget<Image>(find.byType(Image));
+    await tester.pumpWidget(_surface(cloudy, bundle: bundle));
+    expect(find.byType(ColorFiltered), findsNothing);
+    await _releaseScene(tester, bundle, asset);
+    await _waitForScene(tester, cloudy.environment);
+    await tester.pump(const Duration(milliseconds: 950));
+    expect(find.byType(ColorFiltered), findsOneWidget);
+    expect(_displayedScenes(tester), [cloudy.environment]);
+    final latestImage = tester.widget<Image>(find.byType(Image));
+    expect(latestImage.image, initialImage.image);
+    expect(latestImage.fit, initialImage.fit);
+    expect(latestImage.alignment, initialImage.alignment);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('rain gains sunset lighting at five instead of midafternoon',
+      (tester) async {
+    final afternoon = SundoTimeMood(DateTime(2026, 10, 5, 15),
+        weatherCondition: WeatherCondition.rain);
+    final sunset = SundoTimeMood(DateTime(2026, 10, 5, 17),
+        weatherCondition: WeatherCondition.rain);
+    await tester.pumpWidget(_surface(afternoon));
+    await _waitForScene(tester, afternoon.environment);
+    expect(find.byType(ColorFiltered), findsNothing);
+    final afternoonImage = tester.widget<Image>(find.byType(Image));
+    await tester.pumpWidget(_surface(sunset));
+    await _waitForScene(tester, sunset.environment);
+    await tester.pump(const Duration(milliseconds: 950));
+    expect(find.byType(ColorFiltered), findsOneWidget);
+    expect(
+        tester.widget<Image>(find.byType(Image)).image, afternoonImage.image);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  for (final (label, before, after) in [
+    (
+      'sunset',
+      SundoTimeMood(DateTime(2026, 10, 5, 8)),
+      SundoTimeMood(DateTime(2026, 10, 5, 20)),
+    ),
+    (
+      'sunrise',
+      SundoTimeMood(DateTime(2026, 10, 5, 20)),
+      SundoTimeMood(DateTime(2026, 10, 6, 8)),
+    ),
+  ]) {
+    testWidgets('$label clears obsolete scenery during a failed next decode',
+        (tester) async {
+      final bundle = _DeferredSceneBundle();
+      final nextAsset = sundoEnvironmentArtwork(after.environment);
+      bundle.defer(nextAsset);
+      await tester.pumpWidget(_surface(before, bundle: bundle));
+      await _waitForScene(tester, before.environment);
+      await tester.pumpWidget(_surface(after, bundle: bundle));
+      await tester.pump(const Duration(seconds: 1));
+      expect(_displayedScenes(tester), isEmpty);
+      final neutral = find.descendant(
+          of: find.byType(SundoTimeBasedBackground),
+          matching: find.byType(ColoredBox));
+      expect(tester.widget<ColoredBox>(neutral).color, after.background);
+      await tester.runAsync(() async {
+        bundle.fail(nextAsset);
+        await precacheImage(AssetImage(nextAsset, bundle: bundle),
+            tester.element(find.byType(SundoTimeBasedBackground)),
+            onError: (error, stack) {});
+        await AssetImage(nextAsset, bundle: bundle).evict();
+      });
+      await tester.pump();
+      expect(_displayedScenes(tester), isEmpty);
+      expect(tester.widget<ColoredBox>(neutral).color, after.background);
+      await tester.pumpWidget(_surface(
+          SundoTimeMood(after.now.add(const Duration(minutes: 1))),
+          bundle: bundle));
+      await _waitForScene(tester, after.environment);
+      await tester.pump(const Duration(seconds: 1));
+      expect(_displayedScenes(tester), [after.environment]);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets('wet night is darker while retaining the exact wet-day image',
       (tester) async {
     tester.view.physicalSize = const Size(390, 844);

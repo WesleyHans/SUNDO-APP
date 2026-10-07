@@ -279,12 +279,16 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('Philippine greeting updates at noon and evening',
+  testWidgets('Philippine greeting and sun icon follow separate clocks',
       (tester) async {
-    for (final (instant, greeting) in [
-      (DateTime.utc(2026, 10, 7, 3), 'Good Morning,'),
-      (DateTime.utc(2026, 10, 7, 4), 'Good Afternoon,'),
-      (DateTime.utc(2026, 10, 7, 10), 'Good Evening,'),
+    for (final (instant, greeting, icon) in [
+      (DateTime.utc(2026, 10, 6, 16), 'Good Morning,', Icons.nightlight_round),
+      (DateTime.utc(2026, 10, 6, 21), 'Good Morning,', Icons.nightlight_round),
+      (DateTime.utc(2026, 10, 6, 22), 'Good Morning,', Icons.wb_sunny_rounded),
+      (DateTime.utc(2026, 10, 7, 3), 'Good Morning,', Icons.wb_sunny_rounded),
+      (DateTime.utc(2026, 10, 7, 4), 'Good Afternoon,', Icons.wb_sunny_rounded),
+      (DateTime.utc(2026, 10, 7, 9), 'Good Afternoon,', Icons.wb_sunny_rounded),
+      (DateTime.utc(2026, 10, 7, 10), 'Good Evening,', Icons.nightlight_round),
     ]) {
       await _mount(
           tester,
@@ -297,6 +301,7 @@ void main() {
           mood: SundoTimeMood.fromInstant(instant));
       expect(find.text(greeting), findsOneWidget);
       expect(find.text('Juan!'), findsOneWidget);
+      expect(find.byIcon(icon), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
     await tester.pumpWidget(const SizedBox.shrink());

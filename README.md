@@ -36,24 +36,26 @@ The default **3D** view adds perspective to the actual street map, with raised c
 
 Cached base maps do not make GPS or truck updates current. Live mode still requires the configured city backend and a fresh truck fix. Route chevrons decorate the supplied route geometry and never substitute for a reported truck position. No map tiles are bulk downloaded.
 
-## Time and local weather scenery — 1.4.0 release
+## Time and local weather scenery
 
 The new splash keeps the supplied logo, SUNDO wordmark, two-line subtitle, corner leaf frames and bottom **Track. Prepare. Collect.** card fixed. Branding colors and positions remain constant when the environment changes. Five supplied illustrations use the same truck model, orientation, road, city layout and foreground plants; they are bundled as lossless WebP assets rather than generating a new truck for each condition.
 
-| Device local time | Scene |
+| Philippine time (UTC+8) | Scene |
 | --- | --- |
-| 05:00–10:59 | Morning |
-| 11:00–14:59 | Noon |
-| 15:00–17:59 | Afternoon / sunset |
-| 18:00–04:59 | Evening / night |
+| Calculated local sunrise–10:59 | Morning |
+| 11:00–16:59 while daylight | Noon / afternoon |
+| 17:00–calculated local sunset | Sunset |
+| After calculated sunset until next sunrise | Night |
 | Fresh rain, drizzle or thunderstorms during daytime | Rainy atmosphere matched to the time period |
 | Fresh rain, drizzle or thunderstorms at night | Dark rainy night atmosphere |
 
 Scene changes fade over 900 ms; system reduced-motion settings select the new scene immediately. Other resident screens use a continuous, softly masked backdrop rather than separate illustration bands. Home's greeting no longer receives a second status-bar inset in the demo shell. Detailed transparent natural leaves replace the painted leaves within their existing frames.
 
+Version 1.5.7 separates greetings from daylight: **Good Morning starts at midnight, Good Afternoon at noon, and Good Evening at 6 PM**. The moon and dark scenery remain until calculated sunrise. Offline solar calculations use the permitted resolved location, or Sipalay otherwise, and track seasonal sunrise/sunset without a new API or permission. Sunset artwork begins at **5 PM**; night begins at calculated sunset. Missing or delayed artwork uses a neutral current-time surface rather than stale daylight.
+
 On first launch, before account creation or login, an explanation offers **Enable local weather** or **Use time only**. Enabling weather requests foreground device location permission and offers phone Location settings when the switch is off. Valid, recent coordinates are rounded to approximately 0.01 degrees before being sent to [Open-Meteo current model conditions](https://open-meteo.com/en/docs). Coordinates are not saved. A genuinely saved Sipalay address can provide explicitly labeled city-level weather if device location is unavailable; a new guest without an address uses time only. The preference remains available through Profile → Location Permission.
 
-Weather refreshes on foreground entry and every 15 minutes while foregrounded. Failed, malformed, unsupported or more-than-30-minute-old conditions fall back to time; no clear-weather claim is invented. Home displays a compact banner with the area, model source, update age and an optional rain collection caution. Clear, cloudy, rain, drizzle and thunderstorm conditions combine with the local device time. Rainy night uses the same supplied rainy scene with a darker atmosphere; branding stays outside scenery filters. Shared backgrounds remain faint for readable forms and cards.
+Weather refreshes on foreground entry and every five minutes while foregrounded. Failed, malformed, unsupported, more-than-20-minute-old model conditions or responses fetched more than ten minutes ago fall back to time; no clear-weather claim is invented. Home displays a banner with the area, model source, update age and an optional rain collection caution. Clear, cloudy, rain, drizzle and thunderstorm conditions combine with Philippine daylight. Rainy night uses the same supplied rainy scene with a darker atmosphere; branding stays outside scenery filters. Shared backgrounds remain faint for readable forms and cards.
 
 The supplied angled truck replaces the old map graphic, and the supplied side view replaces collection truck icons in cards, schedules, alerts and staff listings. Original transparent PNGs are bundled without pixel changes. The map preserves position updates, heading and camera rotation. Only the original silver rims rotate while a fresh position is interpolating; inactive tracking, stale positions and reduced motion stop the visual effect. Actual fleet GPS still requires the city backend; the demo route remains labeled simulated.
 

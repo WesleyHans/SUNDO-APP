@@ -1,5 +1,34 @@
 # SUNDO mobile status
 
+## Version 1.5.7 Philippine greeting and daylight
+
+Greetings use Philippine Standard Time independently of the phone timezone:
+Good Morning from midnight, Good Afternoon from noon and Good Evening from
+6 PM. The greeting never controls sunlight. Scenery, clear-weather icons and
+the Home sun/moon use estimated local sunrise/sunset by calendar date and the
+permitted resolved area, with Sipalay as the offline default. Night remains
+through the early morning until sunrise; sunset artwork starts at the requested
+5 PM and night starts at calculated sunset. Resolved area coordinates remain
+available for daylight when the current weather response expires or fails.
+
+Solar times use offline NOAA equations checked against independent USNO
+fixtures. Seasonal, leap-day, timezone and invalid/polar-input cases are covered.
+No new dependency, network call or location permission is needed. Open-Meteo
+remains the weather provider, with its existing consent and freshness checks.
+
+Scenery replacements still use the existing fades. If an image delays or fails
+across sunrise/sunset, a neutral current-mood surface replaces obsolete
+day/night artwork. Late initial image decoding applies the latest lighting.
+Warm rainy scenery begins at 5 PM instead of 3 PM. Branding, leaf placement,
+dashboard layout, Login/Welcome/Splash composition and map behavior are preserved.
+
+Flutter analysis reports no issues and all **294 tests passed**. The 17 solar
+tests compare seasonal reference times, leap/year boundaries, literal calendar
+fields and fallback behavior. Clock and widget tests verify midnight greetings
+with a moon, exact 5 PM sunset, sunrise/sunset lighting, retained resolved areas,
+late lighting updates and safe scenery replacement. Installer TypeScript checks
+and production compilation pass. Android version is **1.5.7+15**.
+
 ## Version 1.5.6 reference Home dashboard
 
 Home now follows the supplied soft green/cream clay dashboard: greeting and
