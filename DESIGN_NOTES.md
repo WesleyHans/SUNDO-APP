@@ -15,6 +15,24 @@ Splash, welcome, account screens and installer branding use that asset. Android 
 
 ## Native design structure
 
+The 1.5.6 Home dashboard follows the supplied green/cream clay reference: a
+greeting and circular account controls, one weather card, two equal-width
+collection cards, then a featured truck card with progress and its primary
+action. The existing location card and shortcuts remain below the featured
+card. Collection cards stack when larger accessibility text needs more room.
+Rounded bottom navigation keeps the same five destinations and a soft green
+active indicator.
+
+Home uses reusable Flutter components in
+`features/home/widgets/sundo_dashboard_widgets.dart`; there is no screenshot or
+HTML in the screen. Existing truck and corner-leaf assets are preserved. Native
+decorative painters add clouds, leaf silhouettes, a faint route and highlights
+behind readable text. One 18-second clock repaints decoration only and pauses
+off Home, in background, under disabled TickerMode and for reduced motion.
+Soft card entrances run once; data refreshes do not replay them. Greeting,
+weather freshness, resident collection dates and fleet status remain data-led,
+with explicit demo/source labels.
+
 - `flutter_sundo/lib/features/` contains splash, onboarding, auth, home, live_map, schedule, notifications, report_concern and profile screens; operations retains the connected staff/driver workflows.
 - `flutter_sundo/lib/shared/widgets/` holds reusable controls, brand graphics, scenery, time-based backgrounds, schedule/notification components and bottom navigation.
 - `flutter_sundo/lib/core/theme/` contains the clay palette and local-time theme controller. The app refreshes its greeting and mood each minute and on resume.

@@ -80,9 +80,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       if (!BackendService.live)
                         Container(
                             width: double.infinity,
-                            color: mood.isNight
-                                ? const Color(0xFF34402A)
-                                : const Color(0xFFEAF8EE),
+                            margin: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                                color: mood.isNight
+                                    ? const Color(0xFF34402A)
+                                    : const Color(0xFFEAF8EE),
+                                borderRadius: BorderRadius.circular(20)),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 5),
                             child: Text(

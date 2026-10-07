@@ -176,11 +176,10 @@ class SundoBottomNavigation extends StatelessWidget {
     return Container(
         decoration: BoxDecoration(
             color: mood.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
                 top: BorderSide(
-                    color: mood.isNight
-                        ? const Color(0xFF33523D)
-                        : const Color(0xFFE4EFE7))),
+                    color: mood.isNight ? const Color(0xFF33523D) : const Color(0xFFE4EFE7))),
             boxShadow: const [
               BoxShadow(
                   color: Color(0x16263F29),
@@ -199,44 +198,53 @@ class SundoBottomNavigation extends StatelessWidget {
                             label: labels[i],
                             child: InkWell(
                                 onTap: () => onChanged(i),
-                                child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10),
-                                    child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Stack(
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                Icon(icons[i],
-                                                    size: 24,
-                                                    color: index == i
-                                                        ? mood.accent
-                                                        : mood.mutedTextColor),
-                                                if (i == 3 && unread > 0)
-                                                  Positioned(
-                                                      top: -3,
-                                                      right: -3,
-                                                      child: Container(
-                                                          width: 8,
-                                                          height: 8,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  color: Color(
-                                                                      0xFFDC3B3B),
-                                                                  shape: BoxShape
-                                                                      .circle)))
-                                              ]),
-                                          const SizedBox(height: 4),
-                                          Text(labels[i],
-                                              style: TextStyle(
-                                                  fontSize: 9.5,
-                                                  fontWeight: index == i
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w500,
-                                                  color: index == i
-                                                      ? mood.accent
-                                                      : mood.mutedTextColor))
-                                        ])))))))));
+                                borderRadius: BorderRadius.circular(18),
+                                child: AnimatedContainer(
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 5),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 9),
+                                    decoration: BoxDecoration(
+                                        color: index == i
+                                            ? mood.accent.withValues(
+                                                alpha: mood.isNight ? .14 : .09)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(18)),
+                                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                      Stack(clipBehavior: Clip.none, children: [
+                                        Icon(icons[i],
+                                            size: 24,
+                                            color: index == i
+                                                ? mood.accent
+                                                : mood.mutedTextColor),
+                                        if (i == 3 && unread > 0)
+                                          Positioned(
+                                              top: -3,
+                                              right: -3,
+                                              child: Container(
+                                                  width: 8,
+                                                  height: 8,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                          color:
+                                                              Color(0xFF25B84A),
+                                                          shape:
+                                                              BoxShape.circle)))
+                                      ]),
+                                      const SizedBox(height: 4),
+                                      Text(labels[i],
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: index == i
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: index == i
+                                                  ? mood.accent
+                                                  : mood.mutedTextColor))
+                                    ])))))))));
   }
 }
