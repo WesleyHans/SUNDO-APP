@@ -30,6 +30,17 @@ TypeScript checks and production compilation pass. All 22 existing day/night
 screen preview checks pass; three dedicated dashboard captures were visually
 reviewed at regular/narrow widths and increased text. Android version is 1.5.6+14.
 
+The final native dashboard checks also verify full resident names with 1.5x
+text and whole progress-label glyphs at 250/320 px. PR #9 merged at
+`75a1893818c267104b3e23960642d720eabd3cb3`.
+The final local APK has 93,229,514 bytes and SHA-256
+`b42660ed69bd4e68c847ac9e89e6bcffd06baf53d1093a6fee7c0d5b6b9d4016`.
+APK signature verification and 16 KB alignment checks pass. Package
+`com.sundo.sipalay` uses version code 14, minimum API 24 and target API 36,
+with ARM64, ARMv7 and x86_64 libraries. Its certificate SHA-256
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`
+matches the previous locally published releases.
+
 ## Version 1.5.5 screen and scenery motion
 
 Login, Create Account and page navigation now use gentle fades. One shared
