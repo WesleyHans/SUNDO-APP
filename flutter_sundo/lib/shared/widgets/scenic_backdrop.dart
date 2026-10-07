@@ -14,7 +14,12 @@ class ScenicBackdrop extends StatelessWidget {
   Widget build(BuildContext context) => Stack(fit: StackFit.expand, children: [
         if (sceneryOpacity != null)
           Positioned.fill(
-              child: ColoredBox(color: SundoTimeScope.of(context).background)),
+              child: AnimatedContainer(
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 900),
+                  curve: Curves.easeInOut,
+                  color: SundoTimeScope.of(context).innerBackground)),
         Positioned.fill(
             child: sceneryOpacity == null
                 ? const SundoTimeBasedBackground()

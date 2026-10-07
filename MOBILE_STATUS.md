@@ -1,5 +1,27 @@
 # SUNDO mobile status
 
+## Version 1.5.8 inner sunset tint
+
+Inner-page backgrounds acquire a faint warm yellow/cream wash from 5 PM until
+calculated local sunset. Rain keeps a more muted warm surface. The surface fades
+over 900 ms and follows the current Philippine time even when the next scene
+image is delayed. Night restores the existing dark surface. Card surfaces,
+functional map surfaces and the full Splash/Welcome artwork are unchanged.
+The midnight greeting and independent daylight rules from 1.5.7 remain.
+
+Flutter analysis reports no issues and all **298 tests passed**. Four new native
+tests verify the 5 PM surface fade while artwork is delayed, night restoration,
+shared tint and fixed leaves across resident tabs, unchanged full-scene pixels
+and opaque functional map surfaces. Installer TypeScript checks and production
+compilation pass. Android version is **1.5.8+16**.
+
+The release APK has **93,311,434 bytes** and SHA-256
+`1460bccb474bcf4b91afeae728bd8d652feafdddd2d75749983e4ff59a387666`.
+APK v2 signing verifies with the same published certificate
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`;
+16 KB ZIP alignment passes. Package `com.sundo.sipalay`, minimum API 24,
+target API 36, and ARM64/ARMv7/x86_64 support remain unchanged.
+
 ## Version 1.5.7 Philippine greeting and daylight
 
 Greetings use Philippine Standard Time independently of the phone timezone:
@@ -44,6 +66,9 @@ is ready and aliased to `https://sundo-app.vercel.app`. Public HTTP checks on
 7 October 2026 return 200, confirm the installer bundle displays Version 1.5.7,
 and follow `/download-apk?v=1.5.7` to the complete 93,311,434-byte APK with the
 Android package content type and `SUNDO.apk` attachment filename.
+
+Independent GitHub Actions run `37580598187` completed successfully for the
+merged 1.5.7 mobile source, including analysis, tests, APK build and native previews.
 
 ## Version 1.5.6 reference Home dashboard
 

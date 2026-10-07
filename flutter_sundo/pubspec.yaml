@@ -1,7 +1,7 @@
 name: sundo_sipalay
 description: "SUNDO: Smart Urban Navigation for Dynamic Waste Operations in Sipalay City, Negros Occidental."
 publish_to: "none"
-version: 1.5.7+15
+version: 1.5.8+16
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

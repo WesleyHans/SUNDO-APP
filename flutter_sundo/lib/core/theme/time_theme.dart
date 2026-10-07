@@ -95,6 +95,12 @@ class SundoTimeMood {
       : (raining || weatherCondition == WeatherCondition.cloudy
           ? const Color(0xFFF5F9FA)
           : const Color(0xFFF8FCF9));
+
+  /// A faint sunset wash behind inner-page content, separate from the original
+  /// full-scene artwork and functional map surfaces.
+  Color get innerBackground => isSunset
+      ? (raining ? const Color(0xFFF6F1E6) : const Color(0xFFFFF5DF))
+      : background;
   Color get surface => isNight ? const Color(0xFF1C2B24) : Colors.white;
   Color get textColor =>
       isNight ? const Color(0xFFF0F8EF) : const Color(0xFF153B2A);
