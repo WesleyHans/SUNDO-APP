@@ -17,8 +17,11 @@ inner surface, weather provider and functional map behavior are unchanged.
 
 Android version is **1.5.9+17**. The local Dart executable is blocked by this
 computer's Device Guard policy; validation and compilation use the existing
-GitHub workflow. Publication follows successful checks, native preview review
-and local signing with the established update certificate.
+GitHub workflow. Run `37633389830` succeeded: Flutter analysis reports no
+issues, all **305 tests passed**, the APK compiled and native previews rendered.
+The actual 6 PM and 7 PM Splash previews were reviewed with branding and leaf
+placements preserved. Installer TypeScript checks and production compilation
+pass. Publication uses local signing with the established update certificate.
 
 ## Version 1.5.8 inner sunset tint
 
