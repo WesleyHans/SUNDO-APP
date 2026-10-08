@@ -1,5 +1,44 @@
 # SUNDO mobile status
 
+## Version 1.5.10 dynamic Home card scenery
+
+The three Home cards now render the synchronized 24-image scenery set in real
+Flutter widgets: a riverside and bridge for Weather, a residential street for
+the tomorrow notice, and a city park for Next Collection. Each scene includes
+Morning, Noon, Sunset, 6 PM Early Evening, Evening, Night, Cloudy and Rainy.
+The original card layout remains, with readable cream/day and dark/night
+overlays and protected time/footer chips.
+
+Philippine time selects 5 PM sunset, 6 PM early evening, 6:30 PM evening and
+full night from 7 PM until local sunrise. Fresh rain and cloud observations
+select weather imagery; stale weather falls back to the clock. Cloudy
+conditions cannot restore daylight at night, and rainy imagery dims after
+dusk. The midnight greeting still says Good Morning with nighttime scenery.
+
+Images decode before replacing the current frame, then crossfade over 900 ms.
+First frames fade in; rapid updates invalidate obsolete requests, and reduced
+motion suppresses animations. The existing weather provider, map and protected
+Splash/Welcome composition are unchanged.
+
+All 24 lossless WebPs match their source PNGs' decoded pixels. GitHub run
+`37709015618` passed analysis, all **331 tests**, APK compilation and **72 native
+preview tests**. All eight actual Home states, compact width and large text
+were visually reviewed. Installer TypeScript checks and production build pass.
+PR #13 merged at `683ab12a9afc01150b5ffd7e608777f6bee8037f`; runtime files match
+the tested source commit `b14323328dbca5c1e5c7b796eab57100997dfc7f`.
+
+Android version is **1.5.10+18**. The signed APK has **135,067,178 bytes** and
+SHA-256 `9111c0510badb302e39894a80a2da688f3b6d98116635dd0747b9bfa4fbb01e3`.
+APK v2/v3 signing verifies with the established update certificate
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`.
+16 KB ZIP alignment passes; package `com.sundo.sipalay`, version code 18,
+minimum API 24, target API 36 and ARM64/ARMv7/x86_64 support are verified.
+Physical-device rendering performance is not certified by native previews.
+
+The published GitHub `v1.5.10` asset reports the same **135,067,178-byte** size
+and SHA-256 as the verified local package, with status `uploaded` and filename
+`SUNDO.apk`: [release and APK](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.5.10).
+
 ## Version 1.5.9 evening twilight and full night
 
 The former night image is preserved byte-for-byte as evening twilight and is

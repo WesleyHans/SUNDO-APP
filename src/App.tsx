@@ -1,16 +1,16 @@
 import { ArrowDownToLine, ArrowRight, Check, Leaf, Smartphone, Truck } from 'lucide-react';
 import { SundoTruckIcon } from './components/common/SundoLogo';
 
-const downloadUrl = '/download-apk?v=1.5.9';
+const downloadUrl = '/download-apk?v=1.5.10';
 export default function App() {
   return <div className="installer">
     <header className="site-header"><a className="brand" href="#" aria-label="SUNDO home"><SundoTruckIcon size={62} /><span>SUNDO<small>Sipalay City</small></span></a><a className="header-download" href={downloadUrl}><ArrowDownToLine size={17}/> Download APK</a></header>
     <main>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy"><span className="eyebrow"><Leaf size={15}/> A cleaner Sipalay starts with you</span><h1 id="hero-title">Clean city.<br/>One little <span>download.</span></h1><p className="intro">Meet SUNDO, your companion for waste collection in Sipalay. Get the Android app and help keep your neighborhood clean.</p>
-        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.5.9 · Free</small></span><ArrowRight size={22}/></a>
+        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.5.10 · Free</small></span><ArrowRight size={22}/></a>
         <p className="download-note"><Smartphone size={15}/> Android only. Open the downloaded APK to install.</p>
-        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.5.9 keeps the current twilight scene at 6 PM and smoothly changes to the supplied blue night sky from 7 PM Philippine time until sunrise. Good Morning still starts at midnight, and inner backgrounds retain their gentle sunset tint from 5 PM. The soft eco dashboard, smooth navigation and local weather remain. City accounts, reports and live truck tracking require the city service to be activated.</p></div>
+        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.5.10 brings the new scenery into Home: a riverside Weather card, a residential street for tomorrow’s collection notice and a green park for Next Collection. Each has morning, noon, sunset, 6 PM early evening, evening, night, cloudy and rainy scenes with smooth image fades. Philippine time keeps the fading sunset at 6 PM and full dark night from 7 PM. The same soft eco layout remains. Sample schedules and truck information stay in local demo; city accounts, reports and live tracking need the city service activated.</p></div>
         </div>
         <div className="hero-art"><img src="/clay-city-hero.png" alt="A green recycling truck surrounded by clay trees and the city skyline" width="1024" height="1536" fetchPriority="high"/><div className="art-tag"><span className="tag-icon"><Truck size={24}/></span><span>Small steps.<strong>A cleaner Sipalay.</strong></span><Check size={19}/></div></div>
       </section>
