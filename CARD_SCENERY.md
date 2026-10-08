@@ -1,6 +1,6 @@
 # Home card scenery
 
-Version 1.5.10 integrates the generated scenery into real Flutter Home cards. Weather uses the riverside bridge, tomorrow's collection notice uses the residential street, and Next Collection uses the city park. The existing card arrangement, rounded clay surfaces, icons, schedule values and actions remain.
+Version 1.5.10 integrated the generated scenery into real Flutter Home cards. In 1.5.11, Weather uses the riverside bridge, Today uses the residential street, and Next Collection uses the city park. The existing card arrangement, rounded clay surfaces, schedule values and actions remain; the collection and weather icons now use illustrated assets.
 
 The 24 images are bundled at `flutter_sundo/assets/images/card_scenery/`, with eight fixed-composition variants per location. The three noon references were preserved unchanged; the other images were generated as separate lighting/weather edits of those masters. Main landmarks align visually, although fine foliage, paving, windows and water textures can vary slightly. `scripts/package-card-scenery.mjs` converts the PNG set to lossless WebP and checks decoded RGBA pixels against every source image. Packaging retains the original 1672×941 riverside and 1024×1536 portrait canvases, using 40,317,680 compressed bytes in total.
 

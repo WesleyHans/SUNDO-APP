@@ -19,6 +19,7 @@ import 'package:sundo_sipalay/features/live_map/truck_alert_modal.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
+import 'package:sundo_sipalay/shared/widgets/sundo_card_illustration.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'location_platform_fixture.dart';
@@ -86,6 +87,10 @@ void main() {
           await precacheImage(
               const AssetImage('assets/images/sundo-brand-logo.png'), context);
           if (entry.key == 'home') {
+            for (final illustration in SundoCardIllustration.values) {
+              await precacheImage(
+                  AssetImage(sundoCardIllustrationAsset(illustration)), context);
+            }
             for (final scene in SundoCardScene.values) {
               await precacheImage(
                   AssetImage(sundoCardSceneryArtwork(
@@ -135,7 +140,12 @@ void main() {
               weatherCode: code,
               precipitationMm: 0,
               rainMm: 0,
-              showersMm: 0));
+              showersMm: 0,
+              location: const WeatherLocation(
+                  latitude: 9.75,
+                  longitude: 122.40,
+                  label: 'Your location',
+                  isDeviceLocation: true)));
       expect(sundoCardSceneryState(mood), state);
       await _renderHomeScenery(tester, mood, 'home_card_scenery_$name');
       await tester.pumpWidget(const SizedBox.shrink());
@@ -193,6 +203,7 @@ Future<void> _renderHomeScenery(
           child: SundoTimeScope(
               mood: mood,
               weatherEnabled: true,
+              onWeatherRefresh: () {},
               child: RepaintBoundary(
                   key: const ValueKey('home-scenery-preview'),
                   child: ScenicBackdrop(
@@ -205,6 +216,10 @@ Future<void> _renderHomeScenery(
         AssetImage(sundoEnvironmentArtwork(mood.environment)), context);
     await precacheImage(const AssetImage(sundoSideTruckAsset), context);
     await precacheImage(const AssetImage(sundoLeafSprigAsset), context);
+    for (final illustration in SundoCardIllustration.values) {
+      await precacheImage(
+          AssetImage(sundoCardIllustrationAsset(illustration)), context);
+    }
     for (final scene in SundoCardScene.values) {
       await precacheImage(
           AssetImage(sundoCardSceneryArtwork(scene, sundoCardSceneryState(mood))),

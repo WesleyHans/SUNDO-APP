@@ -8,6 +8,7 @@ import '../../../core/theme/time_theme.dart';
 import '../../../models/map_tracking.dart';
 import '../../../services/backend_service.dart';
 import '../../../shared/widgets/sundo_graphics.dart';
+import '../../../shared/widgets/sundo_card_illustration.dart';
 import '../../live_map/widgets/map_tracking_widgets.dart';
 import 'sundo_card_scenery.dart';
 
@@ -423,7 +424,17 @@ class SundoInfoCard extends StatelessWidget {
                         width: 51,
                         height: 51,
                         decoration: _roundDecoration(mood, green: true),
-                        child: Icon(icon, size: 30, color: mood.accent)),
+                        child: scenery == null
+                            ? Icon(icon, size: 30, color: mood.accent)
+                            : Center(
+                                child: SundoCardIllustratedIcon(
+                                    illustration: scenery ==
+                                            SundoCardScene.noCollectionStreet
+                                        ? SundoCardIllustration.today
+                                        : SundoCardIllustration.calendar,
+                                    fallbackIcon: icon,
+                                    fallbackColor: mood.accent,
+                                    size: 44))),
                     const Spacer(),
                     Container(
                         width: 31,

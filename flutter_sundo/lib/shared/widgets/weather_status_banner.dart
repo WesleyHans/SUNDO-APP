@@ -5,6 +5,7 @@ import '../../core/theme/time_theme.dart';
 import '../../features/home/widgets/sundo_dashboard_widgets.dart';
 import '../../features/home/widgets/sundo_card_scenery.dart';
 import '../../repositories/weather_repository.dart';
+import 'sundo_card_illustration.dart';
 import 'resident_components.dart';
 
 /// Shows only fresh conditions with a known location, never an offline guess.
@@ -39,6 +40,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
               : 'Weather is off in Settings',
           icon: Icons.cloud_outlined,
           iconColor: mood.accent,
+          illustration: SundoCardIllustration.cloud,
         );
       }
       if (scope?.weatherEnabled != true) return const SizedBox.shrink();
@@ -106,6 +108,8 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         subtitle: source,
         icon: icon,
         iconColor: iconColor,
+        illustration: sundoWeatherIllustration(weather.condition,
+            isNight: mood.isNight),
         caution: caution,
       );
     }
@@ -183,6 +187,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
     required String subtitle,
     required IconData icon,
     required Color iconColor,
+    required SundoCardIllustration illustration,
     String? caution,
   }) {
     final mood = SundoTimeScope.of(context);
@@ -191,6 +196,9 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         : const Color(0xFF345244);
     final canRefresh =
         scope?.weatherEnabled == true && scope?.onWeatherRefresh != null;
+    final statusDetails = scope?.weatherEnabled == true
+        ? '$subtitle\nAuto-refresh · Every 5 min'
+        : subtitle;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Semantics(
@@ -224,13 +232,20 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                         color: Colors.white
                             .withValues(alpha: mood.isNight ? .08 : .7)),
                   ),
-                  child: Icon(icon, color: iconColor, size: compact ? 28 : 32),
+                  child: Center(
+                    child: SundoCardIllustratedIcon(
+                      illustration: illustration,
+                      fallbackIcon: icon,
+                      fallbackColor: iconColor,
+                      size: compact ? 38 : 46,
+                    ),
+                  ),
                 ),
                 SizedBox(width: compact ? 10 : 12),
                 Expanded(
                   child: Semantics(
                     excludeSemantics: true,
-                    label: [title, subtitle, if (caution != null) caution]
+                    label: [title, statusDetails, if (caution != null) caution]
                         .join('. '),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -244,7 +259,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                               color: mood.textColor,
                             )),
                         const SizedBox(height: 5),
-                        Text(subtitle,
+                        Text(statusDetails,
                             style: TextStyle(
                               fontSize: compact ? 11 : 12,
                               height: 1.35,

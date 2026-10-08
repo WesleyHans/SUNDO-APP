@@ -258,20 +258,21 @@ void main() {
     expect(requests, 3);
   });
 
-  testWidgets('failed refresh clears rainy state and theme returns to time',
+  testWidgets('failed refresh keeps fresh rain but expired data returns to time',
       (tester) async {
+    var clock = now;
     var fail = false;
     final client = MockClient((_) async =>
         fail ? http.Response('unavailable', 503) : _response(now, code: 61));
     addTearDown(client.close);
     final container = ProviderContainer(overrides: [
-      sundoWeatherClockProvider.overrideWithValue(() => now),
+      sundoWeatherClockProvider.overrideWithValue(() => clock),
       environmentLocationServiceProvider
           .overrideWithValue(TestWeatherLocationService()),
       sundoSavedWeatherAreaProvider.overrideWithValue(() async => null),
-      sundoClockProvider.overrideWithValue(() => now),
+      sundoClockProvider.overrideWithValue(() => clock),
       sundoWeatherRepositoryProvider.overrideWithValue(
-          SipalayWeatherRepository(client: client, clock: () => now)),
+          SipalayWeatherRepository(client: client, clock: () => clock)),
     ]);
     addTearDown(container.dispose);
     expect(container.read(sundoDayNightThemeProvider).environment,
@@ -283,6 +284,12 @@ void main() {
     expect(container.read(sundoDayNightThemeProvider).environment,
         SundoEnvironment.rainy);
     fail = true;
+    clock = clock.add(const Duration(minutes: 5));
+    await controller.refresh();
+    expect(container.read(sundoWeatherProvider)?.isRaining, isTrue);
+    expect(container.read(sundoDayNightThemeProvider).environment,
+        SundoEnvironment.rainy);
+    clock = now.add(const Duration(minutes: 10, seconds: 1));
     await controller.refresh();
     expect(container.read(sundoWeatherProvider), isNull);
     expect(container.read(sundoDayNightThemeProvider).environment,

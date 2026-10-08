@@ -70,8 +70,10 @@ void main() {
       expect(find.text('Good Morning,'), findsOneWidget);
       expect(find.text('Juan!'), findsOneWidget);
       expect(find.text('JD'), findsOneWidget);
-      expect(find.text('No collection scheduled tomorrow'), findsOneWidget);
-      expect(find.text('Thu, Oct 8 · Barangay 1 (Poblacion)'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.textContaining('No collection scheduled today'), findsOneWidget);
+      expect(find.textContaining('Wed, Oct 7 · Barangay 1 (Poblacion)'),
+          findsOneWidget);
       expect(find.text('Sample schedule · Local demo'), findsOneWidget);
       expect(find.text('Saturday, Oct 10, 2026'), findsOneWidget);
       final cards = find.byType(SundoInfoCard);
@@ -121,8 +123,36 @@ void main() {
     ]);
     expect(find.byKey(const ValueKey('sundo-home-info-row')), findsOneWidget);
     expect(find.text('Good Morning,'), findsOneWidget);
-    expect(find.text('No collection scheduled tomorrow'), findsOneWidget);
+    expect(find.textContaining('No collection scheduled today'), findsOneWidget);
     expect(find.text('View Live Truck'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('Today and Next Collection show different calendar days',
+      (tester) async {
+    MockScheduleRepository.shared.items.add(CollectionSchedule(
+        id: 'sample-today-collection',
+        barangay: 'Barangay 1',
+        pickupAt: DateTime(2026, 10, 7, 8),
+        timeLabel: '8:00 AM – 12:00 PM',
+        route: 'Route A',
+        wasteType: 'Recyclables'));
+    await _mount(tester, HomeScreen(onNavigate: (_) {}));
+    final cards = tester
+        .widgetList<SundoInfoCard>(find.byType(SundoInfoCard))
+        .toList();
+    expect(cards, hasLength(2));
+    expect(cards.first.title, 'Today');
+    expect(cards.first.subtitle, contains('Collection scheduled today'));
+    expect(cards.first.subtitle, contains('Wed, Oct 7'));
+    expect(cards.first.additionalDetails,
+        '8:00 AM – 12:00 PM · Recyclables · Scheduled');
+    expect(cards.last.title, 'Next Collection');
+    expect(cards.last.subtitle, 'Saturday, Oct 10, 2026');
+    expect(cards.last.timeLabel, '1:00 PM – 4:00 PM');
+    expect(cards.last.subtitle, isNot(contains('Oct 7')));
+    expect(find.text('Sample schedule · Local demo'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -201,7 +231,7 @@ void main() {
         refresh: () => refreshes++);
     await show(SundoTimeMood.fromInstant(now));
     expect(find.text('Weather unavailable'), findsOneWidget);
-    expect(find.text('Using time-based scenery'), findsOneWidget);
+    expect(find.textContaining('Using time-based scenery'), findsOneWidget);
     await tester.tap(find.byTooltip('Refresh local weather'));
     expect(refreshes, 1);
     await show(SundoTimeMood.fromInstant(now, weather: weather));

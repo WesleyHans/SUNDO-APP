@@ -39,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Format card scenery source and tests
-        run: dart format lib/features/home/widgets/sundo_card_scenery.dart lib/features/home/widgets/sundo_dashboard_widgets.dart lib/features/home/home_collection_notice.dart lib/features/home/home_screen.dart lib/shared/widgets/weather_status_banner.dart test/card_scenery_test.dart test/home_dashboard_test.dart test/design_preview_test.dart
+      - name: Format changed card and weather source and tests
+        run: dart format lib/features/home/widgets/sundo_card_scenery.dart lib/features/home/widgets/sundo_dashboard_widgets.dart lib/features/home/home_collection_notice.dart lib/features/home/home_screen.dart lib/shared/widgets/weather_status_banner.dart lib/shared/widgets/sundo_card_illustration.dart lib/core/utils/resident_area.dart lib/repositories/weather_repository.dart test/card_scenery_test.dart test/home_dashboard_test.dart test/home_location_schedule_test.dart test/design_preview_test.dart test/card_illustrations_test.dart test/weather_status_banner_test.dart test/weather_location_controller_test.dart test/weather_repository_test.dart
 
       - name: Build release APK
         run: |
@@ -65,7 +65,7 @@ jobs:
       # must be signed with the existing local key before publication so
       # residents can upgrade without uninstalling the app.
       - name: Render native scene and truck previews
-        run: flutter test test/splash_environment_test.dart test/map_scene_preview_test.dart test/supplied_truck_graphics_test.dart test/directional_truck_preview_test.dart test/weather_status_banner_test.dart test/design_preview_test.dart test/home_dashboard_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
+        run: flutter test test/splash_environment_test.dart test/map_scene_preview_test.dart test/supplied_truck_graphics_test.dart test/directional_truck_preview_test.dart test/weather_status_banner_test.dart test/design_preview_test.dart test/home_dashboard_test.dart test/card_illustrations_test.dart --dart-define=GENERATE_PREVIEWS=true --update-goldens
 
       - name: Save native previews
         uses: actions/upload-artifact@v4

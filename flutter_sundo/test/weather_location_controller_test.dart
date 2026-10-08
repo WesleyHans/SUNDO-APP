@@ -58,14 +58,20 @@ void main() {
 
   ProviderContainer containerFor(
       http.Client client, TestWeatherLocationService service,
-      {Future<String?> Function()? savedArea}) {
+      {Future<String?> Function()? savedArea,
+      DateTime Function()? clock,
+      Duration requestTimeout = const Duration(seconds: 8)}) {
+    final currentTime = clock ?? () => now;
     final container = ProviderContainer(overrides: [
-      sundoWeatherClockProvider.overrideWithValue(() => now),
+      sundoWeatherClockProvider.overrideWithValue(currentTime),
       environmentLocationServiceProvider.overrideWithValue(service),
       if (savedArea != null)
         sundoSavedWeatherAreaProvider.overrideWithValue(savedArea),
       sundoWeatherRepositoryProvider.overrideWithValue(
-          SipalayWeatherRepository(client: client, clock: () => now)),
+          SipalayWeatherRepository(
+              client: client,
+              clock: currentTime,
+              requestTimeout: requestTimeout)),
     ]);
     addTearDown(container.dispose);
     addTearDown(client.close);
@@ -323,7 +329,7 @@ void main() {
         longitude: 123.89,
         label: 'your location',
         isDeviceLocation: true);
-    await controller.refresh();
+    await controller.refreshSavedArea();
     old.complete(_response(now, code: 63));
     await first;
     expect(container.read(sundoWeatherProvider)?.condition,
@@ -404,6 +410,167 @@ void main() {
     await pending;
     expect(requests, 0);
     expect(container.read(sundoWeatherProvider), isNull);
+    container.dispose();
+  });
+
+  testWidgets(
+      'automatic polls and repeated refresh taps share one pending request',
+      (tester) async {
+    var clock = now;
+    var requests = 0;
+    final pendingResponse = Completer<http.Response>();
+    final service = TestWeatherLocationService();
+    final client = MockClient((_) async {
+      requests++;
+      return requests == 1 ? _response(clock) : pendingResponse.future;
+    });
+    final container = containerFor(client, service,
+        clock: () => clock, requestTimeout: const Duration(minutes: 20));
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    expect(requests, 2);
+    expect(container.read(sundoWeatherLoadingProvider), isTrue);
+    final firstTap = controller.refresh();
+    final secondTap = controller.refresh();
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    expect(requests, 2);
+    expect(service.fixes, 2);
+    pendingResponse.complete(_response(clock, code: 3));
+    await Future.wait([firstTap, secondTap]);
+    expect(container.read(sundoWeatherProvider)?.condition,
+        WeatherCondition.cloudy);
+    expect(container.read(sundoWeatherLoadingProvider), isFalse);
+    container.dispose();
+  });
+
+  testWidgets('automatic failure retains fresh scenery then retries at next poll',
+      (tester) async {
+    var clock = now;
+    var requests = 0;
+    final pendingResponse = Completer<http.Response>();
+    final client = MockClient((_) async {
+      requests++;
+      if (requests == 2) return pendingResponse.future;
+      return _response(clock, code: requests == 1 ? 63 : 0);
+    });
+    final container = containerFor(client, TestWeatherLocationService(),
+        clock: () => clock);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    final rainy = container.read(sundoWeatherProvider);
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    expect(container.read(sundoWeatherProvider), same(rainy));
+    expect(container.read(sundoWeatherLoadingProvider), isTrue);
+    pendingResponse.complete(http.Response('offline', 503));
+    await tester.pump();
+    expect(container.read(sundoWeatherProvider), same(rainy));
+    expect(container.read(sundoWeatherLoadingProvider), isFalse);
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    expect(requests, 3);
+    expect(container.read(sundoWeatherProvider)?.condition,
+        WeatherCondition.clear);
+    container.dispose();
+  });
+
+  testWidgets(
+      'saved-area polling preserves the same fresh snapshot while offline',
+      (tester) async {
+    var clock = now;
+    var fail = false;
+    final service = TestWeatherLocationService()
+      ..location = null
+      ..status = EnvironmentLocationStatus.denied;
+    final client = MockClient((_) async =>
+        fail ? http.Response('offline', 503) : _response(clock, code: 3));
+    final container = containerFor(client, service,
+        clock: () => clock, savedArea: () async => 'Cabadiangan');
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    final previous = container.read(sundoWeatherProvider);
+    fail = true;
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    expect(container.read(sundoWeatherProvider), same(previous));
+    expect(container.read(environmentLocationStatusProvider),
+        EnvironmentLocationStatus.savedArea);
+    clock = now.add(const Duration(minutes: 10, seconds: 1));
+    await controller.refresh();
+    expect(container.read(sundoWeatherProvider), isNull);
+    container.dispose();
+  });
+
+  testWidgets('refresh never retains previous weather for a changed location',
+      (tester) async {
+    var fail = false;
+    final service = TestWeatherLocationService();
+    final client = MockClient((_) async =>
+        fail ? http.Response('offline', 503) : _response(now, code: 63));
+    final container = containerFor(client, service);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    expect(container.read(sundoWeatherProvider)?.isRaining, isTrue);
+    fail = true;
+    service.location = const WeatherLocation(
+        latitude: 10.31,
+        longitude: 123.89,
+        label: 'your location',
+        isDeviceLocation: true);
+    await controller.refresh();
+    expect(container.read(sundoWeatherProvider), isNull);
+    expect(controller.location, service.location);
+    container.dispose();
+  });
+
+  testWidgets('revoked device access clears a previously fresh cached snapshot',
+      (tester) async {
+    var fail = false;
+    final service = TestWeatherLocationService();
+    final client = MockClient((_) async =>
+        fail ? http.Response('offline', 503) : _response(now, code: 63));
+    final container = containerFor(client, service);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    expect(container.read(sundoWeatherProvider)?.isRaining, isTrue);
+    service.access = EnvironmentLocationStatus.deniedForever;
+    fail = true;
+    await controller.refresh();
+    expect(container.read(sundoWeatherProvider), isNull);
+    expect(controller.location, isNull);
+    expect(container.read(environmentLocationStatusProvider),
+        EnvironmentLocationStatus.deniedForever);
+    container.dispose();
+  });
+
+  testWidgets('successful automatic polls preserve the actual observation age',
+      (tester) async {
+    var clock = now;
+    var requests = 0;
+    final client = MockClient((_) async {
+      requests++;
+      return _response(now, code: 3);
+    });
+    final container = containerFor(client, TestWeatherLocationService(),
+        clock: () => clock);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    controller.setForeground(true);
+    await controller.initializeLocation(requestPermission: false);
+    clock = clock.add(const Duration(minutes: 5));
+    await tester.pump(const Duration(minutes: 5));
+    final weather = container.read(sundoWeatherProvider)!;
+    expect(requests, 2);
+    expect(weather.validAt, now);
+    expect(weather.fetchedAt, clock);
+    expect(clock.difference(weather.validAt), const Duration(minutes: 5));
     container.dispose();
   });
 

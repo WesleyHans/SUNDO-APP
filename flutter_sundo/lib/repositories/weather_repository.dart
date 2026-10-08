@@ -184,6 +184,8 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
   bool _disposed = false;
   bool _enabled = false;
   WeatherLocation? _location;
+  Future<void>? _activeRefresh;
+  int? _activeRefreshRequest;
 
   WeatherLocation? get location => _location;
   bool get enabled => _enabled;
@@ -288,8 +290,24 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
 
   Future<void> _refresh({required bool requestPermission}) async {
     if (!_foreground || _disposed || !_enabled) return;
+    // Timer ticks, resume callbacks and repeated taps share the same current
+    // request. Explicit permission or saved-area changes still supersede it.
+    final active = _activeRefresh;
+    if (!requestPermission &&
+        active != null &&
+        _activeRefreshRequest == _request) {
+      return active;
+    }
     final request = ++_request;
-    final identity = AppStore.identity;
+    _activeRefreshRequest = request;
+    final pending = _performRefresh(request, AppStore.identity,
+        requestPermission: requestPermission);
+    _activeRefresh = pending;
+    return pending;
+  }
+
+  Future<void> _performRefresh(int request, String identity,
+      {required bool requestPermission}) async {
     bool current() =>
         !_disposed &&
         ref.mounted &&
@@ -320,7 +338,7 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
         location = EnvironmentLocationService.savedAreaLocation(area);
       }
       if (!current()) return;
-      if (_location != location || resolved.location == null) state = null;
+      if (_location != location) state = null;
       _location = location;
       _setStatus(location == null
           ? locationStatus
@@ -359,8 +377,19 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
         }
       }
       final now = ref.read(sundoWeatherClockProvider)();
-      state = weather != null && weather.isFreshAt(now) ? weather : null;
+      // A brief network failure must not discard a still-fresh snapshot from
+      // this same location. Freshness limits continue to govern both the
+      // banner and scenery; an expired snapshot returns to the time fallback.
+      state = weather != null && weather.isFreshAt(now)
+          ? weather
+          : state?.isFreshAt(now) == true
+              ? state
+              : null;
     } finally {
+      if (_activeRefreshRequest == request) {
+        _activeRefresh = null;
+        _activeRefreshRequest = null;
+      }
       if (current()) _setLoading(false);
     }
   }
