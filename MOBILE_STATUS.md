@@ -42,6 +42,16 @@ The published [v1.5.11 release](https://github.com/WesleyHans/SUNDO-APP/releases
 reports the same **135,371,064-byte** size and SHA-256 as the verified local
 package, with status `uploaded` and filename `SUNDO.apk`.
 
+Production deployment `dpl_5g6Q5sdDkpLjh1xk5oKtsR9MXd3b` is **READY**.
+The verified public installer is [sundo-app.vercel.app](https://sundo-app.vercel.app).
+Installer and JavaScript bundle return HTTP 200 and identify Version 1.5.11.
+Both `/download-apk?v=1.5.11` and `/SUNDO.apk?v=1.5.11` return HTTP 200 with
+the complete **135,371,064-byte** package, Android APK content type and
+`attachment; filename=SUNDO.apk`. Installer source was published at
+`6ad2315f54930e8ba045ff53c07a519398eec681` before deployment. The additional
+CLI-reported `sundo.eco` alias did not resolve from this host at verification;
+the established Vercel URL above is the confirmed working download.
+
 ## Version 1.5.10 dynamic Home card scenery
 
 The three Home cards now render the synchronized 24-image scenery set in real
