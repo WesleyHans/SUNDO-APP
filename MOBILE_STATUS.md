@@ -39,6 +39,14 @@ The published GitHub `v1.5.10` asset reports the same **135,067,178-byte** size
 and SHA-256 as the verified local package, with status `uploaded` and filename
 `SUNDO.apk`: [release and APK](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.5.10).
 
+Production installer deployment `dpl_wA8rD8fr4LKpAb1cs6HBxwi7oAfz` is **READY**
+at [sundo-app.vercel.app](https://sundo-app.vercel.app). Public checks return
+HTTP 200 for the installer and its JavaScript bundle containing Version 1.5.10.
+Both `/download-apk?v=1.5.10` and `/SUNDO.apk?v=1.5.10` return HTTP 200 with
+`application/vnd.android.package-archive`, the complete **135,067,178-byte**
+package and `attachment; filename=SUNDO.apk`. Installer source was published
+at commit `a6527544ff7402a7970ad0d49ed096c011fd0303` before deployment.
+
 ## Version 1.5.9 evening twilight and full night
 
 The former night image is preserved byte-for-byte as evening twilight and is
