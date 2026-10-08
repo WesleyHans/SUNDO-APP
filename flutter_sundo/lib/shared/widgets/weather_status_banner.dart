@@ -239,6 +239,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
           key: const ValueKey('sundo-weather-summary'),
           height: 84,
           child: SundoDashboardCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: SundoDashboardDecoration.weather,
           scenery: SundoCardScene.weatherRiverside,
           child: LayoutBuilder(builder: (context, constraints) {

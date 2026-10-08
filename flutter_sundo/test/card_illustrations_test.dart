@@ -255,7 +255,7 @@ void main() {
             longitude: 122.40,
             label: 'Your location',
             isDeviceLocation: true));
-    for (final (width, scale) in [(390.0, 1.0), (320.0, 1.4)]) {
+    for (final (width, scale) in [(390.0, 1.0), (320.0, 1.4), (390.0, 2.0)]) {
       for (final (weather, enabled, checking) in [
         (snapshot(0), true, false),
         (snapshot(51), true, false),
