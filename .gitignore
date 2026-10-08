@@ -23,6 +23,9 @@ flutter_sundo/android/key.properties
 # Local release packaging notes and APK copies
 artifacts/
 
+# Local full-resolution scenery packages; runtime assets are tracked in Flutter.
+output/
+
 # Android Kotlin compilation cache
 flutter_sundo/android/.kotlin/
 

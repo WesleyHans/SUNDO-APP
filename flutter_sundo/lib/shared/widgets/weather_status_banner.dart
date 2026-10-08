@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/time_theme.dart';
 import '../../features/home/widgets/sundo_dashboard_widgets.dart';
+import '../../features/home/widgets/sundo_card_scenery.dart';
 import '../../repositories/weather_repository.dart';
 import 'resident_components.dart';
 
@@ -185,6 +186,9 @@ class SundoWeatherStatusBanner extends StatelessWidget {
     String? caution,
   }) {
     final mood = SundoTimeScope.of(context);
+    final secondaryColor = mood.isNight
+        ? mood.mutedTextColor
+        : const Color(0xFF345244);
     final canRefresh =
         scope?.weatherEnabled == true && scope?.onWeatherRefresh != null;
     return Padding(
@@ -195,6 +199,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         explicitChildNodes: true,
         child: SundoDashboardCard(
           decoration: SundoDashboardDecoration.weather,
+          scenery: SundoCardScene.weatherRiverside,
           child: LayoutBuilder(builder: (context, constraints) {
             final compact = constraints.maxWidth < 280;
             final iconSize = compact ? 44.0 : 52.0;
@@ -243,7 +248,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                             style: TextStyle(
                               fontSize: compact ? 11 : 12,
                               height: 1.35,
-                              color: mood.mutedTextColor,
+                              color: secondaryColor,
                             )),
                         if (caution != null) ...[
                           const SizedBox(height: 4),

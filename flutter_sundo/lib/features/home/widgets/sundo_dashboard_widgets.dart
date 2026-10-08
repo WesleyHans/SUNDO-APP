@@ -9,6 +9,7 @@ import '../../../models/map_tracking.dart';
 import '../../../services/backend_service.dart';
 import '../../../shared/widgets/sundo_graphics.dart';
 import '../../live_map/widgets/map_tracking_widgets.dart';
+import 'sundo_card_scenery.dart';
 
 /// A single, slow clock shared by decorative Home painters. Content does not
 /// rebuild on each tick, and the clock stops outside Home or in the background.
@@ -163,12 +164,14 @@ class SundoDashboardCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
   final SundoDashboardDecoration decoration;
+  final SundoCardScene? scenery;
   const SundoDashboardCard(
       {super.key,
       required this.child,
       this.padding = const EdgeInsets.all(16),
       this.radius = 26,
-      this.decoration = SundoDashboardDecoration.none});
+      this.decoration = SundoDashboardDecoration.none,
+      this.scenery});
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +206,36 @@ class SundoDashboardCard extends StatelessWidget {
         child: ClipRRect(
             borderRadius: BorderRadius.circular(radius),
             child: Stack(children: [
-              if (decoration != SundoDashboardDecoration.none)
+              if (scenery != null) ...[
+                Positioned.fill(
+                    child: IgnorePointer(
+                        child: ExcludeSemantics(
+                            child: RepaintBoundary(
+                                child: SundoCardScenery(scene: scenery!))))),
+                Positioned.fill(
+                    child: IgnorePointer(
+                        child: DecoratedBox(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    stops: const [0, .28, .85, 1],
+                                    colors: mood.isNight
+                                        ? const [
+                                            Color(0xD91B3327),
+                                            Color(0xDE1B3327),
+                                            Color(0xD91B3327),
+                                            Color(0x541B3327)
+                                          ]
+                                        : const [
+                                            Color(0xC7FEFFFC),
+                                            Color(0xCCFEFFFC),
+                                            Color(0xC2FEFFFC),
+                                            Color(0x54FEFFFC)
+                                          ]))))),
+              ],
+              if (scenery == null &&
+                  decoration != SundoDashboardDecoration.none)
                 Positioned.fill(
                     child: IgnorePointer(
                         child: ExcludeSemantics(
@@ -353,6 +385,7 @@ class SundoInfoCard extends StatelessWidget {
   final String? footer;
   final String? timeLabel;
   final String? additionalDetails;
+  final SundoCardScene? scenery;
   const SundoInfoCard(
       {super.key,
       required this.title,
@@ -361,11 +394,15 @@ class SundoInfoCard extends StatelessWidget {
       required this.onTap,
       this.footer,
       this.timeLabel,
-      this.additionalDetails});
+      this.additionalDetails,
+      this.scenery});
 
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
+    final secondaryColor = scenery != null && !mood.isNight
+        ? const Color(0xFF345244)
+        : mood.mutedTextColor;
     return _PressSurface(
         onTap: onTap,
         label: [title, subtitle, timeLabel, additionalDetails, footer]
@@ -376,6 +413,7 @@ class SundoInfoCard extends StatelessWidget {
             radius: 25,
             padding: const EdgeInsets.all(14),
             decoration: SundoDashboardDecoration.info,
+            scenery: scenery,
             child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,14 +444,18 @@ class SundoInfoCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 12.5,
                           height: 1.35,
-                          color: mood.mutedTextColor)),
+                          color: secondaryColor)),
                   if (timeLabel != null) ...[
                     const SizedBox(height: 9),
                     Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 6),
                         decoration: BoxDecoration(
-                            color: mood.accent.withValues(alpha: .10),
+                            color: scenery == null
+                                ? mood.accent.withValues(alpha: .10)
+                                : mood.isNight
+                                    ? const Color(0xEB294536)
+                                    : const Color(0xEBEFFFEF),
                             borderRadius: BorderRadius.circular(13)),
                         child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +482,7 @@ class SundoInfoCard extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 11,
                             height: 1.3,
-                            color: mood.mutedTextColor))
+                            color: secondaryColor))
                   ],
                   if (footer != null) ...[
                     const SizedBox(height: 9),
@@ -448,7 +490,11 @@ class SundoInfoCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 6),
                         decoration: BoxDecoration(
-                            color: mood.accent.withValues(alpha: .10),
+                            color: scenery == null
+                                ? mood.accent.withValues(alpha: .10)
+                                : mood.isNight
+                                    ? const Color(0xEB294536)
+                                    : const Color(0xEBEFFFEF),
                             borderRadius: BorderRadius.circular(12)),
                         child: Text(footer!,
                             style: TextStyle(

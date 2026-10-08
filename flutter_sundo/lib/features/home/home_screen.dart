@@ -16,6 +16,7 @@ import '../../shared/widgets/weather_status_banner.dart';
 import 'home_collection_notice.dart';
 import 'home_location_card.dart';
 import 'widgets/sundo_dashboard_widgets.dart';
+import 'widgets/sundo_card_scenery.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int) onNavigate;
@@ -285,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ? next.pickupAt.toUtc().add(const Duration(hours: 8))
             : next.pickupAt;
     return SundoInfoCard(
+        scenery: SundoCardScene.nextCollectionPark,
         title: 'Next Collection',
         subtitle: _schedulesFailed
             ? 'Schedule unavailable. Pull down to retry.'

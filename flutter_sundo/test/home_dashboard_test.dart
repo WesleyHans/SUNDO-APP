@@ -10,6 +10,7 @@ import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/app_theme.dart';
 import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/home/home_screen.dart';
+import 'package:sundo_sipalay/features/home/widgets/sundo_card_scenery.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_dashboard_widgets.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/schedule_repository.dart';
@@ -103,6 +104,28 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
+
+  testWidgets(
+      'actual Home displays three distinct scenery locations with reduced motion',
+      (tester) async {
+    await _mount(tester, MainNavigationShell(onLogout: () {}),
+        reduceMotion: true);
+    final scenes = tester
+        .widgetList<SundoCardScenery>(find.byType(SundoCardScenery))
+        .map((widget) => widget.scene)
+        .toList();
+    expect(scenes, [
+      SundoCardScene.weatherRiverside,
+      SundoCardScene.noCollectionStreet,
+      SundoCardScene.nextCollectionPark,
+    ]);
+    expect(find.byKey(const ValueKey('sundo-home-info-row')), findsOneWidget);
+    expect(find.text('Good Morning,'), findsOneWidget);
+    expect(find.text('No collection scheduled tomorrow'), findsOneWidget);
+    expect(find.text('View Live Truck'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets(
       'large text receives full-width cards and a reachable live action',
@@ -403,6 +426,7 @@ void main() {
 Future<void> _mount(WidgetTester tester, Widget child,
     {double width = 390,
     double scale = 1,
+    bool reduceMotion = false,
     SundoTimeMood? mood,
     bool weatherEnabled = true,
     VoidCallback? refresh}) async {
@@ -428,7 +452,9 @@ Future<void> _mount(WidgetTester tester, Widget child,
           key: _preview,
           child: MediaQuery(
               data: MediaQueryData(
-                  size: Size(width, 844), textScaler: TextScaler.linear(scale)),
+                  size: Size(width, 844),
+                  disableAnimations: reduceMotion,
+                  textScaler: TextScaler.linear(scale)),
               child: SundoTimeScope(
                   mood: clock,
                   weatherEnabled: weatherEnabled,
