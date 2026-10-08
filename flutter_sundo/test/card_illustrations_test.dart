@@ -72,6 +72,7 @@ void main() {
       final originalShadows = debugDisableShadows;
       debugDisableShadows = false;
       addTearDown(() => debugDisableShadows = originalShadows);
+      try {
       tester.view.physicalSize = const Size(320, 540);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -146,6 +147,9 @@ void main() {
       await tester.tap(find.byTooltip('Refresh local weather'));
       expect(refreshes, 1);
       await tester.pumpWidget(const SizedBox.shrink());
+      } finally {
+        debugDisableShadows = originalShadows;
+      }
     });
   }
 }
