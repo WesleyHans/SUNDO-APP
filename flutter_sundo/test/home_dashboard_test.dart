@@ -235,12 +235,12 @@ void main() {
     await tester.tap(find.byTooltip('Refresh local weather'));
     expect(refreshes, 1);
     await show(SundoTimeMood.fromInstant(now, weather: weather));
-    expect(find.text('Rainy in Barangay 2'), findsOneWidget);
+    expect(find.text('Rainy'), findsOneWidget);
     expect(find.textContaining('at your location'), findsNothing);
     await show(SundoTimeMood.fromInstant(now.add(const Duration(minutes: 31)),
         weather: weather));
     expect(find.text('Weather unavailable'), findsOneWidget);
-    expect(find.text('Rainy in Barangay 2'), findsNothing);
+    expect(find.text('Rainy'), findsNothing);
     await show(SundoTimeMood.fromInstant(now), enabled: false);
     expect(find.text('Time-based scenery'), findsOneWidget);
     expect(find.byTooltip('Refresh local weather'), findsNothing);

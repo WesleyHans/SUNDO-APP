@@ -35,6 +35,11 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                   ? 'Checking weather…'
                   : 'Weather unavailable'
               : 'Time-based scenery',
+          detailTitle: enabled
+              ? scope!.checkingWeather
+                  ? 'Checking weather for your area…'
+                  : 'Weather unavailable'
+              : 'Time-based scenery',
           subtitle: enabled
               ? 'Using time-based scenery'
               : 'Weather is off in Settings',
@@ -104,8 +109,12 @@ class SundoWeatherStatusBanner extends StatelessWidget {
       return _dashboardStatus(
         context,
         scope: scope,
-        title: headline,
-        subtitle: source,
+        title: description,
+        detailTitle: headline,
+        subtitle: scope?.weatherEnabled == true
+            ? 'Auto-refresh · 5 min'
+            : 'Model-based weather',
+        detailSubtitle: source,
         icon: icon,
         iconColor: iconColor,
         illustration: sundoWeatherIllustration(weather.condition,
@@ -184,7 +193,9 @@ class SundoWeatherStatusBanner extends StatelessWidget {
     BuildContext context, {
     required SundoTimeScope? scope,
     required String title,
+    required String detailTitle,
     required String subtitle,
+    String? detailSubtitle,
     required IconData icon,
     required Color iconColor,
     required SundoCardIllustration illustration,
@@ -196,16 +207,38 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         : const Color(0xFF345244);
     final canRefresh =
         scope?.weatherEnabled == true && scope?.onWeatherRefresh != null;
-    final statusDetails = scope?.weatherEnabled == true
-        ? '$subtitle\nAuto-refresh · Every 5 min'
-        : subtitle;
+    final enabled = scope?.weatherEnabled == true;
+    final details = detailSubtitle ?? subtitle;
+    final fullLabel = [
+      detailTitle,
+      details,
+      if (enabled) 'Auto-refresh every 5 minutes',
+      if (caution != null) caution,
+      'Tap for weather details',
+    ].join('. ');
+    void openDetails() => _showWeatherDetails(context,
+        mood: mood,
+        scope: scope,
+        title: detailTitle,
+        subtitle: details,
+        caution: caution);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Semantics(
         container: true,
         liveRegion: true,
         explicitChildNodes: true,
-        child: SundoDashboardCard(
+        button: true,
+        label: fullLabel,
+        onTap: openDetails,
+        child: InkWell(
+          onTap: openDetails,
+          excludeFromSemantics: true,
+          borderRadius: BorderRadius.circular(28),
+          child: SizedBox(
+          key: const ValueKey('sundo-weather-summary'),
+          height: 84,
+          child: SundoDashboardCard(
           decoration: SundoDashboardDecoration.weather,
           scenery: SundoCardScene.weatherRiverside,
           child: LayoutBuilder(builder: (context, constraints) {
@@ -213,8 +246,9 @@ class SundoWeatherStatusBanner extends StatelessWidget {
             final iconSize = compact ? 44.0 : 52.0;
             final iconTextGap = compact ? 10.0 : 12.0;
             final titleSize = compact ? 15.0 : 16.0;
-            final titleScale =
-                MediaQuery.textScalerOf(context).scale(titleSize) / titleSize;
+            final textScaler = MediaQuery.textScalerOf(context)
+                .clamp(maxScaleFactor: 1.5);
+            final titleScale = textScaler.scale(titleSize) / titleSize;
             final textWidth = constraints.maxWidth -
                 iconSize -
                 iconTextGap -
@@ -247,44 +281,47 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                     ),
                   ),
                 );
-            final description = Semantics(
-                    excludeSemantics: true,
-                    label: [title, statusDetails, if (caution != null) caution]
-                        .join('. '),
+            final shortTitle = textWidth / titleScale < 130
+                ? switch (title) {
+                    'Thunderstorms' => 'Storms',
+                    'Weather unavailable' => 'Unavailable',
+                    'Checking weather…' => 'Checking…',
+                    'Time-based scenery' => 'Weather off',
+                    _ => title,
+                  }
+                : title;
+            final description = ExcludeSemantics(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
+                        Text(shortTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textScaler: textScaler,
                             style: GoogleFonts.outfit(
                               fontSize: titleSize,
                               height: 1.15,
                               fontWeight: FontWeight.w700,
                               color: mood.textColor,
                             )),
-                        const SizedBox(height: 5),
-                        Text(statusDetails,
+                        const SizedBox(height: 3),
+                        Text(subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textScaler: textScaler,
                             style: TextStyle(
-                              fontSize: compact ? 11 : 12,
-                              height: 1.35,
+                              fontSize: compact ? 10.5 : 11,
+                              height: 1.2,
                               color: secondaryColor,
                             )),
-                        if (caution != null) ...[
-                          const SizedBox(height: 4),
-                          Text(caution,
-                              style: TextStyle(
-                                fontSize: 11,
-                                height: 1.35,
-                                color: mood.textColor,
-                              )),
-                        ],
                       ],
                     ),
                   );
             final refresh = !canRefresh
                 ? null
                 : scope!.checkingWeather
-                      ? const Padding(
+                  ? const Padding(
                           padding: EdgeInsets.all(12),
                           child: SizedBox.square(
                             dimension: 20,
@@ -301,25 +338,12 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                             backgroundColor: mood.accent.withValues(alpha: .08),
                             foregroundColor: mood.accent,
                             minimumSize: const Size.square(44),
+                            maximumSize: const Size.square(44),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           icon: const Icon(Icons.refresh_rounded, size: 25),
                         );
-            if (textWidth / titleScale < 140) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    illustrationWidget,
-                    const Spacer(),
-                    if (refresh != null) refresh,
-                  ]),
-                  const SizedBox(height: 10),
-                  description,
-                ],
-              );
-            }
-            return Row(
+            return SizedBox(height: 52, child: Row(
               children: [
                 illustrationWidget,
                 SizedBox(width: iconTextGap),
@@ -329,11 +353,103 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                   refresh,
                 ],
               ],
-            );
+            ));
           }),
+        ),
+        ),
         ),
       ),
     );
+  }
+
+  void _showWeatherDetails(BuildContext context,
+      {required SundoTimeMood mood,
+      required SundoTimeScope? scope,
+      required String title,
+      required String subtitle,
+      String? caution}) {
+    final originalMedia = MediaQuery.of(context);
+    final enabled = scope?.weatherEnabled == true;
+    final canRefresh = enabled && scope?.onWeatherRefresh != null;
+    showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) => MediaQuery(
+            data: originalMedia,
+            child: SundoTimeScope(
+                mood: mood,
+                child: SafeArea(
+                    top: false,
+                    child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                                maxHeight: originalMedia.size.height * .8),
+                            child: RepaintBoundary(
+                              key: const ValueKey('sundo-weather-details'),
+                              child: SundoSurface(
+                                radius: 28,
+                                padding: const EdgeInsets.all(20),
+                                child: SingleChildScrollView(
+                                    child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      Text('Weather details',
+                                          style: GoogleFonts.outfit(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: mood.textColor)),
+                                      const SizedBox(height: 16),
+                                      Text(title,
+                                          style: GoogleFonts.outfit(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w700,
+                                              color: mood.textColor)),
+                                      const SizedBox(height: 8),
+                                      Text(subtitle,
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              height: 1.4,
+                                              color: mood.mutedTextColor)),
+                                      if (enabled) ...[
+                                        const SizedBox(height: 8),
+                                        Text('Auto-refresh · Every 5 min',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: mood.mutedTextColor)),
+                                      ],
+                                      if (caution != null) ...[
+                                        const SizedBox(height: 12),
+                                        Text(caution,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                height: 1.4,
+                                                color: mood.textColor)),
+                                      ],
+                                      const SizedBox(height: 18),
+                                      Wrap(spacing: 8, runSpacing: 8, children: [
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(sheetContext),
+                                            child: const Text('Close')),
+                                        if (canRefresh)
+                                          FilledButton.icon(
+                                              onPressed: scope?.checkingWeather == true
+                                                  ? null
+                                                  : () {
+                                                      Navigator.pop(sheetContext);
+                                                      scope?.onWeatherRefresh?.call();
+                                                    },
+                                              icon: const Icon(Icons.refresh_rounded),
+                                              label: Text(scope?.checkingWeather == true
+                                                  ? 'Checking weather…'
+                                                  : 'Refresh weather')),
+                                      ]),
+                                    ]))))))))));
   }
 
   Widget _weatherRefresh(SundoTimeScope scope) => scope.checkingWeather
