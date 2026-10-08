@@ -186,6 +186,9 @@ class SundoWeatherStatusBanner extends StatelessWidget {
     String? caution,
   }) {
     final mood = SundoTimeScope.of(context);
+    final secondaryColor = mood.isNight
+        ? mood.mutedTextColor
+        : const Color(0xFF345244);
     final canRefresh =
         scope?.weatherEnabled == true && scope?.onWeatherRefresh != null;
     return Padding(
@@ -245,7 +248,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                             style: TextStyle(
                               fontSize: compact ? 11 : 12,
                               height: 1.35,
-                              color: mood.mutedTextColor,
+                              color: secondaryColor,
                             )),
                         if (caution != null) ...[
                           const SizedBox(height: 4),

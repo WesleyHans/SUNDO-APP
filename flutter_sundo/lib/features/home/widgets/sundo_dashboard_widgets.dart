@@ -219,12 +219,12 @@ class SundoDashboardCard extends StatelessWidget {
                                 gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
-                                    stops: const [0, .28, .66, 1],
+                                    stops: const [0, .28, .85, 1],
                                     colors: mood.isNight
                                         ? const [
-                                            Color(0xC71B3327),
-                                            Color(0xCC1B3327),
-                                            Color(0xC21B3327),
+                                            Color(0xD91B3327),
+                                            Color(0xDE1B3327),
+                                            Color(0xD91B3327),
                                             Color(0x541B3327)
                                           ]
                                         : const [
@@ -400,6 +400,9 @@ class SundoInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
+    final secondaryColor = scenery != null && !mood.isNight
+        ? const Color(0xFF345244)
+        : mood.mutedTextColor;
     return _PressSurface(
         onTap: onTap,
         label: [title, subtitle, timeLabel, additionalDetails, footer]
@@ -441,7 +444,7 @@ class SundoInfoCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 12.5,
                           height: 1.35,
-                          color: mood.mutedTextColor)),
+                          color: secondaryColor)),
                   if (timeLabel != null) ...[
                     const SizedBox(height: 9),
                     Container(
@@ -479,7 +482,7 @@ class SundoInfoCard extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 11,
                             height: 1.3,
-                            color: mood.mutedTextColor))
+                            color: secondaryColor))
                   ],
                   if (footer != null) ...[
                     const SizedBox(height: 9),
