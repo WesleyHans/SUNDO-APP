@@ -168,6 +168,7 @@ Future<void> _renderHomeScenery(
   final originalShadows = debugDisableShadows;
   debugDisableShadows = false;
   addTearDown(() => debugDisableShadows = originalShadows);
+  try {
   tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -219,5 +220,8 @@ Future<void> _renderHomeScenery(
   if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
     await expectLater(find.byKey(const ValueKey('home-scenery-preview')),
         matchesGoldenFile('goldens/$name.png'));
+  }
+  } finally {
+    debugDisableShadows = originalShadows;
   }
 }

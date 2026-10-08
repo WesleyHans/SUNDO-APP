@@ -101,6 +101,7 @@ void main() {
             .updateShouldNotify(SundoTimeScope(
                 mood: previous, child: const SizedBox.shrink())),
         isTrue);
+    container.dispose();
   });
 
   test('fresh daytime weather overrides time and stale weather falls back', () {
