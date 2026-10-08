@@ -422,7 +422,8 @@ void main() {
     final service = TestWeatherLocationService();
     final client = MockClient((_) async {
       requests++;
-      return requests == 1 ? _response(clock) : pendingResponse.future;
+      if (requests == 1) return _response(clock);
+      return pendingResponse.future;
     });
     final container = containerFor(client, service,
         clock: () => clock, requestTimeout: const Duration(minutes: 20));

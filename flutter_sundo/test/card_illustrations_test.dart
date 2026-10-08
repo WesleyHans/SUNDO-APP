@@ -114,7 +114,7 @@ void main() {
                   onWeatherRefresh: () => refreshes++,
                   child: Scaffold(
                       backgroundColor: mood.innerBackground,
-                      body: RepaintBoundary(
+                      body: const RepaintBoundary(
                           key: const ValueKey('weather-illustration-preview'),
                           child: const Padding(
                               padding: EdgeInsets.all(18),
