@@ -115,8 +115,8 @@ void main() {
                   child: Scaffold(
                       backgroundColor: mood.innerBackground,
                       body: const RepaintBoundary(
-                          key: const ValueKey('weather-illustration-preview'),
-                          child: const Padding(
+                          key: ValueKey('weather-illustration-preview'),
+                          child: Padding(
                               padding: EdgeInsets.all(18),
                               child: SundoWeatherStatusBanner(dashboardStyle: true))))))));
       await tester.runAsync(() async {
