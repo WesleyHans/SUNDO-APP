@@ -7,6 +7,7 @@ import '../../core/utils/resident_area.dart';
 import '../../repositories/schedule_repository.dart';
 import '../../shared/widgets/resident_components.dart';
 import 'widgets/sundo_dashboard_widgets.dart';
+import 'widgets/sundo_card_scenery.dart';
 
 /// Match the next Philippine calendar day, rather than a rolling 24 hours.
 List<CollectionSchedule> tomorrowCollectionsForResidentArea(
@@ -83,6 +84,7 @@ class HomeCollectionNotice extends StatelessWidget {
             }).join('\n')
           : null;
       return SundoInfoCard(
+        scenery: SundoCardScene.noCollectionStreet,
         title: heading,
         subtitle: details,
         icon: Icons.campaign_rounded,

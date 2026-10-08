@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/time_theme.dart';
 import '../../features/home/widgets/sundo_dashboard_widgets.dart';
+import '../../features/home/widgets/sundo_card_scenery.dart';
 import '../../repositories/weather_repository.dart';
 import 'resident_components.dart';
 
@@ -195,6 +196,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
         explicitChildNodes: true,
         child: SundoDashboardCard(
           decoration: SundoDashboardDecoration.weather,
+          scenery: SundoCardScene.weatherRiverside,
           child: LayoutBuilder(builder: (context, constraints) {
             final compact = constraints.maxWidth < 280;
             final iconSize = compact ? 44.0 : 52.0;

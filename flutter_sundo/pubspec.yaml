@@ -1,7 +1,7 @@
 name: sundo_sipalay
 description: "SUNDO: Smart Urban Navigation for Dynamic Waste Operations in Sipalay City, Negros Occidental."
 publish_to: "none"
-version: 1.5.9+17
+version: 1.5.10+18
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -39,5 +39,8 @@ flutter:
   assets:
     - assets/images/
     - assets/images/truck_directions/
+    - assets/images/card_scenery/weather_riverside/
+    - assets/images/card_scenery/no_collection_street/
+    - assets/images/card_scenery/next_collection_park/
     - assets/fonts/
 
