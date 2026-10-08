@@ -1,5 +1,47 @@
 # SUNDO mobile status
 
+## Version 1.5.11 Today and steady compact weather
+
+Home's left card now shows **Today** with the selected area's actual schedule,
+times and published statuses. **Next Collection** selects the next nonterminal
+pickup after today's Philippine calendar day. Completed and cancelled rows
+remain truthful on Today; the app does not infer completion from elapsed time.
+Live timestamps convert once to UTC+8 while demo calendar fields remain local.
+
+Weather and collection cards use seven transparent 3D illustrations matching
+the existing SUNDO palette. The Weather card stays **84 logical pixels** high
+through fresh, stale, unavailable, checking and disabled states. Tapping its
+short summary opens scrollable weather details with the full location,
+model-based source, actual observation age and any rain caution. Details retain
+the original system text size; the compact summary caps scaling at 1.5.
+
+Weather checks automatically every five minutes in the foreground and on
+resume. Overlapping checks share one request. Brief failures retain same-place
+observations only while fresh; changed location, revoked access or expired
+weather still falls back to the clock. A permission/resume race is covered.
+The existing provider, dynamic scenery, smooth fades, map and protected
+Splash/Welcome composition remain unchanged.
+
+GitHub run `37728091322` at
+`5a825789cb98c5045f22cbdfcd326be46ed1b486` passed Flutter analysis, all **358
+tests**, APK compilation and **84 native preview tests**. The final Home,
+compact, rain/storm and details captures were visually reviewed; 22 native
+Home/weather previews are saved. Widths 320/390 and text scaling up to 2.0
+are covered. Installer TypeScript checks and production compilation pass.
+PR #14 merged at `a4e8e6735d35d0a2ea4713a2a8e3f9bc00d438d8`; merged runtime
+files match the tested source. Physical-device frame rate is not certified.
+
+Android version is **1.5.11+19**. The signed APK is **135,371,064 bytes** with
+SHA-256 `bb97a07a80fae488f27836dc8c7db5d7be94e2f0295feeef5b59841390d51e7b`.
+APK v2/v3 signing verifies with the same update certificate as v1.5.10,
+`9aef25a031654e9ccfe2b4579915b527e215686a1812b87ac0c26a033fbd2a6a`.
+16 KB ZIP alignment passes; package `com.sundo.sipalay`, code 19, minimum
+API 24, target API 36 and ARM64/ARMv7/x86_64 support are verified.
+
+The published [v1.5.11 release](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.5.11)
+reports the same **135,371,064-byte** size and SHA-256 as the verified local
+package, with status `uploaded` and filename `SUNDO.apk`.
+
 ## Version 1.5.10 dynamic Home card scenery
 
 The three Home cards now render the synchronized 24-image scenery set in real
