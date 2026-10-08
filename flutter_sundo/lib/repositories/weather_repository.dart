@@ -246,6 +246,9 @@ class SundoWeatherController extends Notifier<SipalayWeather?> {
           _foreground &&
           _enabled &&
           _request != permissionRequest) {
+        // A still-pending resume check may have read the old denial. Do not
+        // coalesce the post-grant check with that superseded permission state.
+        _request++;
         await refresh();
       }
     }

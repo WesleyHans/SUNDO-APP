@@ -13,23 +13,29 @@ import 'weather_repository_test.dart' show TestWeatherLocationService;
 
 class _PendingPermissionLocationService extends TestWeatherLocationService {
   final permissionResult = Completer<void>();
+  Completer<void>? firstQuietDelay;
   bool granted = false;
   int quietChecks = 0;
   @override
   Future<EnvironmentLocationResult> resolve(
       {required bool requestPermission, bool Function()? canContinue}) async {
+    bool? permissionWhenChecked;
     if (requestPermission) {
       permissionRequests++;
       await permissionResult.future;
       granted = true;
     } else {
       quietChecks++;
+      permissionWhenChecked = granted;
+      if (quietChecks == 1 && firstQuietDelay != null) {
+        await firstQuietDelay!.future;
+      }
     }
     if (canContinue?.call() == false) {
       return const EnvironmentLocationResult(
           EnvironmentLocationStatus.unavailable);
     }
-    return granted
+    return (permissionWhenChecked ?? granted)
         ? EnvironmentLocationResult(EnvironmentLocationStatus.device,
             location: location)
         : const EnvironmentLocationResult(EnvironmentLocationStatus.denied);
@@ -127,6 +133,52 @@ void main() {
     expect(
         container.read(sundoWeatherProvider)?.condition, WeatherCondition.rain);
     container.dispose();
+  });
+
+  testWidgets(
+      'permission grant supersedes a still-pending early-resume quiet check',
+      (tester) async {
+    var requests = 0;
+    final quietDelay = Completer<void>();
+    final service = _PendingPermissionLocationService()
+      ..firstQuietDelay = quietDelay;
+    final client = MockClient((_) async {
+      requests++;
+      return _response(now, code: 63);
+    });
+    final container = containerFor(client, service);
+    final controller = container.read(sundoWeatherProvider.notifier);
+    try {
+      controller.setForeground(true);
+      final pending = controller.initializeLocation(requestPermission: true);
+      await tester.pump();
+      controller.setForeground(false);
+      controller.setForeground(true);
+      await tester.pump();
+      expect(service.quietChecks, 1);
+      expect(requests, 0);
+      service.permissionResult.complete();
+      await tester.pump();
+      expect(service.quietChecks, 2,
+          reason: 'The post-grant check must not join the pre-grant denial.');
+      expect(service.permissionRequests, 1);
+      expect(requests, 1);
+      expect(container.read(sundoWeatherProvider)?.condition,
+          WeatherCondition.rain);
+      quietDelay.complete();
+      await pending;
+      await tester.pump();
+      expect(container.read(sundoWeatherProvider)?.condition,
+          WeatherCondition.rain,
+          reason: 'The retired denial cannot clear the new granted snapshot.');
+      expect(container.read(sundoWeatherLoadingProvider), isFalse);
+    } finally {
+      if (!service.permissionResult.isCompleted) {
+        service.permissionResult.complete();
+      }
+      if (!quietDelay.isCompleted) quietDelay.complete();
+      container.dispose();
+    }
   });
 
   testWidgets(
