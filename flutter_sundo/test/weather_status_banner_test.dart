@@ -237,7 +237,7 @@ void main() {
       });
       await tester.pump(const Duration(milliseconds: 300));
       final greeting = tester.getRect(find.text('${mood.greeting},'));
-      final status = tester.getRect(find.text('Rainy at your location'));
+      final status = tester.getRect(find.text('Rainy'));
       final collection = tester.getRect(find.text('Next Collection'));
       expect(status.top, greaterThan(greeting.bottom));
       expect(status.bottom, lessThan(collection.top));

@@ -9,21 +9,20 @@ import '../../shared/widgets/resident_components.dart';
 import 'widgets/sundo_dashboard_widgets.dart';
 import 'widgets/sundo_card_scenery.dart';
 
-/// Match the next Philippine calendar day, rather than a rolling 24 hours.
-List<CollectionSchedule> tomorrowCollectionsForResidentArea(
+/// Show the whole Philippine day, including already completed or cancelled
+/// windows. An elapsed start time alone does not establish collection status.
+List<CollectionSchedule> todayCollectionsForResidentArea(
     List<CollectionSchedule> schedules, String area, DateTime philippineTime,
     {bool datesAreInstants = false}) {
-  final tomorrow = DateTime(
-      philippineTime.year, philippineTime.month, philippineTime.day + 1);
+  final today = DateTime(
+      philippineTime.year, philippineTime.month, philippineTime.day);
   final matches = schedules.where((entry) {
-    final pickup = datesAreInstants
-        ? entry.pickupAt.toUtc().add(const Duration(hours: 8))
-        : entry.pickupAt;
+    final pickup = residentCollectionTime(entry,
+        datesAreInstants: datesAreInstants);
     return serviceAreaMatchesResident(entry.barangay, area) &&
-        pickup.year == tomorrow.year &&
-        pickup.month == tomorrow.month &&
-        pickup.day == tomorrow.day &&
-        entry.explicitStatus != 'Completed';
+        pickup.year == today.year &&
+        pickup.month == today.month &&
+        pickup.day == today.day;
   }).toList()
     ..sort((a, b) => a.pickupAt.compareTo(b.pickupAt));
   return matches;
@@ -52,48 +51,64 @@ class HomeCollectionNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    final tomorrow = DateTime(
-        mood.localTime.year, mood.localTime.month, mood.localTime.day + 1);
-    final matches = tomorrowCollectionsForResidentArea(
+    final today = DateTime(
+        mood.localTime.year, mood.localTime.month, mood.localTime.day);
+    final matches = todayCollectionsForResidentArea(
         schedules, area, mood.localTime,
         datesAreInstants: !isDemo);
-    final heading = failed
-        ? "Tomorrow's schedule unavailable"
+    final summary = failed
+        ? 'Schedule unavailable'
         : !loaded
-            ? "Checking tomorrow's schedule…"
+            ? 'Checking today’s schedule…'
             : area.trim().isEmpty
                 ? 'Choose your collection area'
                 : matches.isEmpty
-                    ? 'No collection scheduled tomorrow'
-                    : 'Collection tomorrow in your area';
+                    ? 'No collection scheduled today'
+                    : matches.every((entry) =>
+                            entry.explicitStatus?.trim().toLowerCase() ==
+                            'completed')
+                        ? 'Collection completed today'
+                        : matches.every((entry) => const ['cancelled', 'canceled']
+                            .contains(entry.explicitStatus?.trim().toLowerCase()))
+                            ? 'Collection cancelled today'
+                            : matches.every((entry) => const [
+                                  'completed',
+                                  'cancelled',
+                                  'canceled'
+                                ].contains(
+                                    entry.explicitStatus?.trim().toLowerCase()))
+                                ? 'No remaining collection today'
+                                : 'Collection scheduled today';
     final details = failed
         ? 'Pull down to retry.'
         : !loaded
             ? 'Loading published collection times.'
             : area.trim().isEmpty
                 ? 'Set your barangay in Profile.'
-                : '${DateFormat('EEE, MMM d').format(tomorrow)} · $area';
+                : '${DateFormat('EEE, MMM d').format(today)} · $area';
+    String pickupDetails(CollectionSchedule entry) {
+      final time = isDemo
+          ? entry.timeLabel
+          : DateFormat('h:mm a').format(
+              residentCollectionTime(entry, datesAreInstants: true));
+      final status = entry.explicitStatus?.trim();
+      return '$time · ${entry.wasteType} · ${status == null || status.isEmpty ? 'Scheduled' : status}';
+    }
     if (dashboardStyle) {
-      final pickupDetails = loaded && !failed && matches.isNotEmpty
-          ? matches.take(2).map((entry) {
-              final time = isDemo
-                  ? entry.timeLabel
-                  : DateFormat('h:mm a').format(
-                      entry.pickupAt.toUtc().add(const Duration(hours: 8)));
-              return '$time · ${entry.wasteType}';
-            }).join('\n')
+      final pickups = loaded && !failed && matches.isNotEmpty
+          ? matches.take(2).map(pickupDetails).join('\n')
           : null;
       return SundoInfoCard(
         scenery: SundoCardScene.noCollectionStreet,
-        title: heading,
-        subtitle: details,
-        icon: Icons.campaign_rounded,
+        title: 'Today',
+        subtitle: '$summary\n$details',
+        icon: Icons.today_rounded,
         onTap: onOpenSchedule,
         footer: isDemo ? 'Sample schedule · Local demo' : null,
-        additionalDetails: pickupDetails == null
+        additionalDetails: pickups == null
             ? null
             : [
-                pickupDetails,
+                pickups,
                 if (matches.length > 2)
                   '+${matches.length - 2} more · View schedule',
               ].join('\n'),
@@ -112,30 +127,26 @@ class HomeCollectionNotice extends StatelessWidget {
                   color: mood.accent.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(10)),
               child:
-                  Icon(Icons.campaign_rounded, size: 23, color: mood.accent)),
+                  Icon(Icons.today_rounded, size: 23, color: mood.accent)),
           const SizedBox(width: 10),
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(heading,
+              Text('Today',
                   style: GoogleFonts.outfit(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: mood.textColor)),
+              const SizedBox(height: 3),
+              Text(summary,
+                  style: TextStyle(fontSize: 11, color: mood.textColor)),
               const SizedBox(height: 3),
               Text(details,
                   style: TextStyle(fontSize: 10, color: mood.mutedTextColor)),
               if (loaded && !failed && matches.isNotEmpty) ...[
                 const SizedBox(height: 3),
                 Text(
-                    matches.take(2).map((entry) {
-                      final time = isDemo
-                          ? entry.timeLabel
-                          : DateFormat('h:mm a').format(entry.pickupAt
-                              .toUtc()
-                              .add(const Duration(hours: 8)));
-                      return '$time · ${entry.wasteType}';
-                    }).join('\n'),
+                    matches.take(2).map(pickupDetails).join('\n'),
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

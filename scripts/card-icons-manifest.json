@@ -1,0 +1,54 @@
+{
+  "generation": {
+    "method": "Built-in image_gen",
+    "transparentBackground": true,
+    "generatedAssets": 7,
+    "canvas": 256,
+    "contentCanvas": 224,
+    "transparentPadding": 16
+  },
+  "images": [
+    {
+      "name": "weather_sun",
+      "source": "weather_sun.png",
+      "asset": "flutter_sundo/assets/images/card_icons/weather_sun.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: a standalone SUNDO mobile weather icon, readable at 44 pixels.\nPrimary request: one centered sun, a warm golden-yellow spherical sun with eight short plump rounded rays; believable polished 3D clay geometry, soft material with gently realistic highlights and self-shadows.\nScene/backdrop: actual transparent background, isolated subject only.\nStyle/medium: premium eco-app 3D illustration, smooth soft rounded surfaces, modest depth, consistent three-quarter front camera (very slight top view), delicate studio light from upper-left.\nColor palette: warm gold and creamy yellow, gentle amber side shading; no face.\nComposition/framing: square canvas; sun plus rays occupy about 84 percent of frame in both dimensions, fully visible; crisp strong silhouette at tiny scale, minimal negative space.\nConstraints: no text, letters, numbers, badge, disc, container, background, floor, watermark, logo, face, extra objects. No cast shadow outside the subject. Keep genuinely transparent alpha."
+    },
+    {
+      "name": "weather_moon",
+      "source": "weather_moon.png",
+      "asset": "flutter_sundo/assets/images/card_icons/weather_moon.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: standalone SUNDO weather icon, clear at 44px.\nPrimary request: one centered crescent moon with a gently sculpted convex surface, rounded thick curved crescent shape, very subtle shallow crater texture that does not harm small-scale legibility.\nScene/backdrop: genuinely transparent background, isolated subject only.\nStyle/medium: premium eco-app polished soft 3D clay illustration, realistic gentle depth/highlights, soft rounded material, same three-quarter front slight-top camera as a golden 3D sun, studio lighting upper-left.\nColor palette: creamy pale warm gold, warm yellow edges, gentle amber self-shadow; moonlight understated.\nComposition/framing: square canvas, crescent opens toward right; subject occupies 84% frame height and 72%width, fully visible centered. Strong simple silhouette.\nConstraints: no background, floor, badge, disc, stars, cloud, extraobjects, face, text, logos, watermark; no external cast shadow. Transparent alpha."
+    },
+    {
+      "name": "weather_cloud",
+      "source": "weather_cloud.png",
+      "asset": "flutter_sundo/assets/images/card_icons/weather_cloud.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: standalone SUNDO weather icon readable at 44px.\nPrimary request: one centered fluffy puffy cumulus cloud with three large rounded lobes and a broad gently flattened underside, sculpted tangible soft 3D form.\nScene/backdrop: actual transparent background isolated subject only.\nStyle/medium: premium eco-app polished soft 3D clay illustration, gently realistic depth, smooth rounded surfaces and creamy highlights, consistent front three-quarter slight-top camera, studio light upper-left.\nColor palette: cream-white cloud highlights with subtle pale sky-blue underside and bluish side shading, tasteful clear readable form against a light cream UI.\nComposition/framing: square canvas, whole cloud occupies 87 percent width, 65 percent height, centered; large simple silhouette readable tiny.\nConstraints: no sun, moon, rain, stars, face, text, logos, watermark, floor, backdrop, badge or disc. No external cast shadow. Preserve transparent alpha."
+    },
+    {
+      "name": "weather_rain",
+      "source": "weather_rain.png",
+      "asset": "flutter_sundo/assets/images/card_icons/weather_rain.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: standalone SUNDO weather icon readable at 44px.\nPrimary request: one centered puffy cloud with three rounded lobes above three large blue teardrop raindrops below, cohesive sculpted 3D rain weather symbol. All drops fully visible separated slightly for clarity.\nScene/backdrop: genuinely transparent background isolated subject only.\nStyle/medium: premium eco-app polished soft 3D clay illustration with realistic gentle depth, smooth soft rounded surfaces, creamy highlights, front three-quarter very slight-top camera, studio light upper-left.\nColor palette: pale blue-gray cloud with cream-white upper highlights; saturated sky-blue raindrops with subtle glossier highlights; light cyan side reflections.\nComposition/framing: square canvas, whole cloud with drops occupies 84% width and84%height, centered, strong small-scale silhouette.\nConstraints: no sun, moon, lightning, stars, extra objects, face, text, logos, watermark, background, floor, badge or disc. No external cast shadow. Actual transparent alpha."
+    },
+    {
+      "name": "weather_storm",
+      "source": "weather_storm.png",
+      "asset": "flutter_sundo/assets/images/card_icons/weather_storm.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: standalone SUNDO weather icon readable at44px.\nPrimary request: one centered dark soft blue-gray puffy storm cloud with three rounded lobes and one thick warm-gold lightning bolt emerging under the cloud, cohesive sculpted 3D storm weather symbol, simple and easily recognized.\nScene/backdrop: genuinely transparent background isolated subject only.\nStyle/medium: premium eco-app polished soft3D clay illustration, realistic gentle depth/highlights, rounded tangible materials, front three-quarter veryslight-top camera, light upper-left.\nColor palette: medium darkslate blue cloud with lighter top highlights and navy selfshadows, warmgold thick rounded-edged lightningbolt.\nComposition/framing: square canvas, cloudwithbolt occupies84%width and84%height, fullyvisible centered,strongsimple silhouetteat44px.\nConstraints: no rain, sun,moon,face,text,logos,watermark,stars,extraobjects,background,floor,badge ordisc. No externalcastshadow. Actualtransparentalpha."
+    },
+    {
+      "name": "collection_today",
+      "source": "collection_today.png",
+      "asset": "flutter_sundo/assets/images/card_icons/collection_today.webp",
+      "prompt": "Use case: stylized-concept\nAsset type: standalone SUNDO Today collection card icon readable at44px.\nPrimary request: one centered polished emerald-green wheeled recycling bin with hinged lid shut and one bold raised ivory generic three-arrow recycling symbol on its front, plus a small cream clock nestled against lower-right of bin as a clear Today collection cue; clock has darkgreen hands only, no numbers or text. Form a compact cohesive subject, clock about30%subjectheight.\nScene/backdrop: genuinely transparentbackground, isolatedsubjectonly.\nStyle/medium: premium eco-app polished soft 3D clay illustration, gently realistic molded-plastic material, softrounded edges, elegant depth andhighlight, front three-quarter slight-topcamera, light upper-left. Bin front clearly visible, veryslightviewofrightside, two tiny darkgreen wheelsbelow.\nColorpalette: richSUNDOgreenbin, palecreamrecycling symbolandclockface, darkforestgreenclockhands,rimandwheels.\nComposition/framing: squarecanvas, wholebinwithclockoccupies80%widthand86%height, fullyvisiblecentered; simpleclearsilhouette, fewlargedetailsreadableat44px.\nConstraints: no letters,numbers,date,text,logos,watermark,face,trash,vehicles,leaves,extraobjects,background,floor,badgeordisc. Noexternalcastshadow. Actualtransparentalpha."
+    },
+    {
+      "name": "collection_calendar",
+      "source": "collection_calendar.png",
+      "asset": "flutter_sundo/assets/images/card_icons/collection_calendar.webp",
+      "prompt": "Usecase: stylized-concept\nAssettype: standalone SUNDO Next Collection cardiconreadableat44px.\nPrimaryrequest: onecentered freestanding deskcalendar withthick roundedemeraldgreenframeandbackstand, creamyivoryfrontpage, twochunkygreenbindingringsattop, sixlargeraisedblankroundedgreentiles arrangedin2rowsand3columns. Nolettering,numbers,dates,words,marksorcheckmarkonblanktiles.\nScene/backdrop: genuinelytransparentbackgroundisolatedsubjectonly.\nStyle/medium: premiumeco-apppolishedsoft3Dclayillustration,gentlyrealisticdepth,smoothroundedmaterialwithcreamyhighlights, frontthree-quarterveryslight-topcamera,lightupper-left. Frontpageclearlyvisible,veryslightviewofrightside,matchedsoft3Dstyleofthegreenrecyclingbin.\nColorpalette: richSUNDOgreenframeandbindingrings,palecreamfrontpage,softgreenblankraisedtiles,forestgreenselfshadows.\nComposition/framing: squarecanvas,wholecalendaroccupies84%widthand84%height,fullyvisiblecentered,strongclearsilhouettereadableat44px.\nConstraints: notext,letters,numbers,logos,watermark,face,extraobjects,leaves,background,floor,badgeordisc,noexternalcastshadow.Actualtransparentalpha."
+    }
+  ]
+}

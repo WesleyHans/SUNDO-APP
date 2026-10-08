@@ -122,8 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((part) => part[0])
             .join()
             .toUpperCase();
-    final next = nextCollectionForResidentArea(_schedules, _barangay,
-        BackendService.live ? mood.now : mood.localTime);
+    final next = nextCollectionForResidentArea(
+        _schedules, _barangay, mood.localTime,
+        afterToday: true, datesAreInstants: BackendService.live);
     return SundoDashboardMotion(
         isActive: widget.isActive,
         child: Scaffold(
@@ -282,9 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _nextCard(BuildContext context, CollectionSchedule? next) {
     final pickup = next == null
         ? null
-        : BackendService.live
-            ? next.pickupAt.toUtc().add(const Duration(hours: 8))
-            : next.pickupAt;
+        : residentCollectionTime(next, datesAreInstants: BackendService.live);
     return SundoInfoCard(
         scenery: SundoCardScene.nextCollectionPark,
         title: 'Next Collection',
@@ -298,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : 'No sample pickup for your area')
                     : DateFormat('EEEE, MMM d, yyyy').format(pickup!),
         icon: Icons.calendar_month_rounded,
-        timeLabel: next == null
+        timeLabel: next == null || !_schedulesLoaded || _schedulesFailed
             ? null
             : BackendService.live
                 ? DateFormat('h:mm a').format(pickup!)
