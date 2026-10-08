@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -139,6 +140,17 @@ void main() {
       expect(decoded.image, isNotNull,
           reason: 'The illustration must render, not just select an asset');
       expect(decoded.image!.width, 256);
+      final headline = find.byWidgetPredicate((widget) =>
+          widget is Text && widget.data?.endsWith('at your location') == true);
+      expect(headline, findsOneWidget);
+      final headlineText = tester.widget<Text>(headline).data!;
+      final firstWord = headlineText.split(' ').first;
+      final paragraph = tester.renderObject<RenderParagraph>(headline);
+      expect(
+          paragraph.getBoxesForSelection(TextSelection(
+              baseOffset: 0, extentOffset: firstWord.length)),
+          hasLength(1),
+          reason: '$firstWord must stay whole at 320 px and larger system text');
       expect(tester.takeException(), isNull);
       if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
         await expectLater(find.byKey(const ValueKey('weather-illustration-preview')),

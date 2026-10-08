@@ -211,9 +211,15 @@ class SundoWeatherStatusBanner extends StatelessWidget {
           child: LayoutBuilder(builder: (context, constraints) {
             final compact = constraints.maxWidth < 280;
             final iconSize = compact ? 44.0 : 52.0;
-            return Row(
-              children: [
-                Container(
+            final iconTextGap = compact ? 10.0 : 12.0;
+            final titleSize = compact ? 15.0 : 16.0;
+            final titleScale =
+                MediaQuery.textScalerOf(context).scale(titleSize) / titleSize;
+            final textWidth = constraints.maxWidth -
+                iconSize -
+                iconTextGap -
+                (canRefresh ? 50 : 0);
+            final illustrationWidget = Container(
                   width: iconSize,
                   height: iconSize,
                   decoration: BoxDecoration(
@@ -240,10 +246,8 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                       size: compact ? 38 : 46,
                     ),
                   ),
-                ),
-                SizedBox(width: compact ? 10 : 12),
-                Expanded(
-                  child: Semantics(
+                );
+            final description = Semantics(
                     excludeSemantics: true,
                     label: [title, statusDetails, if (caution != null) caution]
                         .join('. '),
@@ -253,7 +257,7 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                       children: [
                         Text(title,
                             style: GoogleFonts.outfit(
-                              fontSize: compact ? 15 : 16,
+                              fontSize: titleSize,
                               height: 1.15,
                               fontWeight: FontWeight.w700,
                               color: mood.textColor,
@@ -276,11 +280,10 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ),
-                ),
-                if (canRefresh) ...[
-                  const SizedBox(width: 6),
-                  scope!.checkingWeather
+                  );
+            final refresh = !canRefresh
+                ? null
+                : scope!.checkingWeather
                       ? const Padding(
                           padding: EdgeInsets.all(12),
                           child: SizedBox.square(
@@ -300,7 +303,30 @@ class SundoWeatherStatusBanner extends StatelessWidget {
                             minimumSize: const Size.square(44),
                           ),
                           icon: const Icon(Icons.refresh_rounded, size: 25),
-                        ),
+                        );
+            if (textWidth / titleScale < 140) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    illustrationWidget,
+                    const Spacer(),
+                    if (refresh != null) refresh,
+                  ]),
+                  const SizedBox(height: 10),
+                  description,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                illustrationWidget,
+                SizedBox(width: iconTextGap),
+                Expanded(child: description),
+                if (refresh != null) ...[
+                  const SizedBox(width: 6),
+                  refresh,
                 ],
               ],
             );
