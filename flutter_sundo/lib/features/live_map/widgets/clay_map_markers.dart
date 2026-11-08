@@ -100,10 +100,8 @@ class SundoClayCollectionMarker extends StatelessWidget {
       );
 }
 
-/// The private GPS marker rendered as the user's 3D clay house with a live GPS
-/// pulse ring at its ground contact point. Its animation does not imply an
-/// accuracy reading; the map's separately measured accuracy circle remains the
-/// source of that.
+/// The user's private GPS location, shown as a single clay house. The pulse
+/// at its base is decorative; GPS accuracy is shown as text.
 class SundoResidentBeacon extends StatelessWidget {
   const SundoResidentBeacon({super.key, this.pulse = 0});
 

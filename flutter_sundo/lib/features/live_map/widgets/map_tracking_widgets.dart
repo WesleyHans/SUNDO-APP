@@ -120,6 +120,7 @@ class SundoTrackingBottomSheet extends StatelessWidget {
   final bool fresh;
   final VoidCallback onFollow;
   final VoidCallback onRefresh;
+  final VoidCallback? onRouteDetails;
   final VoidCallback? onAlertPreview;
   final ScrollController scrollController;
   const SundoTrackingBottomSheet(
@@ -130,6 +131,7 @@ class SundoTrackingBottomSheet extends StatelessWidget {
       required this.fresh,
       required this.onFollow,
       required this.onRefresh,
+      this.onRouteDetails,
       this.onAlertPreview,
       required this.scrollController});
 
@@ -242,7 +244,8 @@ class SundoTrackingBottomSheet extends StatelessWidget {
                   'Active route',
                   snapshot.route.name.isEmpty
                       ? 'Not published'
-                      : snapshot.route.name),
+                      : snapshot.route.name,
+                  onTap: onRouteDetails),
               _detail(context, Icons.location_on_outlined, 'Next stop',
                   snapshot.nextStop ?? 'Not published'),
               _detail(context, Icons.map_outlined, 'Current area',
@@ -274,11 +277,10 @@ class SundoTrackingBottomSheet extends StatelessWidget {
   }
 
   Widget _detail(
-      BuildContext context, IconData icon, String label, String value) {
+      BuildContext context, IconData icon, String label, String value,
+      {VoidCallback? onTap}) {
     final mood = SundoTimeScope.of(context);
-    return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    final row = Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, size: 17, color: mood.accent),
           const SizedBox(width: 8),
           SizedBox(
@@ -291,7 +293,20 @@ class SundoTrackingBottomSheet extends StatelessWidget {
                       fontSize: 11,
                       color: mood.textColor,
                       fontWeight: FontWeight.w600))),
-        ]));
+          if (onTap != null)
+            Icon(Icons.chevron_right_rounded, size: 18, color: mood.accent),
+        ]);
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: onTap == null
+            ? row
+            : Semantics(
+                button: true,
+                child: InkWell(
+                    onTap: onTap,
+                    child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        child: Align(alignment: Alignment.centerLeft, child: row)))));
   }
 }
 
