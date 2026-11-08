@@ -60,8 +60,8 @@ class SundoMapTruckMarker extends StatelessWidget {
   }
 }
 
-/// An elevated collection pavilion. Its ground contact is at (36, 80) in a
-/// 72×90 footprint; the numeric badge stays clearly visible above the roof.
+/// An elevated 3D clay road-stop pin (no house geometry). Its ground contact is
+/// at (36, 80) in a 72×90 footprint; only the user's location uses a house icon.
 class SundoClayCollectionMarker extends StatelessWidget {
   const SundoClayCollectionMarker({
     super.key,
@@ -86,7 +86,7 @@ class SundoClayCollectionMarker extends StatelessWidget {
             width: 72,
             height: 90,
             child: CustomPaint(
-              painter: _CollectionPavilionPainter(
+              painter: _CollectionStopPinPainter(
                 number: number,
                 selected: selected,
                 phase: _phase(pulse),
@@ -100,8 +100,33 @@ class SundoClayCollectionMarker extends StatelessWidget {
       );
 }
 
-/// The private GPS marker. Its animation does not imply an accuracy reading;
-/// the map's separately measured accuracy circle remains the source of that.
+/// The user's 3D clay house marker for their selected home area when live GPS
+/// is off. Ground contact is at (36, 80) in a 72×90 footprint.
+class SundoUserHouseMarker extends StatelessWidget {
+  const SundoUserHouseMarker({super.key, this.pulse = 0});
+
+  final double pulse;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        image: true,
+        label: 'Approximate home area',
+        child: RepaintBoundary(
+          child: SizedBox(
+            width: 72,
+            height: 90,
+            child: CustomPaint(
+              painter: _UserHousePainter(phase: _phase(pulse), liveGps: false),
+            ),
+          ),
+        ),
+      );
+}
+
+/// The private GPS marker rendered as the user's 3D clay house with a live GPS
+/// pulse ring at its ground contact point. Its animation does not imply an
+/// accuracy reading; the map's separately measured accuracy circle remains the
+/// source of that.
 class SundoResidentBeacon extends StatelessWidget {
   const SundoResidentBeacon({super.key, this.pulse = 0});
 
@@ -113,9 +138,11 @@ class SundoResidentBeacon extends StatelessWidget {
         label: 'Your private GPS location',
         child: RepaintBoundary(
           child: SizedBox(
-            width: 64,
-            height: 64,
-            child: CustomPaint(painter: _ResidentBeaconPainter(_phase(pulse))),
+            width: 72,
+            height: 90,
+            child: CustomPaint(
+              painter: _UserHousePainter(phase: _phase(pulse), liveGps: true),
+            ),
           ),
         ),
       );
@@ -160,8 +187,8 @@ class _TruckGroundPainter extends CustomPainter {
       fresh != oldDelegate.fresh || phase != oldDelegate.phase;
 }
 
-class _CollectionPavilionPainter extends CustomPainter {
-  const _CollectionPavilionPainter({
+class _CollectionStopPinPainter extends CustomPainter {
+  const _CollectionStopPinPainter({
     required this.number,
     required this.selected,
     required this.phase,
@@ -179,27 +206,125 @@ class _CollectionPavilionPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 72, size.height / 90);
+    const groundCenter = Offset(36, 78);
     if (selected) {
       canvas.drawOval(
           Rect.fromCenter(
-              center: const Offset(36, 77),
-              width: 54 + 10 * phase,
-              height: 23 + 4 * phase),
+              center: groundCenter,
+              width: 40 + 10 * phase,
+              height: 18 + 4 * phase),
           Paint()
             ..color =
-                const Color(0xFFF9BC42).withValues(alpha: .18 * (1 - phase)));
-      canvas.drawOval(
-          const Rect.fromLTWH(10, 67, 53, 22),
-          Paint()
-            ..color = const Color(0xFFE4AA2F).withValues(alpha: .7)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5);
+                const Color(0xFFF9BC42).withValues(alpha: .22 * (1 - phase)));
     }
+    // Ground contact shadow on road
+    canvas.drawOval(
+        Rect.fromCenter(center: groundCenter, width: 28, height: 12),
+        Paint()
+          ..color = const Color(0xFF163B29).withValues(alpha: .26)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+    // Road anchor ring
+    canvas.drawOval(Rect.fromCenter(center: groundCenter, width: 18, height: 8),
+        Paint()..color = Colors.white);
+    canvas.drawOval(
+        Rect.fromCenter(center: groundCenter, width: 12, height: 5.5),
+        Paint()
+          ..color =
+              selected ? const Color(0xFFEBA725) : const Color(0xFF0A8151));
+
+    // 3D cylindrical stem rising from (36, 78) to badge center (36, 38)
+    _line(canvas, const Offset(36, 77), const Offset(36, 48),
+        const Color(0xFF0A5C3B), 5.2);
+    _line(canvas, const Offset(35.2, 76), const Offset(35.2, 48),
+        const Color(0xFF56C994), 2.0);
+
+    // 3D sculpted circular stop badge
+    const badgeCenter = Offset(36, 34);
+    canvas.drawCircle(
+        const Offset(36, 37),
+        19,
+        Paint()
+          ..color = const Color(0xFF163B29).withValues(alpha: .24)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+    canvas.drawCircle(badgeCenter, 18.5, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        badgeCenter,
+        15.5,
+        Paint()
+          ..shader = LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: selected
+                      ? [const Color(0xFFFFDA72), const Color(0xFFEBA725)]
+                      : [const Color(0xFF19A974), const Color(0xFF08603E)])
+              .createShader(const Rect.fromLTWH(18, 16, 36, 36)));
+    // Top specular clay highlight
+    canvas.drawOval(const Rect.fromLTWH(27, 21, 14, 5),
+        Paint()..color = Colors.white.withValues(alpha: .32));
+
+    final text = TextPainter(
+      text: TextSpan(
+          text: '$number',
+          style: textStyle.copyWith(
+              fontSize: number.abs() > 99
+                  ? 11
+                  : number.abs() > 9
+                      ? 13
+                      : 15,
+              height: 1,
+              fontWeight: FontWeight.w800,
+              color: selected ? const Color(0xFF453611) : Colors.white)),
+      textDirection: textDirection,
+      textAlign: TextAlign.center,
+    )..layout(maxWidth: 26);
+    text.paint(canvas, Offset(36 - text.width / 2, 34 - text.height / 2));
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CollectionStopPinPainter oldDelegate) =>
+      number != oldDelegate.number ||
+      selected != oldDelegate.selected ||
+      phase != oldDelegate.phase ||
+      textDirection != oldDelegate.textDirection ||
+      textStyle != oldDelegate.textStyle;
+}
+
+class _UserHousePainter extends CustomPainter {
+  const _UserHousePainter({required this.phase, required this.liveGps});
+
+  final double phase;
+  final bool liveGps;
+
+  // Keep numbered stops tappable when the house overlaps them.
+  @override
+  bool hitTest(Offset position) => false;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 72, size.height / 90);
+    const groundCenter = Offset(36, 77);
+    final accent = liveGps ? const Color(0xFF1D92F3) : const Color(0xFF119447);
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: groundCenter,
+            width: 52 + 12 * phase,
+            height: 22 + 5 * phase),
+        Paint()..color = accent.withValues(alpha: .20 * (1 - phase)));
+    canvas.drawOval(
+        const Rect.fromLTWH(11, 66, 50, 21),
+        Paint()
+          ..color = accent.withValues(alpha: .55)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5);
     canvas.drawOval(
         const Rect.fromLTWH(13, 66, 49, 17),
         Paint()
           ..color = const Color(0xFF163B29).withValues(alpha: .24)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+
+    // Isometric 3D house base plinth anchored at (36, 78)
     _facet(
         canvas,
         const [Offset(13, 61), Offset(40, 51), Offset(63, 63), Offset(36, 74)],
@@ -213,7 +338,7 @@ class _CollectionPavilionPainter extends CustomPainter {
         const [Offset(36, 72), Offset(63, 63), Offset(63, 68), Offset(36, 78)],
         const [Color(0xFFAF945F), Color(0xFF8D794F)]);
 
-    // Warm walls contrast with the green raised roof, as in the supplied map.
+    // Warm walls contrasting with the green raised roof
     _facet(
         canvas,
         const [Offset(16, 33), Offset(37, 42), Offset(37, 66), Offset(16, 57)],
@@ -223,6 +348,7 @@ class _CollectionPavilionPainter extends CustomPainter {
         const [Offset(37, 42), Offset(59, 33), Offset(59, 57), Offset(37, 66)],
         const [Color(0xFFD8E2BC), Color(0xFFADC490)]);
 
+    // Window & front door
     _facet(
         canvas,
         const [Offset(22, 39), Offset(32, 43), Offset(32, 55), Offset(22, 51)],
@@ -240,6 +366,7 @@ class _CollectionPavilionPainter extends CustomPainter {
     canvas.drawCircle(
         const Offset(50, 50), 1, Paint()..color = const Color(0xFFFFDB78));
 
+    // 3D pitched roof
     _facet(
         canvas,
         const [Offset(10, 28), Offset(38, 17), Offset(64, 28), Offset(36, 41)],
@@ -258,101 +385,12 @@ class _CollectionPavilionPainter extends CustomPainter {
         canvas,
         const [Offset(24, 26), Offset(38, 21), Offset(49, 26), Offset(35, 32)],
         const [Color(0xFF76DBB1), Color(0xFF25A775)]);
-
-    // A short flagpole and clearly numbered badge remain above the roofline.
-    _line(canvas, const Offset(48, 24), const Offset(48, 9),
-        const Color(0xFFC9AC66), 2.6);
-    _facet(
-        canvas,
-        const [Offset(48, 10), Offset(42, 10), Offset(42, 17), Offset(48, 16)],
-        const [Color(0xFFFFDD64), Color(0xFFEDB82F)]);
-    canvas.drawCircle(
-        const Offset(56, 13),
-        13,
-        Paint()
-          ..color = const Color(0xFF163B29).withValues(alpha: .20)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
-    canvas.drawCircle(
-        const Offset(55, 11), 12.3, Paint()..color = Colors.white);
-    canvas.drawCircle(
-        const Offset(55, 11),
-        10.3,
-        Paint()
-          ..shader = LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: selected
-                      ? [const Color(0xFFFFDA72), const Color(0xFFEBA725)]
-                      : [const Color(0xFF15976A), const Color(0xFF08603E)])
-              .createShader(const Rect.fromLTWH(44, 0, 22, 22)));
-    final text = TextPainter(
-      text: TextSpan(
-          text: '$number',
-          style: textStyle.copyWith(
-              fontSize: number.abs() > 99
-                  ? 9
-                  : number.abs() > 9
-                      ? 11
-                      : 13,
-              height: 1,
-              fontWeight: FontWeight.w800,
-              color: selected ? const Color(0xFF453611) : Colors.white)),
-      textDirection: textDirection,
-      textAlign: TextAlign.center,
-    )..layout(maxWidth: 19);
-    text.paint(canvas, Offset(55 - text.width / 2, 11 - text.height / 2));
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _CollectionPavilionPainter oldDelegate) =>
-      number != oldDelegate.number ||
-      selected != oldDelegate.selected ||
-      phase != oldDelegate.phase ||
-      textDirection != oldDelegate.textDirection ||
-      textStyle != oldDelegate.textStyle;
-}
-
-class _ResidentBeaconPainter extends CustomPainter {
-  const _ResidentBeaconPainter(this.phase);
-  final double phase;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 64, size.height / 64);
-    const center = Offset(32, 32);
-    const blue = Color(0xFF1D92F3);
-    canvas.drawCircle(
-        center,
-        17 + phase * 12,
-        Paint()
-          ..color = blue.withValues(alpha: .15 * (1 - phase))
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2);
-    canvas.drawCircle(center, 20, Paint()..color = blue.withValues(alpha: .10));
-    canvas.drawOval(
-        const Rect.fromLTWH(17, 33, 30, 15),
-        Paint()
-          ..color = const Color(0xFF14598F).withValues(alpha: .25)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
-    canvas.drawCircle(center, 13.5, Paint()..color = Colors.white);
-    canvas.drawCircle(
-        center,
-        10.6,
-        Paint()
-          ..shader = const RadialGradient(
-                  center: Alignment(-.4, -.55),
-                  colors: [Color(0xFF8AE5FF), blue, Color(0xFF1460C6)])
-              .createShader(const Rect.fromLTWH(21, 21, 22, 22)));
-    canvas.drawOval(const Rect.fromLTWH(26, 24, 8, 4),
-        Paint()..color = Colors.white.withValues(alpha: .72));
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _ResidentBeaconPainter oldDelegate) =>
-      phase != oldDelegate.phase;
+  bool shouldRepaint(covariant _UserHousePainter oldDelegate) =>
+      phase != oldDelegate.phase || liveGps != oldDelegate.liveGps;
 }
 
 void _facet(Canvas canvas, List<Offset> vertices, List<Color> colors) {

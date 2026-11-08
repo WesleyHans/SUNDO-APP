@@ -33,19 +33,15 @@ class MockMapTruckRepository implements MapTruckRepository {
   var _waypoint = 0;
   var _completed = false;
   static const _base = <LatLng>[
-    LatLng(9.7540, 122.4026),
-    LatLng(9.7534, 122.4030),
-    LatLng(9.7527, 122.4034),
-    LatLng(9.7520, 122.4038),
-    LatLng(9.7514, 122.4042),
-    LatLng(9.7508, 122.4046),
-    LatLng(9.7503, 122.4050),
-    LatLng(9.7507, 122.4055),
-    LatLng(9.7513, 122.4051),
-    LatLng(9.7520, 122.4046),
-    LatLng(9.7527, 122.4041),
-    LatLng(9.7534, 122.4034),
-    LatLng(9.7540, 122.4026),
+    LatLng(9.752692, 122.403795),
+    LatLng(9.751955, 122.403779),
+    LatLng(9.751044, 122.403750),
+    LatLng(9.749638, 122.403673),
+    LatLng(9.749647, 122.402940),
+    LatLng(9.751141, 122.402985),
+    LatLng(9.751968, 122.403025),
+    LatLng(9.751955, 122.403779),
+    LatLng(9.752692, 122.403795),
   ];
 
   static const routes = <MapOperatingRoute>[
@@ -55,60 +51,56 @@ class MockMapTruckRepository implements MapTruckRepository {
       waypoints: _base,
       collectionPoints: [
         MapCollectionPoint(
-            1, 'Barangay 1 · sample stop', LatLng(9.7527, 122.4034)),
+            1, 'Barangay 1 · sample stop', LatLng(9.751955, 122.403779)),
         MapCollectionPoint(
-            2, 'Barangay 2 · sample stop', LatLng(9.7508, 122.4046)),
+            2, 'Barangay 2 · sample stop', LatLng(9.749638, 122.403673)),
         MapCollectionPoint(
-            3, 'Barangay 3 · sample stop', LatLng(9.7520, 122.4046)),
+            3, 'Barangay 3 · sample stop', LatLng(9.751141, 122.402985)),
       ],
     ),
     MapOperatingRoute(
       id: 'B',
       name: 'Route B · Alternate',
       waypoints: [
-        LatLng(9.7540, 122.4026),
-        LatLng(9.7534, 122.4030),
-        LatLng(9.7527, 122.4034),
-        LatLng(9.7529, 122.4040),
-        LatLng(9.7523, 122.4044),
-        LatLng(9.7517, 122.4048),
-        LatLng(9.7512, 122.4052),
-        LatLng(9.7513, 122.4051),
-        LatLng(9.7520, 122.4046),
-        LatLng(9.7527, 122.4041),
-        LatLng(9.7534, 122.4034),
-        LatLng(9.7540, 122.4026),
+        LatLng(9.752692, 122.403795),
+        LatLng(9.751955, 122.403779),
+        LatLng(9.751044, 122.403750),
+        LatLng(9.750877, 122.404615),
+        LatLng(9.750819, 122.404914),
+        LatLng(9.749598, 122.404671),
+        LatLng(9.749638, 122.403673),
+        LatLng(9.751044, 122.403750),
+        LatLng(9.751955, 122.403779),
+        LatLng(9.752692, 122.403795),
       ],
       collectionPoints: [
         MapCollectionPoint(
-            1, 'Barangay 1 · sample stop', LatLng(9.7527, 122.4034)),
+            1, 'Barangay 1 · sample stop', LatLng(9.751044, 122.403750)),
         MapCollectionPoint(
-            2, 'Barangay 2 · sample stop', LatLng(9.7512, 122.4052)),
+            2, 'Barangay 2 · sample stop', LatLng(9.750819, 122.404914)),
       ],
     ),
     MapOperatingRoute(
       id: 'C',
       name: 'Route C · Delayed',
       waypoints: [
-        LatLng(9.7540, 122.4026),
-        LatLng(9.7534, 122.4034),
-        LatLng(9.7527, 122.4041),
-        LatLng(9.7520, 122.4046),
-        LatLng(9.7513, 122.4051),
-        LatLng(9.7507, 122.4055),
-        LatLng(9.7503, 122.4050),
-        LatLng(9.7508, 122.4046),
-        LatLng(9.7514, 122.4042),
-        LatLng(9.7520, 122.4038),
-        LatLng(9.7527, 122.4034),
-        LatLng(9.7534, 122.4030),
-        LatLng(9.7540, 122.4026),
+        LatLng(9.752692, 122.403795),
+        LatLng(9.751955, 122.403779),
+        LatLng(9.751968, 122.403025),
+        LatLng(9.751955, 122.402385),
+        LatLng(9.751913, 122.401540),
+        LatLng(9.751263, 122.401546),
+        LatLng(9.751229, 122.402239),
+        LatLng(9.751141, 122.402985),
+        LatLng(9.751044, 122.403750),
+        LatLng(9.751955, 122.403779),
+        LatLng(9.752692, 122.403795),
       ],
       collectionPoints: [
         MapCollectionPoint(
-            1, 'Barangay 3 · sample stop', LatLng(9.7520, 122.4046)),
+            1, 'Barangay 3 · sample stop', LatLng(9.751913, 122.401540)),
         MapCollectionPoint(
-            2, 'Barangay 1 · sample stop', LatLng(9.7527, 122.4034)),
+            2, 'Barangay 1 · sample stop', LatLng(9.751141, 122.402985)),
       ],
     ),
   ];

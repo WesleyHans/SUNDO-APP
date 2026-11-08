@@ -692,12 +692,16 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             PolylineLayer(polylines: [
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 17,
-                  color: const Color(0x33052F1C)),
+                  strokeWidth: 19,
+                  color: const Color(0x38042214)),
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 13,
-                  color: Colors.white.withValues(alpha: .92)),
+                  strokeWidth: 15,
+                  color: const Color(0xFF064E2C)),
+              Polyline(
+                  points: route.waypoints,
+                  strokeWidth: 12.5,
+                  color: Colors.white.withValues(alpha: .94)),
               Polyline(
                   points: route.waypoints,
                   strokeWidth: 8,
@@ -769,15 +773,16 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                             selected:
                                                 _selectedStop == point.number,
                                             pulse: pulse))))),
-                    if (resident != null)
-                      Marker(
-                          point: resident,
-                          width: 64,
-                          height: 64,
-                          child: _MapBillboard(
-                              child: Semantics(
-                                  label: 'Your private GPS location',
-                                  child: SundoResidentBeacon(pulse: pulse)))),
+                    Marker(
+                        point: resident ?? _areaCenter,
+                        width: _angled ? 72 : 56,
+                        height: _angled ? 90 : 70,
+                        alignment: const Alignment(0, -7 / 9),
+                        child: _MapBillboard(
+                            alignment: const Alignment(0, 7 / 9),
+                            child: resident != null
+                                ? SundoResidentBeacon(pulse: pulse)
+                                : SundoUserHouseMarker(pulse: pulse))),
                     if (_displayTruck != null)
                       Marker(
                           point: _displayTruck!,
