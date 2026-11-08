@@ -259,7 +259,8 @@ void main() {
     }
     await tester.tap(find.byTooltip('Map layers'));
     await tester.pumpAndSettle();
-    expect(find.text('Numbered collection points'), findsOneWidget);
+    expect(find.text('Map layers'), findsOneWidget);
+    expect(find.text('Numbered collection points'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -336,7 +337,8 @@ void main() {
     }
     await tester.tap(find.byTooltip('Map layers'));
     await tester.pumpAndSettle();
-    expect(find.text('Numbered collection points'), findsOneWidget);
+    expect(find.text('Map layers'), findsOneWidget);
+    expect(find.text('Numbered collection points'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
