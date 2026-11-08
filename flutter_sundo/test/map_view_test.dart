@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,12 +52,13 @@ class _PublishedTruckRepository implements MapTruckRepository {
 }
 
 class _ControlledTruckRepository implements MapTruckRepository {
-  _ControlledTruckRepository() {
+  _ControlledTruckRepository({this.simulatedRoute}) {
     _updates = StreamController<List<MapTruckSnapshot>>(
         onListen: () => publish(const LatLng(9.7525, 122.4038)));
   }
 
   late final StreamController<List<MapTruckSnapshot>> _updates;
+  final MapOperatingRoute? simulatedRoute;
 
   void publish(LatLng position, {String id = 'Truck 02', double? heading}) =>
       _updates.add([
@@ -64,21 +66,23 @@ class _ControlledTruckRepository implements MapTruckRepository {
           id: id,
           position: position,
           heading: heading,
-          route: const MapOperatingRoute(
-            id: 'A',
-            name: 'Route A',
-            waypoints: [
-              LatLng(9.7525, 122.4038),
-              LatLng(9.7535, 122.404),
-            ],
-            collectionPoints: [
-              MapCollectionPoint(
-                  1, 'Collection point 1', LatLng(9.7530, 122.4042)),
-            ],
-          ),
+          route: simulatedRoute ??
+              const MapOperatingRoute(
+                id: 'A',
+                name: 'Route A',
+                waypoints: [
+                  LatLng(9.7525, 122.4038),
+                  LatLng(9.7535, 122.404),
+                ],
+                collectionPoints: [
+                  MapCollectionPoint(
+                      1, 'Collection point 1', LatLng(9.7530, 122.4042)),
+                ],
+              ),
           updatedAt: DateTime.now(),
           etaMinutes: 8,
           active: true,
+          simulated: simulatedRoute != null,
           stage: MapTrackingStage.onRoute,
         ),
       ]);
@@ -225,7 +229,6 @@ void main() {
     final initialPlane = tester
         .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
         .transform;
-    expect(initialPlane.entry(3, 2).abs(), greaterThan(0));
     expect(initialPlane.entry(1, 2).abs(), greaterThan(0));
 
     await tester.tap(find.text('2D'));
@@ -243,7 +246,7 @@ void main() {
     final raisedPlane = tester
         .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
         .transform;
-    expect(raisedPlane.entry(3, 2).abs(), greaterThan(0));
+    expect(raisedPlane.entry(1, 2).abs(), greaterThan(0));
     expect(mapController(tester).camera.rotation % 360, closeTo(342, .0001));
 
     await tester.tap(find.byTooltip('Reset map north'));
@@ -253,7 +256,7 @@ void main() {
         tester
             .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
             .transform
-            .entry(3, 2)
+            .entry(1, 2)
             .abs(),
         greaterThan(0));
 
@@ -356,7 +359,7 @@ void main() {
         tester
             .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
             .transform
-            .entry(3, 2),
+            .entry(1, 2),
         0);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
@@ -385,7 +388,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('one house is placed at the fresh private GPS coordinates',
+  testWidgets('the GPS house and other map markers keep their screen size',
       (tester) async {
     const fix = LatLng(9.7521, 122.4035);
     const methods = MethodChannel('flutter.baseflow.com/geolocator');
@@ -409,16 +412,47 @@ void main() {
       messenger.setMockMethodCallHandler(methods, null);
       messenger.setMockMethodCallHandler(events, null);
     });
-    await mountMap(tester,
-        repository: _EmptyTruckRepository(),
-        reducedMotion: true,
-        enableGps: true);
+    await mountMap(tester, reducedMotion: true, enableGps: true);
     await tester.pumpAndSettle();
     expect(find.byType(SundoResidentBeacon), findsOneWidget);
     final markers = tester
         .widgetList<MarkerLayer>(find.byType(MarkerLayer))
         .expand((layer) => layer.markers);
-    expect(markers.single.point, fix);
+    expect(markers.where((marker) => marker.point == fix), hasLength(1));
+
+    Rect screenBounds(Type marker) {
+      final box = tester.renderObject<RenderBox>(find.byType(marker));
+      return MatrixUtils.transformRect(
+          box.getTransformTo(null), Offset.zero & box.size);
+    }
+
+    const markerTypes = [
+      SundoResidentBeacon,
+      SundoMapTruckMarker,
+      SundoClayCollectionMarker,
+    ];
+    final controller = mapController(tester);
+    const center = LatLng(9.7525, 122.4038);
+    controller.move(center, 15);
+    await tester.pump();
+    final baseline = markerTypes.map(screenBounds).toList();
+
+    for (final flat in [false, true]) {
+      if (flat) {
+        await tester.tap(find.text('2D'));
+        await finishCamera(tester);
+      }
+      for (final zoom in [15.0, 18.0]) {
+        controller.move(center, zoom);
+        await tester.pump();
+        expect(controller.camera.zoom, zoom);
+        for (var i = 0; i < markerTypes.length; i++) {
+          final bounds = screenBounds(markerTypes[i]);
+          expect(bounds.width, closeTo(baseline[i].width, .01));
+          expect(bounds.height, closeTo(baseline[i].height, .01));
+        }
+      }
+    }
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -466,6 +500,42 @@ void main() {
       expect(truck().headingDegrees, isNull);
       expect(truck().moving, isFalse);
       expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(repository.dispose);
+      await tester.pump();
+    }
+  });
+
+  testWidgets('an interrupted demo truck leg does not cut across a turn',
+      (tester) async {
+    const start = LatLng(9.7525, 122.4038);
+    const corner = LatLng(9.7525, 122.4043);
+    const end = LatLng(9.7530, 122.4043);
+    final repository = _ControlledTruckRepository(
+        simulatedRoute: const MapOperatingRoute(
+            id: 'A', name: 'Demo road', waypoints: [start, corner, end]));
+    await mountMap(tester, repository: repository);
+    try {
+      LatLng truckPoint() => tester
+          .widget<MarkerLayer>(find
+              .ancestor(
+                  of: find.byType(SundoMapTruckMarker),
+                  matching: find.byType(MarkerLayer))
+              .first)
+          .markers
+          .last
+          .point;
+      repository.publish(corner);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(truckPoint().longitude, lessThan(corner.longitude));
+      repository.publish(end);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(truckPoint().longitude, closeTo(corner.longitude, 1e-9));
+      expect(truckPoint().latitude, greaterThan(corner.latitude));
+      expect(truckPoint().latitude, lessThan(end.latitude));
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.runAsync(repository.dispose);

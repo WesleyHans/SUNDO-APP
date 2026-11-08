@@ -66,10 +66,15 @@ class MapTruckSnapshot {
     final points = <LatLng>[];
     final waypoints = routeMap['waypoints'];
     for (final point in waypoints is List ? waypoints : const []) {
-      if (point is List && point.length >= 2) {
-        final position = mapCoordinate(point[0], point[1]);
-        if (position != null) points.add(position);
+      final position = point is List && point.length >= 2
+          ? mapCoordinate(point[0], point[1])
+          : null;
+      if (position == null) {
+        // Joining points across missing geometry could draw through a block.
+        points.clear();
+        break;
       }
+      points.add(position);
     }
     final stops = <MapCollectionPoint>[];
     final collectionPoints = routeMap['collection_points'];

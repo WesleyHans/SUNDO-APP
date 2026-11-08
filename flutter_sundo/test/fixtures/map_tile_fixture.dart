@@ -5,8 +5,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
 
-/// A canvas fixture for layout QA. Its roads/parks are synthetic, not OSM data.
+/// A synthetic canvas fixture with the bundled demonstration road geometry.
 /// Geographic points use the same Web Mercator tile grid as the real map.
 class SipalayMapFixtureTileProvider extends TileProvider {
   SipalayMapFixtureTileProvider._(this._tiles, this._fallback);
@@ -141,26 +142,7 @@ Future<Uint8List> _paintTile(int x, int y, int zoom) async {
       LatLng(9.7503, 122.4050),
       LatLng(9.7470, 122.4072),
     ],
-    const [
-      LatLng(9.752692, 122.403795),
-      LatLng(9.749638, 122.403673),
-    ],
-    const [
-      LatLng(9.749647, 122.402940),
-      LatLng(9.751968, 122.403025),
-    ],
-    const [
-      LatLng(9.751913, 122.401540),
-      LatLng(9.751955, 122.403779),
-    ],
-    const [
-      LatLng(9.751263, 122.401546),
-      LatLng(9.750819, 122.404914),
-    ],
-    const [
-      LatLng(9.749647, 122.402940),
-      LatLng(9.749598, 122.404671),
-    ],
+    for (final route in MockMapTruckRepository.routes) route.waypoints,
   ];
   for (final road in roads) {
     final path = pathOf(road);

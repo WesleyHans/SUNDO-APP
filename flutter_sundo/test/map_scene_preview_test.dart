@@ -159,7 +159,7 @@ void main() {
           map.mapController!.camera.center.latitude, closeTo(9.7525, .00001));
       final transform = tester
           .widget<Transform>(find.byKey(const ValueKey('map-perspective')));
-      expect(transform.transform.entry(3, 2),
+      expect(transform.transform.entry(1, 2).abs(),
           scene == 'flat' ? 0 : greaterThan(0));
       if (const bool.fromEnvironment('GENERATE_PREVIEWS')) {
         await expectLater(

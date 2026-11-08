@@ -271,6 +271,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     final priorSourcePosition = previous?.position;
     final priorPosition = _displayTruck;
     final target = next?.position;
+    final demoPoints = next?.route.waypoints;
+    final followsDemoLeg = next?.simulated == true &&
+        previous?.route.id == next?.route.id &&
+        demoPoints != null &&
+        demoPoints.asMap().entries.any((entry) =>
+            entry.key + 1 < demoPoints.length &&
+            entry.value == priorSourcePosition &&
+            demoPoints[entry.key + 1] == target);
     final priorHeading = _displayHeading;
     _truckMotion.stop();
     setState(() {
@@ -281,7 +289,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
         _followTruck = false;
       }
       if (previous?.route.id != next?.route.id) _selectedStop = null;
-      _truckStart = sameTruck ? priorPosition ?? target : target;
+      // Restart at the road junction if a new demo leg interrupts animation.
+      _truckStart = next?.simulated == true
+          ? followsDemoLeg
+              ? priorSourcePosition
+              : target
+          : sameTruck
+              ? priorPosition ?? target
+              : target;
       _truckTarget = target;
       _headingStart = sameTruck ? priorHeading : null;
       if (next?.heading?.isFinite == true) {
@@ -298,6 +313,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (_visualMotion &&
         sameTruck &&
         next.freshAt(DateTime.now()) &&
+        (!next.simulated || followsDemoLeg) &&
         priorPosition != null &&
         target != null &&
         priorPosition != target) {
@@ -582,7 +598,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     updateSheet(() {});
                   }),
               SwitchListTile(
-                  title: const Text('3D city perspective'),
+                  title: const Text('Angled city view'),
                   value: _angled,
                   onChanged: (value) {
                     _setView(value);
@@ -635,16 +651,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             _reduceMotion ? Duration.zero : const Duration(milliseconds: 750),
         curve: Curves.easeInOutCubic,
         child: _buildMap(mood),
-        builder: (context, tilt, child) => LayoutBuilder(
-            builder: (context, size) => Transform(
-                key: const ValueKey('map-perspective'),
-                alignment: Alignment.center,
-                transformHitTests: true,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, tilt * .9 / size.maxHeight)
-                  ..rotateX(-.58 * tilt)
-                  ..scaleByDouble(1 + .32 * tilt, 1 + .55 * tilt, 1, 1),
-                child: _MapPitchScope(pitch: .58 * tilt, child: child!))),
+        builder: (context, tilt, child) => Transform(
+            key: const ValueKey('map-perspective'),
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              // An angled view without depth scaling keeps markers steady.
+              ..rotateX(-.58 * tilt)
+              ..scaleByDouble(1 + .32 * tilt, 1 + .55 * tilt, 1, 1),
+            child: _MapPitchScope(pitch: .58 * tilt, child: child!)),
       );
 
   Widget _buildMap(SundoTimeMood mood) {
@@ -692,19 +706,13 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             PolylineLayer(polylines: [
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 19,
-                  color: const Color(0x38042214)),
+                  strokeWidth: 6,
+                  useStrokeWidthInMeter: true,
+                  color: const Color(0xFFF5FFF3)),
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 15,
-                  color: const Color(0xFF064E2C)),
-              Polyline(
-                  points: route.waypoints,
-                  strokeWidth: 12.5,
-                  color: Colors.white.withValues(alpha: .94)),
-              Polyline(
-                  points: route.waypoints,
-                  strokeWidth: 8,
+                  strokeWidth: 4,
+                  useStrokeWidthInMeter: true,
                   gradientColors: _truckFresh
                       ? const [
                           Color(0xFF087C3B),
@@ -741,14 +749,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     for (final arrow in arrows)
                       Marker(
                           point: arrow.position,
-                          width: 20,
-                          height: 20,
+                          width: 10,
+                          height: 10,
                           child: ExcludeSemantics(
                               child: Transform.rotate(
                                   angle: arrow.headingDegrees * math.pi / 180,
                                   child: const Icon(
                                       Icons.keyboard_arrow_up_rounded,
-                                      size: 21,
+                                      size: 10,
                                       color: Color(0xFFE6FFE2))))),
                   ]),
                   MarkerLayer(rotate: true, markers: [
@@ -756,8 +764,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                       for (final point in route.collectionPoints)
                         Marker(
                             point: point.position,
-                            width: _angled ? 72 : 54,
-                            height: _angled ? 90 : 67.5,
+                            width: 54,
+                            height: 67.5,
                             alignment: const Alignment(0, -7 / 9),
                             child: _MapBillboard(
                                 alignment: const Alignment(0, 7 / 9),
@@ -776,8 +784,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     if (resident != null)
                       Marker(
                           point: resident,
-                          width: _angled ? 72 : 56,
-                          height: _angled ? 90 : 70,
+                          width: 56,
+                          height: 70,
                           alignment: const Alignment(0, -7 / 9),
                           child: _MapBillboard(
                               alignment: const Alignment(0, 7 / 9),
@@ -785,8 +793,8 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     if (_displayTruck != null)
                       Marker(
                           point: _displayTruck!,
-                          width: _angled ? 84 : 68,
-                          height: _angled ? 84 : 68,
+                          width: 68,
+                          height: 68,
                           child: _MapBillboard(
                               child: Semantics(
                                   label: (_truck?.id ?? 'Truck') +

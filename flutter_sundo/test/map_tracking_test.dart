@@ -52,12 +52,33 @@ void main() {
       },
     });
     expect(truck.route.id, 'B');
+    expect(truck.route.waypoints,
+        const [LatLng(9.75, 122.4), LatLng(9.751, 122.401)]);
     expect(truck.route.collectionPoints.single.number, 1);
     expect(truck.etaMinutes, 15);
     expect(truck.progress, .5);
     expect(truck.stage, MapTrackingStage.approaching);
     expect(truck.freshAt(now), isTrue);
     expect(truck.freshAt(now.add(const Duration(minutes: 3))), isFalse);
+  });
+
+  test('malformed live route geometry does not bridge across the gap', () {
+    for (final invalidPoint in [null, [9.75], [91, 122.4]]) {
+      final truck = MapTruckSnapshot.fromSupabase({
+        'id': 'Truck 02',
+        'latitude': 9.75,
+        'longitude': 122.4,
+        'active_route': {
+          'waypoints': [
+            [9.75, 122.4],
+            invalidPoint,
+            [9.751, 122.401],
+          ],
+        },
+      });
+      expect(truck.route.waypoints, isEmpty);
+      expect(truck.position, const LatLng(9.75, 122.4));
+    }
   });
 
   test('animation reaches the source fix without overshooting', () {
