@@ -1,5 +1,42 @@
 # SUNDO mobile status
 
+## Version 1.5.12 Live Map and Welcome
+
+Live Map shows the truck, its route, and one house at a fresh private device
+GPS fix. No house is drawn at the saved area center, and numbered stop pins
+and the separate accuracy circle are absent. Truck and house icons keep their
+screen dimensions while zooming in 2D and the angled view.
+
+The three local demo paths use 22 contiguous, directed road edges in the
+OpenStreetMap data for Sipalay Poblacion. The green route has a light outline
+and direction chevrons, and tapping the line or the Active route row opens
+route details with a fit-to-map action. The demo truck follows route segments
+at turns. Invalid backend geometry is hidden rather than joining points across
+a gap. Connected routes still depend on the city's supplied road geometry.
+
+The welcome copy cycles through the three existing slides every six seconds.
+The equal-sized dots keep 44-pixel tap targets. Manual selection restarts the
+interval, and autoplay pauses with reduced motion, backgrounding or another
+screen covering Welcome. Branding, artwork and buttons remain in place.
+
+PR #15 merged at `c387afd5cfdd85dd983df4424199b1d9403ba670`; app source matches
+`f0037cbc096c5a42e308899516bf28ad66be3b9a`. The local release APK compiled,
+the final map previews were reviewed, and the installer lint and build passed.
+[Validation run 42460488332](https://github.com/WesleyHans/SUNDO-APP/actions/runs/42460488332)
+passed analysis, 366 tests, APK compilation and 84 native preview checks.
+
+The Android APK is version **1.5.12+20**, package `com.sundo.sipalay`, minimum
+API 24, target API 36 and ARM64/ARMv7/x86_64. The **135,371,064-byte** package
+passes 16 KB ZIP alignment and v2/v3 signature verification with the existing
+update certificate. SHA-256:
+`edc9c9bb3870d0c72e001048764e7c6ddd550035a80ee39e2b5f645490fdf8a9`.
+
+The [v1.5.12 GitHub release](https://github.com/WesleyHans/SUNDO-APP/releases/tag/v1.5.12)
+reports the same SHA-256 and size. The direct public APK download returned
+HTTP 200 with Android package type and filename `SUNDO.apk`. Installer source
+links were prepared for this verified release; production deployment is a
+separate check.
+
 ## Version 1.5.11 Today and steady compact weather
 
 Home's left card now shows **Today** with the selected area's actual schedule,
