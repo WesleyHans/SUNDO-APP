@@ -773,16 +773,15 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                             selected:
                                                 _selectedStop == point.number,
                                             pulse: pulse))))),
-                    Marker(
-                        point: resident ?? _areaCenter,
-                        width: _angled ? 72 : 56,
-                        height: _angled ? 90 : 70,
-                        alignment: const Alignment(0, -7 / 9),
-                        child: _MapBillboard(
-                            alignment: const Alignment(0, 7 / 9),
-                            child: resident != null
-                                ? SundoResidentBeacon(pulse: pulse)
-                                : SundoUserHouseMarker(pulse: pulse))),
+                    if (resident != null)
+                      Marker(
+                          point: resident,
+                          width: _angled ? 72 : 56,
+                          height: _angled ? 90 : 70,
+                          alignment: const Alignment(0, -7 / 9),
+                          child: _MapBillboard(
+                              alignment: const Alignment(0, 7 / 9),
+                              child: SundoResidentBeacon(pulse: pulse))),
                     if (_displayTruck != null)
                       Marker(
                           point: _displayTruck!,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -106,7 +107,8 @@ void main() {
 
   Future<void> mountMap(WidgetTester tester,
       {MapTruckRepository repository = const _PublishedTruckRepository(),
-      bool reducedMotion = false}) async {
+      bool reducedMotion = false,
+      bool enableGps = false}) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -120,7 +122,7 @@ void main() {
                 child: SundoTimeScope(
                     mood: SundoTimeMood(DateTime(2026, 10, 5, 9)),
                     child: LiveMapScreen(
-                        enableGps: false,
+                        enableGps: enableGps,
                         enableTiles: false,
                         repository: repository))))));
     await tester.pump();
@@ -380,6 +382,43 @@ void main() {
     expect(find.bySemanticsLabel('Your private GPS location'), findsNothing);
     expect(find.text('Your Location · private'), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('one house is placed at the fresh private GPS coordinates',
+      (tester) async {
+    const fix = LatLng(9.7521, 122.4035);
+    const methods = MethodChannel('flutter.baseflow.com/geolocator');
+    const events = MethodChannel('flutter.baseflow.com/geolocator_updates');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(methods, (call) async {
+      return switch (call.method) {
+        'isLocationServiceEnabled' => true,
+        'checkPermission' => 2, // While in use.
+        'getCurrentPosition' => {
+            'latitude': fix.latitude,
+            'longitude': fix.longitude,
+            'accuracy': 6.0,
+          },
+        _ => throw StateError('Unexpected location request: ${call.method}'),
+      };
+    });
+    messenger.setMockMethodCallHandler(events, (_) async => null);
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(methods, null);
+      messenger.setMockMethodCallHandler(events, null);
+    });
+    await mountMap(tester,
+        repository: _EmptyTruckRepository(),
+        reducedMotion: true,
+        enableGps: true);
+    await tester.pumpAndSettle();
+    expect(find.byType(SundoResidentBeacon), findsOneWidget);
+    final markers = tester
+        .widgetList<MarkerLayer>(find.byType(MarkerLayer))
+        .expand((layer) => layer.markers);
+    expect(markers.single.point, fix);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

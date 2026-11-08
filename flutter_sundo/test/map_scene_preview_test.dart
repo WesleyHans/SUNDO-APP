@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/core/theme/app_theme.dart';
@@ -18,14 +17,16 @@ import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
 import 'fixtures/map_tile_fixture.dart';
 
 class _SceneTruckRepository implements MapTruckRepository {
+  static final _route = MockMapTruckRepository.routes.first;
+
   @override
   Stream<List<MapTruckSnapshot>> watchTrucks() => Stream.value([
         MapTruckSnapshot(
           id: 'Truck 02',
-          route: MockMapTruckRepository.routes.first,
-          position: const LatLng(9.7520, 122.4038),
+          route: _route,
+          position: _route.waypoints[1],
           updatedAt: DateTime.now(),
-          heading: 146,
+          heading: mapBearing(_route.waypoints[1], _route.waypoints[2]),
           etaMinutes: 8,
           distanceKm: 1.2,
           nextStop: 'Barangay 2 · sample stop',

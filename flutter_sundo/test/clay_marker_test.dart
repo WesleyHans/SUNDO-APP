@@ -58,39 +58,34 @@ void main() {
               fresh: false),
           SundoClayCollectionMarker(number: 2, pulse: double.infinity),
           SundoResidentBeacon(pulse: -4),
-          SundoUserHouseMarker(pulse: double.nan),
         ]),
       ),
     ));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('area and GPS markers announce their source and allow stop taps',
+  testWidgets('private GPS house announces its source and allows stop taps',
       (tester) async {
     final semantics = tester.ensureSemantics();
     var taps = 0;
-    for (final (marker, label) in const [
-      (SundoUserHouseMarker(), 'Approximate home area'),
-      (SundoResidentBeacon(), 'Your private GPS location'),
-    ]) {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Stack(alignment: Alignment.center, children: [
-              GestureDetector(
-                onTap: () => taps++,
-                child: const SundoClayCollectionMarker(number: 1),
-              ),
-              marker,
-            ]),
-          ),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Stack(alignment: Alignment.center, children: [
+            GestureDetector(
+              onTap: () => taps++,
+              child: const SundoClayCollectionMarker(number: 1),
+            ),
+            const SundoResidentBeacon(),
+          ]),
         ),
-      ));
-      expect(find.bySemanticsLabel(label), findsOneWidget);
-      expect(tester.getSize(find.byWidget(marker)), const Size(72, 90));
-      await tester.tap(find.byType(SundoClayCollectionMarker));
-    }
-    expect(taps, 2);
+      ),
+    ));
+    expect(find.bySemanticsLabel('Your private GPS location'), findsOneWidget);
+    expect(
+        tester.getSize(find.byType(SundoResidentBeacon)), const Size(72, 90));
+    await tester.tap(find.byType(SundoClayCollectionMarker));
+    expect(taps, 1);
     semantics.dispose();
   });
 

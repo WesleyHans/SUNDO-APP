@@ -100,29 +100,6 @@ class SundoClayCollectionMarker extends StatelessWidget {
       );
 }
 
-/// The user's 3D clay house marker for their selected home area when live GPS
-/// is off. Ground contact is at (36, 80) in a 72×90 footprint.
-class SundoUserHouseMarker extends StatelessWidget {
-  const SundoUserHouseMarker({super.key, this.pulse = 0});
-
-  final double pulse;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        image: true,
-        label: 'Approximate home area',
-        child: RepaintBoundary(
-          child: SizedBox(
-            width: 72,
-            height: 90,
-            child: CustomPaint(
-              painter: _UserHousePainter(phase: _phase(pulse), liveGps: false),
-            ),
-          ),
-        ),
-      );
-}
-
 /// The private GPS marker rendered as the user's 3D clay house with a live GPS
 /// pulse ring at its ground contact point. Its animation does not imply an
 /// accuracy reading; the map's separately measured accuracy circle remains the
@@ -141,7 +118,7 @@ class SundoResidentBeacon extends StatelessWidget {
             width: 72,
             height: 90,
             child: CustomPaint(
-              painter: _UserHousePainter(phase: _phase(pulse), liveGps: true),
+              painter: _UserHousePainter(_phase(pulse)),
             ),
           ),
         ),
@@ -291,10 +268,9 @@ class _CollectionStopPinPainter extends CustomPainter {
 }
 
 class _UserHousePainter extends CustomPainter {
-  const _UserHousePainter({required this.phase, required this.liveGps});
+  const _UserHousePainter(this.phase);
 
   final double phase;
-  final bool liveGps;
 
   // Keep numbered stops tappable when the house overlaps them.
   @override
@@ -305,7 +281,7 @@ class _UserHousePainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 72, size.height / 90);
     const groundCenter = Offset(36, 77);
-    final accent = liveGps ? const Color(0xFF1D92F3) : const Color(0xFF119447);
+    const accent = Color(0xFF1D92F3);
     canvas.drawOval(
         Rect.fromCenter(
             center: groundCenter,
@@ -390,7 +366,7 @@ class _UserHousePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _UserHousePainter oldDelegate) =>
-      phase != oldDelegate.phase || liveGps != oldDelegate.liveGps;
+      phase != oldDelegate.phase;
 }
 
 void _facet(Canvas canvas, List<Offset> vertices, List<Color> colors) {
