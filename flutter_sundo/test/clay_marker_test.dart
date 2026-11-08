@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sundo_sipalay/features/live_map/widgets/clay_map_markers.dart';
+import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
 
 void main() {
   testWidgets('collection markers announce their number and selection',
@@ -61,5 +62,38 @@ void main() {
       ),
     ));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('private GPS house announces its source and allows stop taps',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Stack(alignment: Alignment.center, children: [
+            GestureDetector(
+              onTap: () => taps++,
+              child: const SundoClayCollectionMarker(number: 1),
+            ),
+            const SundoResidentBeacon(),
+          ]),
+        ),
+      ),
+    ));
+    expect(find.bySemanticsLabel('Your private GPS location'), findsOneWidget);
+    expect(
+        tester.getSize(find.byType(SundoResidentBeacon)), const Size(72, 90));
+    await tester.tap(find.byType(SundoClayCollectionMarker));
+    expect(taps, 1);
+    semantics.dispose();
+  });
+
+  test('sample collection stops are positioned on route waypoints', () {
+    for (final route in MockMapTruckRepository.routes) {
+      for (final stop in route.collectionPoints) {
+        expect(route.waypoints.contains(stop.position), isTrue);
+      }
+    }
   });
 }

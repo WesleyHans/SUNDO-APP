@@ -330,10 +330,9 @@ void main() {
         }
         await tester.tap(find.byTooltip('Map layers'));
         await tester.pumpAndSettle();
-        expect(find.text('Numbered collection points'), findsOneWidget);
+        expect(find.text('Numbered collection points'), findsNothing);
         _expectNoError(tester);
-        Navigator.of(tester.element(find.text('Numbered collection points')))
-            .pop();
+        Navigator.of(tester.element(find.text('Map layers'))).pop();
         await tester.pumpAndSettle();
       }
       await _preview(tester, 'map_$scale');

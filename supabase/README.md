@@ -53,7 +53,7 @@ Driver `publish_position` updates coordinates, speed, active state, timestamp an
 The optional `trucks` columns are `eta_minutes`, `next_stop`, `current_area`, `progress` (0–1), `status` and `active_route`. Valid status labels are `Not Started`, `On Route`, `Approaching`, `Nearby` and `Completed`. `active_route` is JSON with:
 
 - `id` and `name`: string identifiers/labels.
-- `waypoints`: arrays of `[latitude, longitude]` using actual route coordinates.
+- `waypoints`: the full ordered road path as `[latitude, longitude]` pairs, including turns and bends. A list of stops alone can cut across blocks. The app hides the route line when geometry is missing or contains an invalid point rather than joining across a gap.
 - `collection_points`: objects with integer `number`, string `name`, numeric `latitude` and numeric `longitude`.
 
 Use community collection stops rather than residents' private coordinates. The mobile interface displays this route read-only. Sample A/B/C route simulation is available only in demo mode and is not seeded into the connected database.

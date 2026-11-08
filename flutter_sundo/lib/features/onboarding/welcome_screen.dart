@@ -18,13 +18,61 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with WidgetsBindingObserver {
+  static const _slideInterval = Duration(seconds: 6);
   int _slide = 0;
   bool _startingDemo = false;
+  bool _canAutoAdvance = false;
+  Timer? _slideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final allowed = (ModalRoute.isCurrentOf(context) ?? true) &&
+        !MediaQuery.disableAnimationsOf(context);
+    if (allowed == _canAutoAdvance) return;
+    _canAutoAdvance = allowed;
+    _restartSlides();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) => _restartSlides();
+
+  void _restartSlides() {
+    _slideTimer?.cancel();
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (!_canAutoAdvance ||
+        _startingDemo ||
+        (lifecycle != null && lifecycle != AppLifecycleState.resumed)) {
+      return;
+    }
+    _slideTimer = Timer(
+        _slideInterval, () => _selectSlide((_slide + 1) % _titles.length));
+  }
+
+  void _selectSlide(int index) {
+    if (_slide != index) setState(() => _slide = index);
+    _restartSlides();
+  }
+
+  @override
+  void dispose() {
+    _slideTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   Future<void> _getStarted() async {
     if (_startingDemo) return;
     setState(() => _startingDemo = true);
+    _restartSlides();
     try {
       await widget.onGetStarted();
     } catch (_) {
@@ -34,7 +82,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 'Could not switch to the demo. Check your connection and try again.')));
       }
     } finally {
-      if (mounted) setState(() => _startingDemo = false);
+      if (mounted) {
+        setState(() => _startingDemo = false);
+        _restartSlides();
+      }
     }
   }
 
@@ -51,6 +102,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final enlargedText = MediaQuery.textScalerOf(context).scale(13) > 15.6;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       body: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
@@ -114,7 +166,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
+                            duration: reduceMotion
+                                ? Duration.zero
+                                : const Duration(milliseconds: 200),
+                            layoutBuilder: (current, previous) => Stack(
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  for (final child in previous)
+                                    ExcludeSemantics(child: child),
+                                  if (current != null) current,
+                                ]),
                             child: Column(key: ValueKey(_slide), children: [
                               Text(_titles[_slide],
                                   textAlign: TextAlign.center,
@@ -146,8 +207,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           child: Column(children: [
                             Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children:
-                                    List.generate(3, _introductionButton)),
+                                children: List.generate(
+                                    _titles.length, _introductionButton)),
                             _button(
                                 _startingDemo ? 'Opening demo…' : 'Get Started',
                                 _startingDemo ? null : _getStarted,
@@ -175,11 +236,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           height: 44,
           child: InkWell(
             borderRadius: BorderRadius.circular(22),
-            onTap: () => setState(() => _slide = index),
+            onTap: () => _selectSlide(index),
             child: Center(
               child: Container(
                 height: 8,
-                width: index == _slide ? 24 : 8,
+                width: 8,
                 decoration: BoxDecoration(
                   color: index == _slide
                       ? const Color(0xFF07853D)

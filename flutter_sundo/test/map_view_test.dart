@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,12 +51,13 @@ class _PublishedTruckRepository implements MapTruckRepository {
 }
 
 class _ControlledTruckRepository implements MapTruckRepository {
-  _ControlledTruckRepository() {
+  _ControlledTruckRepository({this.simulatedRoute}) {
     _updates = StreamController<List<MapTruckSnapshot>>(
         onListen: () => publish(const LatLng(9.7525, 122.4038)));
   }
 
   late final StreamController<List<MapTruckSnapshot>> _updates;
+  final MapOperatingRoute? simulatedRoute;
 
   void publish(LatLng position, {String id = 'Truck 02', double? heading}) =>
       _updates.add([
@@ -63,21 +65,23 @@ class _ControlledTruckRepository implements MapTruckRepository {
           id: id,
           position: position,
           heading: heading,
-          route: const MapOperatingRoute(
-            id: 'A',
-            name: 'Route A',
-            waypoints: [
-              LatLng(9.7525, 122.4038),
-              LatLng(9.7535, 122.404),
-            ],
-            collectionPoints: [
-              MapCollectionPoint(
-                  1, 'Collection point 1', LatLng(9.7530, 122.4042)),
-            ],
-          ),
+          route: simulatedRoute ??
+              const MapOperatingRoute(
+                id: 'A',
+                name: 'Route A',
+                waypoints: [
+                  LatLng(9.7525, 122.4038),
+                  LatLng(9.7535, 122.404),
+                ],
+                collectionPoints: [
+                  MapCollectionPoint(
+                      1, 'Collection point 1', LatLng(9.7530, 122.4042)),
+                ],
+              ),
           updatedAt: DateTime.now(),
           etaMinutes: 8,
           active: true,
+          simulated: simulatedRoute != null,
           stage: MapTrackingStage.onRoute,
         ),
       ]);
@@ -106,7 +110,8 @@ void main() {
 
   Future<void> mountMap(WidgetTester tester,
       {MapTruckRepository repository = const _PublishedTruckRepository(),
-      bool reducedMotion = false}) async {
+      bool reducedMotion = false,
+      bool enableGps = false}) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -120,7 +125,7 @@ void main() {
                 child: SundoTimeScope(
                     mood: SundoTimeMood(DateTime(2026, 10, 5, 9)),
                     child: LiveMapScreen(
-                        enableGps: false,
+                        enableGps: enableGps,
                         enableTiles: false,
                         repository: repository))))));
     await tester.pump();
@@ -207,11 +212,12 @@ void main() {
       expect(map.mapController!.camera.zoom, greaterThan(startingZoom));
       await tester.tap(find.byTooltip('Map layers'));
       await tester.pumpAndSettle();
-      expect(find.text('Numbered collection points'), findsOneWidget);
+      expect(find.text('Numbered collection points'), findsNothing);
       expect(find.text('Operational routes are managed by the city.'),
           findsNothing);
       await tester.tap(find.widgetWithText(SwitchListTile, 'Active route'));
       await tester.pump();
+      expect(find.byType(PolylineLayer), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -223,7 +229,6 @@ void main() {
     final initialPlane = tester
         .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
         .transform;
-    expect(initialPlane.entry(3, 2).abs(), greaterThan(0));
     expect(initialPlane.entry(1, 2).abs(), greaterThan(0));
 
     await tester.tap(find.text('2D'));
@@ -241,7 +246,7 @@ void main() {
     final raisedPlane = tester
         .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
         .transform;
-    expect(raisedPlane.entry(3, 2).abs(), greaterThan(0));
+    expect(raisedPlane.entry(1, 2).abs(), greaterThan(0));
     expect(mapController(tester).camera.rotation % 360, closeTo(342, .0001));
 
     await tester.tap(find.byTooltip('Reset map north'));
@@ -251,7 +256,7 @@ void main() {
         tester
             .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
             .transform
-            .entry(3, 2)
+            .entry(1, 2)
             .abs(),
         greaterThan(0));
 
@@ -264,6 +269,52 @@ void main() {
     expect(mapController(tester).camera.zoom, closeTo(zoom, .0001));
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('only route taps open route details and can fit the map',
+      (tester) async {
+    const start = LatLng(9.7525, 122.4038);
+    const end = LatLng(9.7508, 122.4038);
+    final repository = _ControlledTruckRepository(
+        simulatedRoute: const MapOperatingRoute(
+            id: 'A',
+            name: 'Route A · sample',
+            waypoints: [start, end],
+            collectionPoints: [MapCollectionPoint(1, 'Market stop', end)]));
+    await mountMap(tester, repository: repository);
+    try {
+      final controller = mapController(tester);
+      controller.move(start, 17);
+      await tester.pump();
+      final mapBox = tester.renderObject<RenderBox>(find.byType(FlutterMap));
+      Future<void> tapLocation(LatLng location) async {
+        final p = controller.camera.latLngToScreenPoint(location);
+        await tester.tapAt(mapBox.localToGlobal(Offset(p.x, p.y)));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 350));
+      }
+
+      await tapLocation(const LatLng(9.7519, 122.4032));
+      expect(find.text('Route details'), findsNothing);
+      await tapLocation(const LatLng(9.7519, 122.4038));
+      expect(find.text('Route details'), findsOneWidget);
+      expect(find.textContaining('Sample route'), findsOneWidget);
+      expect(find.text('Market stop'), findsNothing);
+      await tester.tap(find.text('Fit route on map'));
+      await finishCamera(tester);
+      expect(find.text('Route details'), findsNothing);
+      expect(controller.camera.zoom, lessThan(17));
+      final locationPins = tester.widget<MarkerLayer>(find
+          .ancestor(
+              of: find.byType(SundoMapTruckMarker),
+              matching: find.byType(MarkerLayer))
+          .first);
+      expect(locationPins.markers.single.point, start);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(repository.dispose);
+      await tester.pump();
+    }
   });
 
   testWidgets('watch can stop and dragging the tilted map cancels following',
@@ -291,28 +342,6 @@ void main() {
         greaterThan(.00001));
     expect(find.text('Watching'), findsNothing);
     expect(find.text('Watch'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('tapping an elevated collection point focuses its actual stop',
-      (tester) async {
-    await mountMap(tester);
-    await tester.tap(find.text('Watch'));
-    await finishCamera(tester);
-    expect(find.text('Watching'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('collection-stop-1')));
-    await finishCamera(tester);
-
-    final selected = tester.widget<SundoClayCollectionMarker>(
-        find.byType(SundoClayCollectionMarker));
-    expect(selected.selected, isTrue);
-    expect(
-        mapController(tester).camera.center.latitude, closeTo(9.7530, .00001));
-    expect(mapController(tester).camera.center.longitude,
-        closeTo(122.4042, .00001));
-    expect(mapController(tester).camera.zoom, closeTo(16.8, .0001));
-    expect(find.text('Watching'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -354,7 +383,7 @@ void main() {
         tester
             .widget<Transform>(find.byKey(const ValueKey('map-perspective')))
             .transform
-            .entry(3, 2),
+            .entry(1, 2),
         0);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
@@ -380,6 +409,73 @@ void main() {
     expect(find.bySemanticsLabel('Your private GPS location'), findsNothing);
     expect(find.text('Your Location · private'), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('only the truck and GPS house pin keep their screen size',
+      (tester) async {
+    const fix = LatLng(9.7521, 122.4035);
+    const methods = MethodChannel('flutter.baseflow.com/geolocator');
+    const events = MethodChannel('flutter.baseflow.com/geolocator_updates');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(methods, (call) async {
+      return switch (call.method) {
+        'isLocationServiceEnabled' => true,
+        'checkPermission' => 2, // While in use.
+        'getCurrentPosition' => {
+            'latitude': fix.latitude,
+            'longitude': fix.longitude,
+            'accuracy': 6.0,
+          },
+        _ => throw StateError('Unexpected location request: ${call.method}'),
+      };
+    });
+    messenger.setMockMethodCallHandler(events, (_) async => null);
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(methods, null);
+      messenger.setMockMethodCallHandler(events, null);
+    });
+    await mountMap(tester, reducedMotion: true, enableGps: true);
+    await tester.pumpAndSettle();
+    expect(find.byType(SundoResidentBeacon), findsOneWidget);
+    final locationPins = tester.widget<MarkerLayer>(find
+        .ancestor(
+            of: find.byType(SundoMapTruckMarker),
+            matching: find.byType(MarkerLayer))
+        .first);
+    expect(locationPins.markers.map((marker) => marker.point),
+        unorderedEquals([fix, const LatLng(9.7525, 122.4038)]));
+
+    Rect screenBounds(Type marker) {
+      final box = tester.renderObject<RenderBox>(find.byType(marker));
+      return MatrixUtils.transformRect(
+          box.getTransformTo(null), Offset.zero & box.size);
+    }
+
+    const markerTypes = [SundoResidentBeacon, SundoMapTruckMarker];
+    final controller = mapController(tester);
+    const center = LatLng(9.7525, 122.4038);
+    controller.move(center, 15);
+    await tester.pump();
+    final baseline = markerTypes.map(screenBounds).toList();
+
+    for (final flat in [false, true]) {
+      if (flat) {
+        await tester.tap(find.text('2D'));
+        await finishCamera(tester);
+      }
+      for (final zoom in [15.0, 18.0]) {
+        controller.move(center, zoom);
+        await tester.pump();
+        expect(controller.camera.zoom, zoom);
+        for (var i = 0; i < markerTypes.length; i++) {
+          final bounds = screenBounds(markerTypes[i]);
+          expect(bounds.width, closeTo(baseline[i].width, .01));
+          expect(bounds.height, closeTo(baseline[i].height, .01));
+        }
+      }
+    }
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -427,6 +523,42 @@ void main() {
       expect(truck().headingDegrees, isNull);
       expect(truck().moving, isFalse);
       expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(repository.dispose);
+      await tester.pump();
+    }
+  });
+
+  testWidgets('an interrupted demo truck leg does not cut across a turn',
+      (tester) async {
+    const start = LatLng(9.7525, 122.4038);
+    const corner = LatLng(9.7525, 122.4043);
+    const end = LatLng(9.7530, 122.4043);
+    final repository = _ControlledTruckRepository(
+        simulatedRoute: const MapOperatingRoute(
+            id: 'A', name: 'Demo road', waypoints: [start, corner, end]));
+    await mountMap(tester, repository: repository);
+    try {
+      LatLng truckPoint() => tester
+          .widget<MarkerLayer>(find
+              .ancestor(
+                  of: find.byType(SundoMapTruckMarker),
+                  matching: find.byType(MarkerLayer))
+              .first)
+          .markers
+          .last
+          .point;
+      repository.publish(corner);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(truckPoint().longitude, lessThan(corner.longitude));
+      repository.publish(end);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(truckPoint().longitude, closeTo(corner.longitude, 1e-9));
+      expect(truckPoint().latitude, greaterThan(corner.latitude));
+      expect(truckPoint().latitude, lessThan(end.latitude));
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.runAsync(repository.dispose);

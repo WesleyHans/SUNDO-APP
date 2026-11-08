@@ -57,11 +57,9 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   LatLng? _truckStart, _truckTarget;
   LatLng? _residentPosition;
   LatLng _areaCenter = _sipalay;
-  double? _residentAccuracy;
   DateTime? _residentUpdatedAt;
   double? _headingStart, _headingTarget;
   double _sheetFraction = .30;
-  int? _selectedStop;
   bool _motionEnabled = true;
   bool _reduceMotion = false;
   String _barangay = 'Sipalay City';
@@ -69,7 +67,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   String? _trackingError;
   bool _loading = true;
   bool _mapReady = false;
-  bool _showRoute = true, _showStops = true, _angled = true;
+  bool _showRoute = true, _angled = true;
   bool _followTruck = false;
   bool _locating = false;
   bool _alertVisible = false;
@@ -271,6 +269,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     final priorSourcePosition = previous?.position;
     final priorPosition = _displayTruck;
     final target = next?.position;
+    final demoPoints = next?.route.waypoints;
+    final followsDemoLeg = next?.simulated == true &&
+        previous?.route.id == next?.route.id &&
+        demoPoints != null &&
+        demoPoints.asMap().entries.any((entry) =>
+            entry.key + 1 < demoPoints.length &&
+            entry.value == priorSourcePosition &&
+            demoPoints[entry.key + 1] == target);
     final priorHeading = _displayHeading;
     _truckMotion.stop();
     setState(() {
@@ -280,8 +286,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       if (next == null || !next.freshAt(DateTime.now())) {
         _followTruck = false;
       }
-      if (previous?.route.id != next?.route.id) _selectedStop = null;
-      _truckStart = sameTruck ? priorPosition ?? target : target;
+      // Restart at the road junction if a new demo leg interrupts animation.
+      _truckStart = next?.simulated == true
+          ? followsDemoLeg
+              ? priorSourcePosition
+              : target
+          : sameTruck
+              ? priorPosition ?? target
+              : target;
       _truckTarget = target;
       _headingStart = sameTruck ? priorHeading : null;
       if (next?.heading?.isFinite == true) {
@@ -298,6 +310,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (_visualMotion &&
         sameTruck &&
         next.freshAt(DateTime.now()) &&
+        (!next.simulated || followsDemoLeg) &&
         priorPosition != null &&
         target != null &&
         priorPosition != target) {
@@ -445,15 +458,13 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       _setLocationMessage('Fresh GPS unavailable · showing $_barangay area');
       return;
     }
+    final accuracy = position.accuracy;
     setState(() {
       _residentPosition = coordinates;
-      _residentAccuracy = position.accuracy.isFinite && position.accuracy >= 0
-          ? position.accuracy
-          : null;
       _residentUpdatedAt = position.timestamp;
-      _locationMessage = _residentAccuracy == null
-          ? 'Your private GPS location'
-          : 'Your private GPS · ±${_residentAccuracy!.round()} m';
+      _locationMessage = accuracy.isFinite && accuracy >= 0
+          ? 'Your private GPS · ±${accuracy.round()} m'
+          : 'Your private GPS location';
     });
     // Device position is deliberately never written to a shared truck source.
   }
@@ -472,7 +483,6 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (!mounted) return;
     setState(() {
       _residentPosition = null;
-      _residentAccuracy = null;
       _residentUpdatedAt = null;
     });
   }
@@ -481,7 +491,6 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (!_mapReady) return;
     setState(() {
       _followTruck = false;
-      _selectedStop = null;
     });
     final route = _truck?.route.waypoints ?? [];
     if (route.length > 1) {
@@ -502,7 +511,6 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (!_mapReady || _displayTruck == null) return;
     setState(() {
       _followTruck = !_followTruck && _truckFresh;
-      _selectedStop = null;
     });
     if (_followTruck) _flyTo(_displayTruck!, 16.5);
   }
@@ -542,13 +550,57 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     }
   }
 
-  void _selectStop(MapCollectionPoint point) {
-    setState(() {
-      _selectedStop = point.number;
-      _followTruck = false;
-    });
-    _flyTo(point.position, 16.8);
+  void _tapRoute(LatLng location) {
+    final truck = _truck;
+    if (!_showRoute || truck == null) return;
+    final points = truck.route.waypoints;
+    if (points.length < 2) return;
+    final camera = _mapController.camera;
+    final tap = camera.project(location);
+    var start = camera.project(points.first);
+    for (final point in points.skip(1)) {
+      final end = camera.project(point);
+      final leg = end - start;
+      final delta = tap - start;
+      final lengthSquared = leg.x * leg.x + leg.y * leg.y;
+      if (lengthSquared > 0) {
+        final progress =
+            ((delta.x * leg.x + delta.y * leg.y) / lengthSquared).clamp(0, 1);
+        if ((delta - leg * progress).magnitude <= 16) {
+          _showRouteDetails(truck);
+          return;
+        }
+      }
+      start = end;
+    }
   }
+
+  Future<void> _showRouteDetails(MapTruckSnapshot truck) => showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                ListTile(
+                  leading: const Icon(Icons.route_rounded),
+                  title: const Text('Route details'),
+                  subtitle: Text([
+                    if (truck.route.name.isNotEmpty) truck.route.name,
+                    if (truck.simulated) 'Sample route',
+                  ].join(' · ')),
+                ),
+                FilledButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      _recenter();
+                    },
+                    icon: const Icon(Icons.center_focus_strong_rounded),
+                    label: const Text('Fit route on map')),
+              ]),
+            ),
+          ));
 
   void _zoom(double change) {
     if (!_mapReady) return;
@@ -575,14 +627,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     updateSheet(() {});
                   }),
               SwitchListTile(
-                  title: const Text('Numbered collection points'),
-                  value: _showStops,
-                  onChanged: (value) {
-                    setState(() => _showStops = value);
-                    updateSheet(() {});
-                  }),
-              SwitchListTile(
-                  title: const Text('3D city perspective'),
+                  title: const Text('Angled city view'),
                   value: _angled,
                   onChanged: (value) {
                     _setView(value);
@@ -635,16 +680,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             _reduceMotion ? Duration.zero : const Duration(milliseconds: 750),
         curve: Curves.easeInOutCubic,
         child: _buildMap(mood),
-        builder: (context, tilt, child) => LayoutBuilder(
-            builder: (context, size) => Transform(
-                key: const ValueKey('map-perspective'),
-                alignment: Alignment.center,
-                transformHitTests: true,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, tilt * .9 / size.maxHeight)
-                  ..rotateX(-.58 * tilt)
-                  ..scaleByDouble(1 + .32 * tilt, 1 + .55 * tilt, 1, 1),
-                child: _MapPitchScope(pitch: .58 * tilt, child: child!))),
+        builder: (context, tilt, child) => Transform(
+            key: const ValueKey('map-perspective'),
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              // An angled view without depth scaling keeps markers steady.
+              ..rotateX(-.58 * tilt)
+              ..scaleByDouble(1 + .32 * tilt, 1 + .55 * tilt, 1, 1),
+            child: _MapPitchScope(pitch: .58 * tilt, child: child!)),
       );
 
   Widget _buildMap(SundoTimeMood mood) {
@@ -675,15 +718,11 @@ class _LiveMapScreenState extends State<LiveMapScreen>
           onMapReady: () {
             _mapReady = true;
           },
+          onTap: (_, location) => _tapRoute(location),
           onPositionChanged: (_, gesture) {
             if (!gesture) return;
             _cameraMotion.stop();
-            if (_followTruck || _selectedStop != null) {
-              setState(() {
-                _followTruck = false;
-                _selectedStop = null;
-              });
-            }
+            if (_followTruck) setState(() => _followTruck = false);
           },
         ),
         children: [
@@ -692,33 +731,19 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             PolylineLayer(polylines: [
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 17,
-                  color: const Color(0x33052F1C)),
+                  strokeWidth: 7,
+                  useStrokeWidthInMeter: true,
+                  color: const Color(0x66405F4C)),
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 13,
-                  color: Colors.white.withValues(alpha: .92)),
+                  strokeWidth: 6,
+                  useStrokeWidthInMeter: true,
+                  color: const Color(0xFFF8FFF7)),
               Polyline(
                   points: route.waypoints,
-                  strokeWidth: 8,
-                  gradientColors: _truckFresh
-                      ? const [
-                          Color(0xFF087C3B),
-                          Color(0xFF59BE39),
-                          Color(0xFF008D54)
-                        ]
-                      : [routeColor, routeColor],
-                  colorsStop: const [0, .5, 1]),
-            ]),
-          if (resident != null && _residentAccuracy != null)
-            CircleLayer(circles: [
-              CircleMarker(
-                  point: resident,
-                  radius: _residentAccuracy!,
-                  useRadiusInMeter: true,
-                  color: const Color(0x222F80ED),
-                  borderColor: const Color(0x882F80ED),
-                  borderStrokeWidth: 1),
+                  strokeWidth: 4,
+                  useStrokeWidthInMeter: true,
+                  color: routeColor),
             ]),
           AnimatedBuilder(
               animation:
@@ -737,52 +762,31 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     for (final arrow in arrows)
                       Marker(
                           point: arrow.position,
-                          width: 20,
-                          height: 20,
+                          width: 10,
+                          height: 10,
                           child: ExcludeSemantics(
                               child: Transform.rotate(
                                   angle: arrow.headingDegrees * math.pi / 180,
                                   child: const Icon(
                                       Icons.keyboard_arrow_up_rounded,
-                                      size: 21,
+                                      size: 10,
                                       color: Color(0xFFE6FFE2))))),
                   ]),
                   MarkerLayer(rotate: true, markers: [
-                    if (_showStops && route != null)
-                      for (final point in route.collectionPoints)
-                        Marker(
-                            point: point.position,
-                            width: _angled ? 72 : 54,
-                            height: _angled ? 90 : 67.5,
-                            alignment: const Alignment(0, -7 / 9),
-                            child: _MapBillboard(
-                                alignment: const Alignment(0, 7 / 9),
-                                child: Tooltip(
-                                    message: point.name,
-                                    child: GestureDetector(
-                                        key: ValueKey(
-                                            'collection-stop-${point.number}'),
-                                        onTap: () => _selectStop(point),
-                                        child: SundoClayCollectionMarker(
-                                            number: point.number,
-                                            name: point.name,
-                                            selected:
-                                                _selectedStop == point.number,
-                                            pulse: pulse))))),
                     if (resident != null)
                       Marker(
                           point: resident,
-                          width: 64,
-                          height: 64,
+                          width: 56,
+                          height: 70,
+                          alignment: const Alignment(0, -7 / 9),
                           child: _MapBillboard(
-                              child: Semantics(
-                                  label: 'Your private GPS location',
-                                  child: SundoResidentBeacon(pulse: pulse)))),
+                              alignment: const Alignment(0, 7 / 9),
+                              child: SundoResidentBeacon(pulse: pulse))),
                     if (_displayTruck != null)
                       Marker(
                           point: _displayTruck!,
-                          width: _angled ? 84 : 68,
-                          height: _angled ? 84 : 68,
+                          width: 68,
+                          height: 68,
                           child: _MapBillboard(
                               child: Semantics(
                                   label: (_truck?.id ?? 'Truck') +
@@ -805,6 +809,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
     final resident = _visibleResident;
+    final truck = _truck;
     return Scaffold(
         backgroundColor: mood.background,
         body: SafeArea(
@@ -930,21 +935,6 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                             child: Text('© OpenStreetMap contributors',
                                 style: TextStyle(
                                     fontSize: 9, color: mood.textColor)))),
-                    if (resident != null)
-                      Positioned(
-                          left: 16,
-                          bottom: constraints.maxHeight * _sheetFraction + 29,
-                          child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 5),
-                              decoration: BoxDecoration(
-                                  color: mood.surface,
-                                  borderRadius: BorderRadius.circular(9)),
-                              child: Text('Your Location · private',
-                                  style: TextStyle(
-                                      color: mood.textColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700)))),
                     NotificationListener<DraggableScrollableNotification>(
                         onNotification: (notification) {
                           if ((_sheetFraction - notification.extent).abs() >
@@ -962,10 +952,14 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                             snapSizes: const [.30, .55],
                             builder: (context, scrollController) =>
                                 SundoTrackingBottomSheet(
-                                  truck: _truck,
+                                  truck: truck,
                                   error: _trackingError,
                                   loading: _loading,
                                   fresh: _truckFresh,
+                                  onRouteDetails: truck != null &&
+                                          truck.route.waypoints.length > 1
+                                      ? () => _showRouteDetails(truck)
+                                      : null,
                                   scrollController: scrollController,
                                   onFollow: _follow,
                                   onRefresh: () {
