@@ -282,6 +282,16 @@ void main() {
     expect(find.textContaining('3.2 km'), findsNothing);
     expect(find.textContaining('ETA:'), findsNothing);
     expect(find.text('Last known position · Route A'), findsOneWidget);
+    await show(MapTruckSnapshot(
+        id: 'sundo-test-truck',
+        route: const MapOperatingRoute(id: 'A', name: 'Route A'),
+        position: const LatLng(9.75, 122.40),
+        updatedAt: now,
+        simulated: true));
+    expect(find.text('Truck is PARKED'), findsOneWidget);
+    expect(find.text('No collection scheduled for your area today.'),
+        findsOneWidget);
+    expect(find.text('LIVE'), findsNothing);
     await show(null);
     expect(find.textContaining('Awaiting fleet data'), findsOneWidget);
     expect(find.text('LIVE'), findsNothing);

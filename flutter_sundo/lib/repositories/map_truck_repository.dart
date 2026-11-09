@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/storage/app_store.dart';
+import '../core/utils/resident_area.dart';
 import '../models/map_tracking.dart';
+import 'schedule_repository.dart';
 
 /// Replace this interface with PHP, Firebase or WebSocket transport as needed.
 abstract interface class MapTruckRepository {
@@ -112,65 +115,92 @@ class MockMapTruckRepository implements MapTruckRepository {
   Stream<List<MapTruckSnapshot>> watchTrucks() => Stream.multi((listener) {
         final subscription = _updates.stream.listen(listener.add,
             onError: listener.addError, onDone: listener.close);
-        listener.add(_lastUpdate ??= _snapshot());
+        final lastUpdate = _lastUpdate;
+        if (lastUpdate != null) listener.add(lastUpdate);
         listener.onCancel = subscription.cancel;
       });
 
   void _start() {
-    _timer ??= Timer.periodic(waypointInterval, (_) {
+    final timer = Timer.periodic(
+        waypointInterval, (timer) => _update(timer, advance: true));
+    _timer = timer;
+    unawaited(_update(timer, advance: false));
+  }
+
+  Future<void> _update(Timer timer, {required bool advance}) async {
+    var area = '';
+    try {
+      area = await AppStore.getBarangay();
+    } catch (_) {
+      // Stay parked when the collection area cannot be read.
+    }
+    if (!timer.isActive) return;
+
+    final now = DateTime.now();
+    final today = now.toUtc().add(const Duration(hours: 8));
+    final scheduled = MockScheduleRepository.shared.items.any((entry) =>
+        entry.isOn(today) &&
+        serviceAreaMatchesResident(entry.barangay, area) &&
+        !const ['completed', 'cancelled', 'canceled']
+            .contains(entry.explicitStatus?.trim().toLowerCase()));
+    if (scheduled && advance) {
       if (_completed) {
         _routeIndex = (_routeIndex + 1) % routes.length;
         _waypoint = 0;
         _completed = false;
       } else {
         _waypoint++;
-        if (_waypoint >= routes[_routeIndex].waypoints.length - 1) {
-          _waypoint = routes[_routeIndex].waypoints.length - 1;
-          _completed = true;
-        }
+        _completed = _waypoint == routes[_routeIndex].waypoints.length - 1;
       }
-      _lastUpdate = _snapshot();
-      _updates.add(_lastUpdate!);
-    });
+    }
+    final update = _snapshot(now, scheduled: scheduled);
+    _lastUpdate = update;
+    _updates.add(update);
   }
 
   void _stop() {
     _timer?.cancel();
     _timer = null;
+    _lastUpdate = null;
   }
 
-  List<MapTruckSnapshot> _snapshot() {
+  List<MapTruckSnapshot> _snapshot(DateTime now, {required bool scheduled}) {
     final route = routes[_routeIndex];
     final progress = _waypoint / (route.waypoints.length - 1);
     final baseEta = [12, 15, 22][_routeIndex];
     final eta = ((1 - progress) * baseEta).ceil();
-    final stage = _completed
-        ? MapTrackingStage.completed
-        : eta <= 2
-            ? MapTrackingStage.nearby
-            : eta <= 10
-                ? MapTrackingStage.approaching
-                : MapTrackingStage.onRoute;
+    final stage = !scheduled
+        ? MapTrackingStage.notStarted
+        : _completed
+            ? MapTrackingStage.completed
+            : eta <= 2
+                ? MapTrackingStage.nearby
+                : eta <= 10
+                    ? MapTrackingStage.approaching
+                    : MapTrackingStage.onRoute;
     return [
       MapTruckSnapshot(
         id: 'Truck 02',
         route: route,
         position: route.waypoints[_waypoint],
-        updatedAt: DateTime.now(),
+        updatedAt: now,
         heading: _waypoint == route.waypoints.length - 1
             ? mapBearing(
                 route.waypoints[_waypoint - 1], route.waypoints[_waypoint])
             : mapBearing(
                 route.waypoints[_waypoint], route.waypoints[_waypoint + 1]),
-        etaMinutes: eta,
-        distanceKm: [3.2, 4.1, 5.0][_routeIndex] * (1 - progress),
-        nextStop: _completed
-            ? 'Collection complete'
-            : route.collectionPoints.first.name,
+        etaMinutes: scheduled ? eta : null,
+        distanceKm:
+            scheduled ? [3.2, 4.1, 5.0][_routeIndex] * (1 - progress) : null,
+        nextStop: !scheduled
+            ? 'No collection scheduled for your area today'
+            : _completed
+                ? 'Collection complete'
+                : route.collectionPoints.first.name,
         currentArea: 'Sipalay Poblacion',
-        progress: progress,
+        progress: scheduled ? progress : 0,
         stage: stage,
-        active: !_completed,
+        active: scheduled && !_completed,
         simulated: true,
       )
     ];

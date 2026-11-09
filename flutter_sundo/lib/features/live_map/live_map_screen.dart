@@ -981,7 +981,9 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                     setState(() => _loading = true);
                                     _subscribeTrucks();
                                   },
-                                  onAlertPreview: _truck?.simulated == true
+                                  onAlertPreview: truck?.simulated == true &&
+                                          truck?.stage !=
+                                              MapTrackingStage.notStarted
                                       ? () => _showAlert(_truck!)
                                       : null,
                                 ))),
