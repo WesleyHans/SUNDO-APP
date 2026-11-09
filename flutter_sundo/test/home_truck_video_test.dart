@@ -85,7 +85,7 @@ void main() {
       await show();
       player.events.add(VideoEvent(
           eventType: VideoEventType.initialized,
-          duration: const Duration(milliseconds: 3667),
+          duration: const Duration(milliseconds: 3033),
           size: const Size(352, 176)));
       await tester.pump();
       await tester.pump();
@@ -94,6 +94,7 @@ void main() {
       expect(player.looping, isTrue);
       expect(player.volume, 0);
       expect(player.playing, isTrue);
+      expect(find.image(parkedAsset), findsNothing);
       expect(tester.getSize(find.byKey(const ValueKey('truck-video-view'))),
           const Size(104, 52));
       final videoFrame = tester.getRect(find.byType(ClipPath));
@@ -111,6 +112,8 @@ void main() {
       expect(player.playing, isTrue);
       await show(active: false);
       expect(player.playing, isFalse);
+      expect(find.byKey(const ValueKey('truck-video-view')), findsNothing);
+      expect(find.image(parkedAsset), findsOneWidget);
       await show(reduceMotion: true);
       expect(player.playing, isFalse);
       expect(find.image(parkedAsset), findsOneWidget);
