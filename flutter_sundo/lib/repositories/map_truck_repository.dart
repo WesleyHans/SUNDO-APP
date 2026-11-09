@@ -36,6 +36,7 @@ class MockMapTruckRepository implements MapTruckRepository {
   var _routeIndex = 0;
   var _waypoint = 0;
   var _completed = false;
+  var _previewEnabled = false;
   // Road geometry © OpenStreetMap contributors (ODbL), Sipalay Poblacion.
   // Consecutive points are adjacent way nodes in the direction of travel.
   static const _routeStart =
@@ -127,6 +128,13 @@ class MockMapTruckRepository implements MapTruckRepository {
     unawaited(_update(timer, advance: false));
   }
 
+  void togglePreview() {
+    final timer = _timer;
+    if (timer == null) return;
+    _previewEnabled = !_previewEnabled;
+    unawaited(_update(timer, advance: false));
+  }
+
   Future<void> _update(Timer timer, {required bool advance}) async {
     var area = '';
     try {
@@ -143,7 +151,8 @@ class MockMapTruckRepository implements MapTruckRepository {
         serviceAreaMatchesResident(entry.barangay, area) &&
         !const ['completed', 'cancelled', 'canceled']
             .contains(entry.explicitStatus?.trim().toLowerCase()));
-    if (scheduled && advance) {
+    final running = scheduled || _previewEnabled;
+    if (running && advance) {
       if (_completed) {
         _routeIndex = (_routeIndex + 1) % routes.length;
         _waypoint = 0;
@@ -153,7 +162,7 @@ class MockMapTruckRepository implements MapTruckRepository {
         _completed = _waypoint == routes[_routeIndex].waypoints.length - 1;
       }
     }
-    final update = _snapshot(now, scheduled: scheduled);
+    final update = _snapshot(now, running: running);
     _lastUpdate = update;
     _updates.add(update);
   }
@@ -162,14 +171,15 @@ class MockMapTruckRepository implements MapTruckRepository {
     _timer?.cancel();
     _timer = null;
     _lastUpdate = null;
+    _previewEnabled = false;
   }
 
-  List<MapTruckSnapshot> _snapshot(DateTime now, {required bool scheduled}) {
+  List<MapTruckSnapshot> _snapshot(DateTime now, {required bool running}) {
     final route = routes[_routeIndex];
     final progress = _waypoint / (route.waypoints.length - 1);
     final baseEta = [12, 15, 22][_routeIndex];
     final eta = ((1 - progress) * baseEta).ceil();
-    final stage = !scheduled
+    final stage = !running
         ? MapTrackingStage.notStarted
         : _completed
             ? MapTrackingStage.completed
@@ -189,19 +199,20 @@ class MockMapTruckRepository implements MapTruckRepository {
                 route.waypoints[_waypoint - 1], route.waypoints[_waypoint])
             : mapBearing(
                 route.waypoints[_waypoint], route.waypoints[_waypoint + 1]),
-        etaMinutes: scheduled ? eta : null,
+        etaMinutes: running ? eta : null,
         distanceKm:
-            scheduled ? [3.2, 4.1, 5.0][_routeIndex] * (1 - progress) : null,
-        nextStop: !scheduled
+            running ? [3.2, 4.1, 5.0][_routeIndex] * (1 - progress) : null,
+        nextStop: !running
             ? 'No collection scheduled for your area today'
             : _completed
                 ? 'Collection complete'
                 : route.collectionPoints.first.name,
         currentArea: 'Sipalay Poblacion',
-        progress: scheduled ? progress : 0,
+        progress: running ? progress : 0,
         stage: stage,
-        active: scheduled && !_completed,
+        active: running && !_completed,
         simulated: true,
+        demoPreview: _previewEnabled,
       )
     ];
   }

@@ -252,7 +252,10 @@ void main() {
       (tester) async {
     final semantics = tester.ensureSemantics();
     final now = DateTime.utc(2026, 10, 7, 1);
-    MapTruckSnapshot truck({bool simulated = false, bool stale = false}) =>
+    MapTruckSnapshot truck(
+            {bool simulated = false,
+            bool stale = false,
+            bool preview = false}) =>
         MapTruckSnapshot(
             id: 'sundo-test-truck',
             route: const MapOperatingRoute(id: 'A', name: 'Route A'),
@@ -260,11 +263,18 @@ void main() {
             updatedAt: stale ? now.subtract(const Duration(minutes: 3)) : now,
             active: true,
             simulated: simulated,
+            demoPreview: preview,
             stage: MapTrackingStage.onRoute,
             distanceKm: 3.2,
             etaMinutes: 12);
-    Future<void> show(MapTruckSnapshot? snapshot) => _mount(tester,
-        Scaffold(body: SundoLiveTruckCard(truck: snapshot, onViewMap: () {})),
+    var previewTaps = 0;
+    Future<void> show(MapTruckSnapshot? snapshot) => _mount(
+        tester,
+        Scaffold(
+            body: SundoLiveTruckCard(
+                truck: snapshot,
+                onViewMap: () {},
+                onDemoPreview: () => previewTaps++)),
         mood: SundoTimeMood.fromInstant(now), width: 390);
     await show(truck(simulated: true));
     expect(find.text('Truck is ON ROUTE'), findsOneWidget);
@@ -292,6 +302,13 @@ void main() {
     expect(find.text('No collection scheduled for your area today.'),
         findsOneWidget);
     expect(find.text('LIVE'), findsNothing);
+    await tester.tap(find.text('Watch truck demo'));
+    expect(previewTaps, 1);
+    await show(truck(simulated: true, preview: true));
+    expect(find.text('DEMO'), findsOneWidget);
+    expect(find.text('LIVE'), findsNothing);
+    await tester.tap(find.text('Stop truck demo'));
+    expect(previewTaps, 2);
     await show(null);
     expect(find.textContaining('Awaiting fleet data'), findsOneWidget);
     expect(find.text('LIVE'), findsNothing);

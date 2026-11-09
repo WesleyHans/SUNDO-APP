@@ -38,6 +38,7 @@ class MapTruckSnapshot {
   final MapTrackingStage stage;
   final bool active;
   final bool simulated;
+  final bool demoPreview;
 
   const MapTruckSnapshot({
     required this.id,
@@ -53,6 +54,7 @@ class MapTruckSnapshot {
     this.stage = MapTrackingStage.notStarted,
     this.active = false,
     this.simulated = false,
+    this.demoPreview = false,
   });
 
   bool freshAt(DateTime now) =>
