@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_home_truck_video.dart';
-import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 class _VideoPlatform extends VideoPlayerPlatform {
@@ -70,6 +69,7 @@ void main() {
       await player.events.close();
     });
     const asset = 'assets/images/sundo-home-truck-loop.mp4';
+    const parkedAsset = AssetImage('assets/images/sundo-home-truck-parked.png');
     final bytes = await tester.runAsync(() => rootBundle.load(asset));
     expect(bytes?.lengthInBytes, greaterThan(10000));
 
@@ -95,7 +95,14 @@ void main() {
       expect(player.volume, 0);
       expect(player.playing, isTrue);
       expect(tester.getSize(find.byKey(const ValueKey('truck-video-view'))),
-          const Size(124, 62));
+          const Size(104, 52));
+      final videoFrame = tester.getRect(find.byType(ClipPath));
+      final clip = tester.widget<ClipPath>(find.byType(ClipPath)).clipper!;
+      final silhouette = clip.getClip(videoFrame.size);
+      expect(silhouette.contains(const Offset(1, 1)), isFalse);
+      expect(silhouette.contains(const Offset(103, 51)), isFalse);
+      expect(silhouette.contains(const Offset(28, 43)), isTrue);
+      expect(silhouette.contains(const Offset(82, 43)), isTrue);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump();
       expect(player.playing, isFalse);
@@ -106,7 +113,10 @@ void main() {
       expect(player.playing, isFalse);
       await show(reduceMotion: true);
       expect(player.playing, isFalse);
-      expect(find.byType(SundoTruckGraphic), findsOneWidget);
+      expect(find.image(parkedAsset), findsOneWidget);
+      expect(tester.getRect(find.image(parkedAsset)), videoFrame);
+      expect(
+          tester.widget<ClipPath>(find.byType(ClipPath)).clipper, same(clip));
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../shared/widgets/sundo_graphics.dart';
-
 /// Plays the bundled illustration; fleet location and status come from Home.
 class SundoHomeTruckVideo extends StatefulWidget {
   const SundoHomeTruckVideo({super.key, required this.active});
@@ -17,7 +15,6 @@ class SundoHomeTruckVideo extends StatefulWidget {
 
 class _SundoHomeTruckVideoState extends State<SundoHomeTruckVideo>
     with WidgetsBindingObserver {
-  static const _fallback = SundoTruckGraphic(width: 124, height: 62);
   VideoPlayerController? _player;
   bool _allowMotion = false;
   bool _ready = false;
@@ -106,28 +103,94 @@ class _SundoHomeTruckVideoState extends State<SundoHomeTruckVideo>
   @override
   Widget build(BuildContext context) {
     final player = _player;
-    if (!_ready ||
-        _failed ||
-        !widget.active ||
-        !_allowMotion ||
-        player == null) {
-      return _fallback;
-    }
-    return ValueListenableBuilder<VideoPlayerValue>(
-      valueListenable: player,
-      builder: (context, value, child) => value.hasError ? _fallback : child!,
-      child: Semantics(
-        image: true,
-        label: 'Animated SUNDO collection truck illustration',
-        child: SizedBox(
-          width: 124,
-          height: 62,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: VideoPlayer(player),
+    const parked = Image(
+      image: AssetImage('assets/images/sundo-home-truck-parked.png'),
+      fit: BoxFit.fill,
+      excludeFromSemantics: true,
+    );
+    final showVideo = _ready && !_failed && widget.active && _allowMotion;
+    return Semantics(
+      image: true,
+      label: 'SUNDO collection truck illustration',
+      child: SizedBox(
+        width: 124,
+        height: 62,
+        child: Center(
+          child: SizedBox(
+            width: 104,
+            height: 52,
+            child: ClipPath(
+              clipper: const _TruckSilhouette(),
+              child: showVideo && player != null
+                  ? ValueListenableBuilder<VideoPlayerValue>(
+                      valueListenable: player,
+                      builder: (context, value, child) =>
+                          value.hasError ? parked : child!,
+                      child: VideoPlayer(player),
+                    )
+                  : parked,
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// The clip is in source-frame pixels. It removes the backdrop while leaving
+/// the truck's dark wheels and chassis intact.
+class _TruckSilhouette extends CustomClipper<Path> {
+  const _TruckSilhouette();
+
+  static final Path _outline = Path()
+    ..moveTo(32, 147)
+    ..lineTo(33, 101)
+    ..lineTo(43, 85)
+    ..quadraticBezierTo(55, 54, 64, 51)
+    ..lineTo(72, 49)
+    ..lineTo(72, 43)
+    ..quadraticBezierTo(78, 39, 82, 44)
+    ..lineTo(83, 48)
+    ..lineTo(93, 46)
+    ..lineTo(94, 36)
+    ..lineTo(102, 35)
+    ..lineTo(103, 29)
+    ..lineTo(116, 26)
+    ..lineTo(119, 29)
+    ..lineTo(133, 24)
+    ..lineTo(152, 23)
+    ..lineTo(154, 21)
+    ..lineTo(163, 21)
+    ..lineTo(165, 23)
+    ..lineTo(212, 21)
+    ..lineTo(225, 20)
+    ..lineTo(233, 23)
+    ..lineTo(235, 17)
+    ..lineTo(242, 16)
+    ..quadraticBezierTo(250, 2, 262, 9)
+    ..quadraticBezierTo(282, 20, 297, 52)
+    ..quadraticBezierTo(311, 54, 308, 67)
+    ..lineTo(306, 71)
+    ..lineTo(318, 89)
+    ..quadraticBezierTo(321, 98, 321, 105)
+    ..lineTo(325, 110)
+    ..lineTo(325, 123)
+    ..lineTo(316, 131)
+    ..lineTo(315, 138)
+    ..lineTo(302, 142)
+    ..cubicTo(304, 156, 291, 170, 275, 170)
+    ..cubicTo(258, 170, 247, 159, 246, 148)
+    ..lineTo(121, 150)
+    ..cubicTo(118, 163, 108, 170, 95, 170)
+    ..cubicTo(81, 170, 70, 163, 66, 151)
+    ..lineTo(37, 151)
+    ..quadraticBezierTo(32, 151, 32, 147)
+    ..close();
+
+  @override
+  Path getClip(Size size) => _outline.transform(
+      Matrix4.diagonal3Values(size.width / 352, size.height / 176, 1).storage);
+
+  @override
+  bool shouldReclip(_TruckSilhouette oldClipper) => false;
 }
