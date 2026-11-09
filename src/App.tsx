@@ -1,16 +1,16 @@
 import { ArrowDownToLine, ArrowRight, Check, Leaf, Smartphone, Truck } from 'lucide-react';
 import { SundoTruckIcon } from './components/common/SundoLogo';
 
-const downloadUrl = '/download-apk?v=1.5.12';
+const downloadUrl = '/download-apk?v=1.5.13';
 export default function App() {
   return <div className="installer">
     <header className="site-header"><a className="brand" href="#" aria-label="SUNDO home"><SundoTruckIcon size={62} /><span>SUNDO<small>Sipalay City</small></span></a><a className="header-download" href={downloadUrl}><ArrowDownToLine size={17}/> Download APK</a></header>
     <main>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy"><span className="eyebrow"><Leaf size={15}/> A cleaner Sipalay starts with you</span><h1 id="hero-title">Clean city.<br/>One little <span>download.</span></h1><p className="intro">Meet SUNDO, your companion for waste collection in Sipalay. Get the Android app and help keep your neighborhood clean.</p>
-        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.5.12 · Free</small></span><ArrowRight size={22}/></a>
+        <a className="download-button" href={downloadUrl}><span className="download-icon"><ArrowDownToLine size={24}/></span><span>Download for Android<small>APK · Version 1.5.13 · Free</small></span><ArrowRight size={22}/></a>
         <p className="download-note"><Smartphone size={15}/> Android only. Open the downloaded APK to install.</p>
-        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.5.12 shows the truck, a tappable route aligned with mapped roads, and one private house marker when GPS provides a fresh fix. The icons keep their size while zooming. The three welcome slides now advance automatically. Routes, schedules and fleet information are samples in local demo; city accounts, reports and live tracking need the city service activated.</p></div>
+        <div className="release-note"><span className="status-dot"/><p><strong>Development preview</strong>Version 1.5.13 keeps the truck facing the road it is driving on and turns it at the junction. Live Map shows its tappable route and one private house marker when GPS provides a fresh fix. The icons keep their size while zooming. The three welcome slides now advance automatically. Routes, schedules and fleet information are samples in local demo; city accounts, reports and live tracking need the city service activated.</p></div>
         </div>
         <div className="hero-art"><img src="/clay-city-hero.png" alt="A green recycling truck surrounded by clay trees and the city skyline" width="1024" height="1536" fetchPriority="high"/><div className="art-tag"><span className="tag-icon"><Truck size={24}/></span><span>Small steps.<strong>A cleaner Sipalay.</strong></span><Check size={19}/></div></div>
       </section>

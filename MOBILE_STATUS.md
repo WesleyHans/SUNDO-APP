@@ -1,5 +1,23 @@
 # SUNDO mobile status
 
+## Version 1.5.13 truck movement and direction
+
+The Live Map truck faces the segment it is traveling, then turns at the
+waypoint before continuing. Demo movement uses the full six-second waypoint
+interval; the previous early pause is gone on straight segments. Route geometry,
+marker size and truck artwork are unchanged.
+
+Flutter analysis and all 366 tests passed, including a regression that verifies
+truck position and heading at a corner with the map rotated. The installer
+lint and build passed. The source was merged in PR #16 at
+`3077ba6b60acdd7bbaa2847b57c3960b3a32beee`.
+
+The signed Android APK is **1.5.13+21** (`com.sundo.sipalay`),
+**135,371,064 bytes**, SHA-256
+`0f6128bb9cfb740e5198d3e099507b320a9ac978e9770964af140147f1a393d2`.
+The established update certificate, APK v2/v3 signatures, and 16 KB ZIP
+alignment were verified. Android API 24+, ARM64, ARMv7 and x86_64 are supported.
+
 ## Version 1.5.12 Live Map and Welcome
 
 Live Map shows the truck, its route, and one house at a fresh private device
