@@ -530,7 +530,7 @@ void main() {
     }
   });
 
-  testWidgets('an interrupted demo truck leg does not cut across a turn',
+  testWidgets('demo truck faces its road and turns only at the junction',
       (tester) async {
     const start = LatLng(9.7525, 122.4038);
     const corner = LatLng(9.7525, 122.4043);
@@ -540,6 +540,8 @@ void main() {
             id: 'A', name: 'Demo road', waypoints: [start, corner, end]));
     await mountMap(tester, repository: repository);
     try {
+      SundoMapTruckMarker truck() =>
+          tester.widget<SundoMapTruckMarker>(find.byType(SundoMapTruckMarker));
       LatLng truckPoint() => tester
           .widget<MarkerLayer>(find
               .ancestor(
@@ -549,16 +551,24 @@ void main() {
           .markers
           .last
           .point;
-      repository.publish(corner);
+      mapController(tester).rotate(37);
+      repository.publish(corner, heading: mapBearing(corner, end));
       await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 3));
       expect(truckPoint().longitude, lessThan(corner.longitude));
+      expect(truckPoint().latitude, start.latitude);
+      expect(truck().headingDegrees, closeTo(mapBearing(start, corner), .001));
+      expect(truck().mapRotationDegrees, 37);
+      await tester.pump(const Duration(milliseconds: 2850));
+      expect(truckPoint(), corner);
+      expect(truck().headingDegrees, closeTo(45, .001));
       repository.publish(end);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(truckPoint().longitude, closeTo(corner.longitude, 1e-9));
       expect(truckPoint().latitude, greaterThan(corner.latitude));
       expect(truckPoint().latitude, lessThan(end.latitude));
+      expect(truck().headingDegrees, closeTo(mapBearing(corner, end), .001));
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.runAsync(repository.dispose);
