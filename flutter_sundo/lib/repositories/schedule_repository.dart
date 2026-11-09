@@ -45,7 +45,8 @@ class MockScheduleRepository implements ScheduleRepository {
   static final shared = MockScheduleRepository();
   final DateTime referenceDate;
   MockScheduleRepository({DateTime? now})
-      : referenceDate = now ?? DateTime.now();
+      : referenceDate =
+            now ?? DateTime.now().toUtc().add(const Duration(hours: 8));
 
   @override
   bool get isDemo => true;

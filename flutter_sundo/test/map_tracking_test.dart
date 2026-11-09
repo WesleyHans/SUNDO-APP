@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sundo_sipalay/core/storage/app_store.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/map_truck_repository.dart';
 
@@ -63,7 +65,11 @@ void main() {
   });
 
   test('malformed live route geometry does not bridge across the gap', () {
-    for (final invalidPoint in [null, [9.75], [91, 122.4]]) {
+    for (final invalidPoint in [
+      null,
+      [9.75],
+      [91, 122.4]
+    ]) {
       final truck = MapTruckSnapshot.fromSupabase({
         'id': 'Truck 02',
         'latitude': 9.75,
@@ -96,6 +102,8 @@ void main() {
 
   testWidgets('shared simulation replays state and stops after last listener',
       (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppStore.setBarangay('Barangay 2');
     final repository = MockMapTruckRepository();
     final first = <MapTruckSnapshot>[];
     final second = <MapTruckSnapshot>[];
@@ -109,12 +117,45 @@ void main() {
     expect(first.last.position, second.last.position);
     expect(first.last.updatedAt, second.last.updatedAt);
     expect(first.last.simulated, isTrue);
+    expect(first.last.active, isTrue);
     unawaited(firstSubscription.cancel());
     unawaited(secondSubscription.cancel());
     await tester.pump();
     final count = second.length;
     await tester.pump(const Duration(seconds: 30));
     expect(second.length, count);
+  });
+
+  testWidgets('demo truck stays parked without a schedule for the area',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppStore.setBarangay('Barangay 1 (Poblacion)');
+    final snapshots = <MapTruckSnapshot>[];
+    final subscription = MockMapTruckRepository()
+        .watchTrucks()
+        .listen((trucks) => snapshots.add(trucks.single));
+    await tester.pump();
+    final start = snapshots.last.position;
+    await tester.pump(MockMapTruckRepository.waypointInterval * 2);
+    expect(snapshots.every((truck) => truck.position == start), isTrue);
+    expect(snapshots.last.stage, MapTrackingStage.notStarted);
+    expect(snapshots.last.active, isFalse);
+    expect(snapshots.last.etaMinutes, isNull);
+
+    await AppStore.setBarangay('Barangay 2');
+    await tester.pump(MockMapTruckRepository.waypointInterval);
+    final onRoute = snapshots.last.position;
+    expect(onRoute, isNot(start));
+    expect(snapshots.last.active, isTrue);
+
+    await AppStore.setBarangay('Barangay 1 (Poblacion)');
+    await tester.pump(MockMapTruckRepository.waypointInterval * 2);
+    expect(snapshots.last.position, onRoute);
+    expect(snapshots.last.stage, MapTrackingStage.notStarted);
+    expect(snapshots.last.active, isFalse);
+
+    unawaited(subscription.cancel());
+    await tester.pump();
   });
 
   test('simulated route changes share a contact point and never jump', () {

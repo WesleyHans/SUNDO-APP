@@ -453,9 +453,7 @@ class SundoInfoCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(subtitle,
                       style: TextStyle(
-                          fontSize: 12.5,
-                          height: 1.35,
-                          color: secondaryColor)),
+                          fontSize: 12.5, height: 1.35, color: secondaryColor)),
                   if (timeLabel != null) ...[
                     const SizedBox(height: 9),
                     Container(
@@ -491,9 +489,7 @@ class SundoInfoCard extends StatelessWidget {
                     const SizedBox(height: 7),
                     Text(additionalDetails!,
                         style: TextStyle(
-                            fontSize: 11,
-                            height: 1.3,
-                            color: secondaryColor))
+                            fontSize: 11, height: 1.3, color: secondaryColor))
                   ],
                   if (footer != null) ...[
                     const SizedBox(height: 9),
@@ -530,6 +526,8 @@ class SundoLiveTruckCard extends StatelessWidget {
     final mood = SundoTimeScope.of(context);
     final snapshot = truck;
     final fresh = snapshot?.freshAt(mood.now) ?? false;
+    final parked = snapshot?.simulated == true &&
+        snapshot?.stage == MapTrackingStage.notStarted;
     final available = snapshot != null &&
         fresh &&
         (snapshot.active || snapshot.stage == MapTrackingStage.completed);
@@ -537,16 +535,20 @@ class SundoLiveTruckCard extends StatelessWidget {
         ? 'Awaiting fleet data'
         : available
             ? mapStageLabel(snapshot.stage).toUpperCase()
-            : 'OFFLINE';
+            : parked
+                ? 'PARKED'
+                : 'OFFLINE';
     final distance = snapshot?.distanceKm;
     final eta = snapshot?.etaMinutes;
     final detail = snapshot == null
         ? (BackendService.live
             ? 'No position has been received.'
             : 'Starting the sample route…')
-        : !fresh
-            ? 'Waiting for a current truck position.'
-            : '${distance == null ? 'Distance unavailable' : '${distance.toStringAsFixed(1)} km away'} · ${eta == null ? 'ETA unavailable' : 'ETA: $eta minutes'}';
+        : parked
+            ? 'No collection scheduled for your area today.'
+            : !fresh
+                ? 'Waiting for a current truck position.'
+                : '${distance == null ? 'Distance unavailable' : '${distance.toStringAsFixed(1)} km away'} · ${eta == null ? 'ETA unavailable' : 'ETA: $eta minutes'}';
     final source = snapshot == null
         ? null
         : '${snapshot.simulated ? 'Simulated collection' : fresh ? 'Live city update' : 'Last known position'}${snapshot.route.name.isEmpty ? '' : ' · ${snapshot.route.name}'}';
