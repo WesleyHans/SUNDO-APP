@@ -184,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     isActive: widget.isActive,
                                     child: SundoLiveTruckCard(
                                         truck: _truck,
+                                        isActive: widget.isActive,
                                         onViewMap: () => widget.onNavigate(1))),
                                 const SizedBox(height: 14),
                                 HomeLocationCard(

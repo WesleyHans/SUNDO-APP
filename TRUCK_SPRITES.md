@@ -23,6 +23,16 @@ stale/stationary trucks and reduced-motion settings render without transitions.
 Images decode at 256px for mobile map markers. Branding and side-view card truck
 assets are unchanged. The old artwork's rim masks are not applied to new views.
 
+## Home card video
+
+The Home tracking card plays `assets/images/sundo-home-truck-loop.mp4`, a muted
+local video made from the supplied four-second truck clip. It is cropped to fit
+the existing card slot and encoded at 352 × 176, 30 fps. Its final ten frames
+blend into the first ten source frames before playback wraps, preserving the
+truck silhouette and avoiding a hard restart. The static truck remains the
+fallback when playback is unavailable or reduced motion is enabled. This is a
+decorative clip; truck status, distance, and ETA come from the tracking source.
+
 `scripts/inspect-truck-directions.mjs` checks alpha, records silhouette bounds,
 and measures the blue windshield / yellow compactor direction for calibration.
 It produces a source contact sheet. `directional_truck_preview_test.dart`

@@ -7,10 +7,10 @@ import '../../../core/theme/clay_theme.dart';
 import '../../../core/theme/time_theme.dart';
 import '../../../models/map_tracking.dart';
 import '../../../services/backend_service.dart';
-import '../../../shared/widgets/sundo_graphics.dart';
 import '../../../shared/widgets/sundo_card_illustration.dart';
 import '../../live_map/widgets/map_tracking_widgets.dart';
 import 'sundo_card_scenery.dart';
+import 'sundo_home_truck_video.dart';
 
 /// A single, slow clock shared by decorative Home painters. Content does not
 /// rebuild on each tick, and the clock stops outside Home or in the background.
@@ -521,7 +521,9 @@ class SundoInfoCard extends StatelessWidget {
 class SundoLiveTruckCard extends StatelessWidget {
   final MapTruckSnapshot? truck;
   final VoidCallback onViewMap;
-  const SundoLiveTruckCard({super.key, this.truck, required this.onViewMap});
+  final bool isActive;
+  const SundoLiveTruckCard(
+      {super.key, this.truck, required this.onViewMap, this.isActive = true});
 
   @override
   Widget build(BuildContext context) {
@@ -601,9 +603,10 @@ class SundoLiveTruckCard extends StatelessWidget {
                     fontSize: 10.5, height: 1.35, color: mood.mutedTextColor))
           ],
           const SizedBox(height: 1),
-          const Align(
+          Align(
               alignment: Alignment.centerRight,
-              child: SundoTruckGraphic(width: 124, height: 62)),
+              child: SundoHomeTruckVideo(
+                  active: isActive && available && snapshot.active)),
           Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
