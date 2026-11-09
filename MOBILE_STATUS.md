@@ -1,5 +1,17 @@
 # SUNDO mobile status
 
+## Version 1.5.15 on-demand truck demo
+
+On days without scheduled collection, Home and Live Map keep the sample truck
+parked and offer **Watch truck demo**. The preview is labeled **DEMO** and
+**Stop truck demo** restores the schedule-based state. The simulated arrival
+alert can also be previewed from Live Map.
+
+Flutter analysis and all 368 tests passed. The installer lint and build passed.
+The signed APK is **1.5.15+23** (com.sundo.sipalay), **136640931 bytes**.
+Its SHA-256 is a4cc4cb4c852789c7e5096a40724026fdcf5545db0c68360122b1c8b75c65180.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.14 Home truck video and parked state
 
 The Home truck illustration plays the supplied muted MP4 on a blended loop.
