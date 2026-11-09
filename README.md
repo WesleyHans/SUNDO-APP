@@ -95,7 +95,7 @@ npm run build
 npm run dev
 ```
 
-Vercel builds `dist`. The installer configuration points to the [signed 1.5.16 GitHub APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.16/SUNDO.apk). Binaries stay outside Git and the web bundle, and download redirects use no-store headers. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). See [mobile status](MOBILE_STATUS.md) for deployment verification.
+Vercel builds `dist`. The installer configuration points to the [signed 1.5.17 GitHub APK](https://github.com/WesleyHans/SUNDO-APP/releases/download/v1.5.17/SUNDO.apk). Binaries stay outside Git and the web bundle, and download redirects use no-store headers. Production address: [sundo-app.vercel.app](https://sundo-app.vercel.app). See [mobile status](MOBILE_STATUS.md) for deployment verification.
 
 The [Android workflow](.github/workflows/build-apk.yml) runs analysis/tests and retains APK/preview artifacts on mobile changes to `main`. Its public Supabase values come from Actions variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Builds now run under WesleyHans after the repository transfer. Before release publication, sign the artifact with the existing local app key and verify its signature, version and checksum; runner-signed builds are never automatically published.
 

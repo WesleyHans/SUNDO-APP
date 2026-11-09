@@ -1,5 +1,15 @@
 # SUNDO mobile status
 
+## Version 1.5.17 clean Home truck loop
+
+The three-second truck loop joins closely matched frames without a crossfade.
+The parked image is taken from the first frame and uses the same framing.
+
+All 368 Flutter tests passed. The installer lint and build passed.
+The signed APK is **1.5.17+25** (com.sundo.sipalay), **136772112 bytes**.
+Its SHA-256 is 9b359561e43e18bdceea4140a4e5daa41c1107d2ad60259fc8654e79b230b51f.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.16 matched Home truck artwork
 
 The moving and parked truck now share the same artwork size and framing.
