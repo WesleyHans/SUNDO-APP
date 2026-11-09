@@ -23,6 +23,7 @@ class SupabaseMapTruckRepository implements MapTruckRepository {
 /// These demonstration routes are sample paths, not city operating directions.
 /// Every route closes at the same point, so changing routes never teleports.
 class MockMapTruckRepository implements MapTruckRepository {
+  static const waypointInterval = Duration(seconds: 6);
   static final shared = MockMapTruckRepository();
   late final StreamController<List<MapTruckSnapshot>> _updates =
       StreamController<List<MapTruckSnapshot>>.broadcast(
@@ -34,7 +35,8 @@ class MockMapTruckRepository implements MapTruckRepository {
   var _completed = false;
   // Road geometry © OpenStreetMap contributors (ODbL), Sipalay Poblacion.
   // Consecutive points are adjacent way nodes in the direction of travel.
-  static const _routeStart = LatLng(9.751955, 122.403779); // OSM node 2824836369.
+  static const _routeStart =
+      LatLng(9.751955, 122.403779); // OSM node 2824836369.
 
   // OSM ways: 80607428, 80558708, 80607419, 80558717.
   static const _base = <LatLng>[
@@ -115,7 +117,7 @@ class MockMapTruckRepository implements MapTruckRepository {
       });
 
   void _start() {
-    _timer ??= Timer.periodic(const Duration(seconds: 6), (_) {
+    _timer ??= Timer.periodic(waypointInterval, (_) {
       if (_completed) {
         _routeIndex = (_routeIndex + 1) % routes.length;
         _waypoint = 0;

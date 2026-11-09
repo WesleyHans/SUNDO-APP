@@ -58,7 +58,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   LatLng? _residentPosition;
   LatLng _areaCenter = _sipalay;
   DateTime? _residentUpdatedAt;
-  double? _headingStart, _headingTarget;
+  double? _legHeading, _headingTarget;
   double _sheetFraction = .30;
   bool _motionEnabled = true;
   bool _reduceMotion = false;
@@ -74,14 +74,29 @@ class _LiveMapScreenState extends State<LiveMapScreen>
   bool _demo = true;
   bool _foreground = true;
 
+  double get _travelEnd => _legHeading != null &&
+          _headingTarget != null &&
+          ((_headingTarget! - _legHeading! + 180) % 360 - 180).abs() > 5
+      ? .95
+      : 1;
   LatLng? get _displayTruck => _truckStart != null && _truckTarget != null
-      ? interpolateMapPosition(_truckStart!, _truckTarget!, _truckMotion.value)
+      ? interpolateMapPosition(
+          _truckStart!, _truckTarget!, _truckMotion.value / _travelEnd)
       : _truck?.position;
   bool get _truckFresh => _truck?.freshAt(DateTime.now()) == true;
-  double? get _displayHeading => _headingTarget == null
-      ? null
-      : interpolateMapHeading(_headingStart ?? _headingTarget!, _headingTarget!,
-          _truckMotion.value);
+  double? get _displayHeading {
+    final target = _headingTarget;
+    final leg = _legHeading;
+    final progress = _truckMotion.value;
+    if (leg == null || target == null || progress >= 1) return target;
+    final travelEnd = _travelEnd;
+    // Turn only once the truck reaches the junction.
+    return progress <= travelEnd
+        ? leg
+        : interpolateMapHeading(
+            leg, target, (progress - travelEnd) / (1 - travelEnd));
+  }
+
   bool get _truckMoving =>
       _truckFresh &&
       _truck?.active == true &&
@@ -108,9 +123,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
         _mapRotation.value = event.camera.rotation;
       }
     });
-    _truckMotion = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 5400))
-      ..value = 1;
+    _truckMotion = AnimationController(vsync: this, value: 1);
     _truckMotion.addListener(() {
       if (_followTruck &&
           _mapReady &&
@@ -277,7 +290,7 @@ class _LiveMapScreenState extends State<LiveMapScreen>
             entry.key + 1 < demoPoints.length &&
             entry.value == priorSourcePosition &&
             demoPoints[entry.key + 1] == target);
-    final priorHeading = _displayHeading;
+    final priorHeading = _headingTarget;
     _truckMotion.stop();
     setState(() {
       _truck = next;
@@ -295,7 +308,10 @@ class _LiveMapScreenState extends State<LiveMapScreen>
               ? priorPosition ?? target
               : target;
       _truckTarget = target;
-      _headingStart = sameTruck ? priorHeading : null;
+      final start = _truckStart;
+      _legHeading = start != null && target != null && start != target
+          ? mapBearing(start, target)
+          : null;
       if (next?.heading?.isFinite == true) {
         _headingTarget = next!.heading!;
       } else if (sameTruck &&
@@ -310,12 +326,10 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     if (_visualMotion &&
         sameTruck &&
         next.freshAt(DateTime.now()) &&
-        (!next.simulated || followsDemoLeg) &&
-        priorPosition != null &&
-        target != null &&
-        priorPosition != target) {
-      _truckMotion.duration =
-          Duration(milliseconds: next.simulated ? 5400 : 1400);
+        _legHeading != null) {
+      _truckMotion.duration = next.simulated
+          ? MockMapTruckRepository.waypointInterval
+          : const Duration(milliseconds: 1400);
       _truckMotion.forward(from: 0);
     } else {
       _truckMotion.value = 1;
@@ -575,32 +589,33 @@ class _LiveMapScreenState extends State<LiveMapScreen>
     }
   }
 
-  Future<void> _showRouteDetails(MapTruckSnapshot truck) => showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                ListTile(
-                  leading: const Icon(Icons.route_rounded),
-                  title: const Text('Route details'),
-                  subtitle: Text([
-                    if (truck.route.name.isNotEmpty) truck.route.name,
-                    if (truck.simulated) 'Sample route',
-                  ].join(' · ')),
+  Future<void> _showRouteDetails(MapTruckSnapshot truck) =>
+      showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          isScrollControlled: true,
+          builder: (sheetContext) => SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    ListTile(
+                      leading: const Icon(Icons.route_rounded),
+                      title: const Text('Route details'),
+                      subtitle: Text([
+                        if (truck.route.name.isNotEmpty) truck.route.name,
+                        if (truck.simulated) 'Sample route',
+                      ].join(' · ')),
+                    ),
+                    FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _recenter();
+                        },
+                        icon: const Icon(Icons.center_focus_strong_rounded),
+                        label: const Text('Fit route on map')),
+                  ]),
                 ),
-                FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      _recenter();
-                    },
-                    icon: const Icon(Icons.center_focus_strong_rounded),
-                    label: const Text('Fit route on map')),
-              ]),
-            ),
-          ));
+              ));
 
   void _zoom(double change) {
     if (!_mapReady) return;

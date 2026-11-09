@@ -14,8 +14,9 @@ isometric projection and recenters each transparent silhouette. Use this widget
 instead of treating the filename as the PNG's raw on-screen front bearing.
 North is up; east is right. Known headings wrap across north. Missing headings
 show a neutral front view and remain explicitly unavailable in marker semantics.
-The existing GPS position interpolation and labeled local-demo route remain the
-movement source. No sprite generates its own coordinates.
+The truck faces the leg it is traveling, then turns at the waypoint or published
+GPS fix if the next heading differs. The demo animation uses the waypoint update
+interval. No sprite generates its own coordinates.
 
 Views crossfade for 140ms while movement effects are enabled. Paused effects,
 stale/stationary trucks and reduced-motion settings render without transitions.
