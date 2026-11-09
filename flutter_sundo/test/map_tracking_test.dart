@@ -131,7 +131,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await AppStore.setBarangay('Barangay 1 (Poblacion)');
     final snapshots = <MapTruckSnapshot>[];
-    final subscription = MockMapTruckRepository()
+    final repository = MockMapTruckRepository();
+    final subscription = repository
         .watchTrucks()
         .listen((trucks) => snapshots.add(trucks.single));
     await tester.pump();
@@ -142,10 +143,25 @@ void main() {
     expect(snapshots.last.active, isFalse);
     expect(snapshots.last.etaMinutes, isNull);
 
+    repository.togglePreview();
+    await tester.pump();
+    expect(snapshots.last.demoPreview, isTrue);
+    expect(snapshots.last.active, isTrue);
+    await tester.pump(MockMapTruckRepository.waypointInterval);
+    final previewPosition = snapshots.last.position;
+    expect(previewPosition, isNot(start));
+
+    repository.togglePreview();
+    await tester.pump();
+    await tester.pump(MockMapTruckRepository.waypointInterval * 2);
+    expect(snapshots.last.demoPreview, isFalse);
+    expect(snapshots.last.active, isFalse);
+    expect(snapshots.last.position, previewPosition);
+
     await AppStore.setBarangay('Barangay 2');
     await tester.pump(MockMapTruckRepository.waypointInterval);
     final onRoute = snapshots.last.position;
-    expect(onRoute, isNot(start));
+    expect(onRoute, isNot(previewPosition));
     expect(snapshots.last.active, isTrue);
 
     await AppStore.setBarangay('Barangay 1 (Poblacion)');

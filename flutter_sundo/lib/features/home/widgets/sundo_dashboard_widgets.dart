@@ -517,14 +517,20 @@ class SundoInfoCard extends StatelessWidget {
 class SundoLiveTruckCard extends StatelessWidget {
   final MapTruckSnapshot? truck;
   final VoidCallback onViewMap;
+  final VoidCallback? onDemoPreview;
   final bool isActive;
   const SundoLiveTruckCard(
-      {super.key, this.truck, required this.onViewMap, this.isActive = true});
+      {super.key,
+      this.truck,
+      required this.onViewMap,
+      this.onDemoPreview,
+      this.isActive = true});
 
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
     final snapshot = truck;
+    final preview = snapshot?.demoPreview == true;
     final fresh = snapshot?.freshAt(mood.now) ?? false;
     final parked = snapshot?.simulated == true &&
         snapshot?.stage == MapTrackingStage.notStarted;
@@ -569,9 +575,11 @@ class SundoLiveTruckCard extends StatelessWidget {
                         fontWeight: FontWeight.w800)),
                 if (available)
                   Semantics(
-                      label: snapshot.simulated
-                          ? 'Live demo updates'
-                          : 'Live city updates',
+                      label: preview
+                          ? 'Truck demo preview'
+                          : snapshot.simulated
+                              ? 'Live demo updates'
+                              : 'Live city updates',
                       child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 9, vertical: 6),
@@ -587,7 +595,7 @@ class SundoLiveTruckCard extends StatelessWidget {
                                             context),
                                         color: mood.accent))),
                             const SizedBox(width: 5),
-                            Text('LIVE',
+                            Text(preview ? 'DEMO' : 'LIVE',
                                 style: TextStyle(
                                     fontSize: 10,
                                     color: mood.accent,
@@ -619,7 +627,16 @@ class SundoLiveTruckCard extends StatelessWidget {
                   stage: snapshot?.stage ?? MapTrackingStage.notStarted,
                   available: available)),
           const SizedBox(height: 11),
-          _DashboardPrimaryButton(onPressed: onViewMap)
+          _DashboardPrimaryButton(onPressed: onViewMap),
+          if (onDemoPreview != null && (parked || preview))
+            Center(
+              child: TextButton.icon(
+                onPressed: onDemoPreview,
+                icon: Icon(
+                    preview ? Icons.stop_rounded : Icons.play_arrow_rounded),
+                label: Text(preview ? 'Stop truck demo' : 'Watch truck demo'),
+              ),
+            ),
         ]));
   }
 }

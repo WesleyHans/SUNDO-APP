@@ -122,6 +122,7 @@ class SundoTrackingBottomSheet extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback? onRouteDetails;
   final VoidCallback? onAlertPreview;
+  final VoidCallback? onDemoPreview;
   final ScrollController scrollController;
   const SundoTrackingBottomSheet(
       {super.key,
@@ -133,6 +134,7 @@ class SundoTrackingBottomSheet extends StatelessWidget {
       required this.onRefresh,
       this.onRouteDetails,
       this.onAlertPreview,
+      this.onDemoPreview,
       required this.scrollController});
 
   @override
@@ -195,11 +197,13 @@ class SundoTrackingBottomSheet extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                               color: mood.textColor)),
                       Text(
-                          snapshot.simulated
-                              ? 'Simulated collection'
-                              : fresh
-                                  ? 'Live city update'
-                                  : 'Last known position',
+                          snapshot.demoPreview
+                              ? 'Truck demo preview'
+                              : snapshot.simulated
+                                  ? 'Simulated collection'
+                                  : fresh
+                                      ? 'Live city update'
+                                      : 'Last known position',
                           style: TextStyle(
                               color: mood.mutedTextColor, fontSize: 11)),
                     ])),
@@ -219,6 +223,18 @@ class SundoTrackingBottomSheet extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.w800))),
               ]),
+              if (onDemoPreview != null &&
+                  (snapshot.demoPreview ||
+                      snapshot.stage == MapTrackingStage.notStarted))
+                TextButton.icon(
+                  onPressed: onDemoPreview,
+                  icon: Icon(snapshot.demoPreview
+                      ? Icons.stop_rounded
+                      : Icons.play_arrow_rounded),
+                  label: Text(snapshot.demoPreview
+                      ? 'Stop truck demo'
+                      : 'Watch truck demo'),
+                ),
               const SizedBox(height: 8),
               Wrap(spacing: 14, runSpacing: 4, children: [
                 Text(

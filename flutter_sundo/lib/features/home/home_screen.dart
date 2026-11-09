@@ -185,6 +185,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: SundoLiveTruckCard(
                                         truck: _truck,
                                         isActive: widget.isActive,
+                                        onDemoPreview: BackendService.live
+                                            ? null
+                                            : MockMapTruckRepository
+                                                .shared.togglePreview,
                                         onViewMap: () => widget.onNavigate(1))),
                                 const SizedBox(height: 14),
                                 HomeLocationCard(

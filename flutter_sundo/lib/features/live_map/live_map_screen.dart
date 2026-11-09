@@ -981,9 +981,12 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                                     setState(() => _loading = true);
                                     _subscribeTrucks();
                                   },
-                                  onAlertPreview: truck?.simulated == true &&
-                                          truck?.stage !=
-                                              MapTrackingStage.notStarted
+                                  onDemoPreview:
+                                      _demo && widget.repository == null
+                                          ? MockMapTruckRepository
+                                              .shared.togglePreview
+                                          : null,
+                                  onAlertPreview: truck?.simulated == true
                                       ? () => _showAlert(_truck!)
                                       : null,
                                 ))),
