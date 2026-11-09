@@ -1,5 +1,15 @@
 # SUNDO mobile status
 
+## Version 1.5.16 matched Home truck artwork
+
+The moving and parked truck now share the same artwork size and framing.
+The card scenery shows around the truck during video playback.
+
+Flutter analysis and all 368 tests passed. The installer lint and build passed.
+The signed APK is **1.5.16+24** (com.sundo.sipalay), **136755728 bytes**.
+Its SHA-256 is 5cf7f81f80a1f88cfe6118c8d79d81cd89da0d6306525925f33b09791c30d548.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.15 on-demand truck demo
 
 On days without scheduled collection, Home and Live Map keep the sample truck
