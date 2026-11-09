@@ -1,5 +1,17 @@
 # SUNDO mobile status
 
+## Version 1.5.14 Home truck video and parked state
+
+The Home truck illustration plays the supplied muted MP4 on a blended loop.
+In local demo, Home shows **PARKED** with a stationary illustration and Live
+Map holds its last position when no collection is scheduled today in the
+selected barangay. Today follows Philippine time.
+
+Flutter analysis and all 368 tests passed. The installer lint and build passed.
+The signed APK is **1.5.14+22** (com.sundo.sipalay), **136640931 bytes**.
+Its SHA-256 is 578f5d2598a7523085e9a9bbc10410bdd4d362d99c796df381679161f5d29370.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.13 truck movement and direction
 
 The Live Map truck faces the segment it is traveling, then turns at the
