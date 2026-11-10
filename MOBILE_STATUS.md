@@ -1,5 +1,15 @@
 # SUNDO mobile status
 
+## Version 1.5.20 original still Home truck
+
+The Home card uses the original transparent side-view truck artwork, facing
+right. One still image sits directly above the current progress dot.
+
+All 368 Flutter tests passed. The installer lint and build passed.
+The signed APK is **1.5.20+28** (com.sundo.sipalay), **135371064 bytes**.
+Its SHA-256 is 042017726047a7ac857a5f3287d665c6adb48bda4fa2ced8ae13e7ba10d20d0d.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.19 stabilized Home truck
 
 The video loop keeps the truck body stable and preserves wheel motion from
