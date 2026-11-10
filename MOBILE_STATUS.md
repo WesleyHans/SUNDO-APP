@@ -1,5 +1,17 @@
 # SUNDO mobile status
 
+## Version 1.5.18 Home truck follows the progress tracker
+
+The Home truck faces right in parked and moving states and slides above the
+current progress dot. A clean gradient replaces the skyline, hills, and road
+behind the truck. Large text keeps complete stage labels and reduced motion
+moves the truck directly to the next dot.
+
+Flutter analysis and all 369 Flutter tests passed. The installer lint and
+build passed. The signed APK is **1.5.18+26** (com.sundo.sipalay), **136772112 bytes**.
+Its SHA-256 is 0caedff5a9db6bffd757cb0cf75d8c3e8e59988af2ba55c32ba7de1b100e9e5e.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.17 clean Home truck loop
 
 The three-second truck loop joins closely matched frames without a crossfade.
