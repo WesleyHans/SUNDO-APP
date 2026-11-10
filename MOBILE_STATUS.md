@@ -1,5 +1,17 @@
 # SUNDO mobile status
 
+## Version 1.5.22 smooth Home tracking card
+
+The original truck image and pulsing halo glide together between dots.
+Status and ETA fade into place, and progress colors transition smoothly.
+Route contours and leaves add texture at the card edges.
+Reduced-motion settings show the updated stage immediately.
+
+All 368 Flutter tests passed. The installer lint and build passed.
+The signed APK is **1.5.22+30** (com.sundo.sipalay), **135371064 bytes**.
+Its SHA-256 is 374921eedbd0c766f45bd0431b55979d2881737b24b78c43fd710f970e1304be.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.21 animated Home status and progress dots
 
 Home fades in the new truck status and eases progress line and dot color
