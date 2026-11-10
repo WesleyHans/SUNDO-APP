@@ -184,7 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     isActive: widget.isActive,
                                     child: SundoLiveTruckCard(
                                         truck: _truck,
-                                        isActive: widget.isActive,
                                         onDemoPreview: BackendService.live
                                             ? null
                                             : MockMapTruckRepository

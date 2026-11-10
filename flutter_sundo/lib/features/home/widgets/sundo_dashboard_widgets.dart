@@ -8,9 +8,9 @@ import '../../../core/theme/time_theme.dart';
 import '../../../models/map_tracking.dart';
 import '../../../services/backend_service.dart';
 import '../../../shared/widgets/sundo_card_illustration.dart';
+import '../../../shared/widgets/sundo_graphics.dart';
 import '../../live_map/widgets/map_tracking_widgets.dart';
 import 'sundo_card_scenery.dart';
-import 'sundo_home_truck_video.dart';
 
 /// A single, slow clock shared by decorative Home painters. Content does not
 /// rebuild on each tick, and the clock stops outside Home or in the background.
@@ -518,13 +518,8 @@ class SundoLiveTruckCard extends StatelessWidget {
   final MapTruckSnapshot? truck;
   final VoidCallback onViewMap;
   final VoidCallback? onDemoPreview;
-  final bool isActive;
   const SundoLiveTruckCard(
-      {super.key,
-      this.truck,
-      required this.onViewMap,
-      this.onDemoPreview,
-      this.isActive = true});
+      {super.key, this.truck, required this.onViewMap, this.onDemoPreview});
 
   @override
   Widget build(BuildContext context) {
@@ -615,8 +610,7 @@ class SundoLiveTruckCard extends StatelessWidget {
           SundoProgressTracker(
               stage: snapshot?.stage ?? MapTrackingStage.notStarted,
               available: available,
-              truck: SundoHomeTruckVideo(
-                  active: isActive && available && snapshot.active)),
+              showTruck: true),
           const SizedBox(height: 11),
           _DashboardPrimaryButton(onPressed: onViewMap),
           if (onDemoPreview != null && (parked || preview))
@@ -637,9 +631,12 @@ class SundoLiveTruckCard extends StatelessWidget {
 class SundoProgressTracker extends StatelessWidget {
   final MapTrackingStage stage;
   final bool available;
-  final SundoHomeTruckVideo? truck;
+  final bool showTruck;
   const SundoProgressTracker(
-      {super.key, required this.stage, this.available = true, this.truck});
+      {super.key,
+      required this.stage,
+      this.available = true,
+      this.showTruck = false});
 
   @override
   Widget build(BuildContext context) {
@@ -651,7 +648,7 @@ class SundoProgressTracker extends StatelessWidget {
       const edgeDot = 6 / totalWeight;
       final width = constraints.maxWidth;
       // Keep the silhouette inside the card at the first and last stops.
-      final inset = truck == null
+      final inset = !showTruck
           ? 0.0
           : math.max(
               0.0,
@@ -762,7 +759,7 @@ class SundoProgressTracker extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: inset),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            if (!wraps || truck != null) ...[
+            if (!wraps || showTruck) ...[
               dots,
               const SizedBox(height: 6),
             ],
@@ -770,25 +767,21 @@ class SundoProgressTracker extends StatelessWidget {
           ]),
         ),
       );
-      if (truck == null) return track;
+      if (!showTruck) return track;
+      const truckWidth = 124.0;
+      const truckHeight = 62.0;
       return Column(mainAxisSize: MainAxisSize.min, children: [
         SizedBox(
-          height: SundoHomeTruckVideo.slotHeight,
+          height: truckHeight,
           width: width,
           child: Stack(clipBehavior: Clip.none, children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(end: dotX),
-              duration: MediaQuery.disableAnimationsOf(context)
-                  ? Duration.zero
-                  : const Duration(milliseconds: 340),
-              curve: Curves.easeInOutCubic,
-              builder: (context, x, _) => Positioned(
-                left: x - SundoHomeTruckVideo.slotWidth / 2,
-                width: SundoHomeTruckVideo.slotWidth,
-                top: 0,
-                // Move one rasterized truck while the video texture is paused.
-                child: SundoHomeTruckVideo(
-                    active: truck!.active && (x - dotX).abs() < .01),
+            Positioned(
+              left: dotX - truckWidth / 2,
+              top: 0,
+              child: Transform.flip(
+                flipX: true,
+                child: const SundoTruckGraphic(
+                    width: truckWidth, height: truckHeight),
               ),
             ),
           ]),
