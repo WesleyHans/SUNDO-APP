@@ -7,6 +7,9 @@ import 'package:video_player/video_player.dart';
 class SundoHomeTruckVideo extends StatefulWidget {
   const SundoHomeTruckVideo({super.key, required this.active});
 
+  static const slotWidth = 124.0;
+  static const slotHeight = 62.0;
+
   final bool active;
 
   @override
@@ -113,22 +116,25 @@ class _SundoHomeTruckVideoState extends State<SundoHomeTruckVideo>
       image: true,
       label: 'SUNDO collection truck illustration',
       child: SizedBox(
-        width: 124,
-        height: 62,
+        width: SundoHomeTruckVideo.slotWidth,
+        height: SundoHomeTruckVideo.slotHeight,
         child: Center(
           child: SizedBox(
             width: 104,
             height: 52,
-            child: ClipPath(
-              clipper: const _TruckSilhouette(),
-              child: showVideo && player != null
-                  ? ValueListenableBuilder<VideoPlayerValue>(
-                      valueListenable: player,
-                      builder: (context, value, child) =>
-                          value.hasError ? parked : child!,
-                      child: VideoPlayer(player),
-                    )
-                  : parked,
+            child: Transform.flip(
+              flipX: true,
+              child: ClipPath(
+                clipper: const _TruckSilhouette(),
+                child: showVideo && player != null
+                    ? ValueListenableBuilder<VideoPlayerValue>(
+                        valueListenable: player,
+                        builder: (context, value, child) =>
+                            value.hasError ? parked : child!,
+                        child: VideoPlayer(player),
+                      )
+                    : parked,
+              ),
             ),
           ),
         ),

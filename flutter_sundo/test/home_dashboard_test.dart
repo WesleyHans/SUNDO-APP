@@ -12,6 +12,7 @@ import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/home/home_screen.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_card_scenery.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_dashboard_widgets.dart';
+import 'package:sundo_sipalay/features/home/widgets/sundo_home_truck_video.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/schedule_repository.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
@@ -71,7 +72,8 @@ void main() {
       expect(find.text('Juan!'), findsOneWidget);
       expect(find.text('JD'), findsOneWidget);
       expect(find.text('Today'), findsOneWidget);
-      expect(find.textContaining('No collection scheduled today'), findsOneWidget);
+      expect(
+          find.textContaining('No collection scheduled today'), findsOneWidget);
       expect(find.textContaining('Wed, Oct 7 · Barangay 1 (Poblacion)'),
           findsOneWidget);
       expect(find.text('Sample schedule · Local demo'), findsOneWidget);
@@ -123,7 +125,8 @@ void main() {
     ]);
     expect(find.byKey(const ValueKey('sundo-home-info-row')), findsOneWidget);
     expect(find.text('Good Morning,'), findsOneWidget);
-    expect(find.textContaining('No collection scheduled today'), findsOneWidget);
+    expect(
+        find.textContaining('No collection scheduled today'), findsOneWidget);
     expect(find.text('View Live Truck'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -139,9 +142,8 @@ void main() {
         route: 'Route A',
         wasteType: 'Recyclables'));
     await _mount(tester, HomeScreen(onNavigate: (_) {}));
-    final cards = tester
-        .widgetList<SundoInfoCard>(find.byType(SundoInfoCard))
-        .toList();
+    final cards =
+        tester.widgetList<SundoInfoCard>(find.byType(SundoInfoCard)).toList();
     expect(cards, hasLength(2));
     expect(cards.first.title, 'Today');
     expect(cards.first.subtitle, contains('Collection scheduled today'));
@@ -275,7 +277,8 @@ void main() {
                 truck: snapshot,
                 onViewMap: () {},
                 onDemoPreview: () => previewTaps++)),
-        mood: SundoTimeMood.fromInstant(now), width: 390);
+        mood: SundoTimeMood.fromInstant(now),
+        width: 390);
     await show(truck(simulated: true));
     expect(find.text('Truck is ON ROUTE'), findsOneWidget);
     expect(find.text('LIVE'), findsOneWidget);
@@ -305,6 +308,10 @@ void main() {
     await tester.tap(find.text('Watch truck demo'));
     expect(previewTaps, 1);
     await show(truck(simulated: true, preview: true));
+    final card =
+        tester.widget<SundoDashboardCard>(find.byType(SundoDashboardCard));
+    expect(card.decoration, SundoDashboardDecoration.none);
+    expect(card.scenery, isNull);
     expect(find.text('DEMO'), findsOneWidget);
     expect(find.text('LIVE'), findsNothing);
     await tester.tap(find.text('Stop truck demo'));
@@ -357,6 +364,44 @@ void main() {
     }
     await tester.pumpWidget(const SizedBox.shrink());
     semantics.dispose();
+  });
+
+  testWidgets('truck slides to the center of its progress dot', (tester) async {
+    for (final (width, scale) in [(390.0, 1.0), (320.0, 1.5)]) {
+      var stage = MapTrackingStage.notStarted;
+      late StateSetter update;
+      await _mount(
+        tester,
+        Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 34),
+            child: StatefulBuilder(builder: (context, setState) {
+              update = setState;
+              return SundoProgressTracker(
+                stage: stage,
+                truck: const SundoHomeTruckVideo(active: false),
+              );
+            }),
+          ),
+        ),
+        width: width,
+        scale: scale,
+      );
+      final truck = find.byType(SundoHomeTruckVideo);
+      double dot(MapTrackingStage value) =>
+          tester.getCenter(find.byKey(ValueKey(value))).dx;
+      expect(tester.getCenter(truck).dx, closeTo(dot(stage), .01));
+      for (final next in MapTrackingStage.values.skip(1)) {
+        final from = dot(stage);
+        update(() => stage = next);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 170));
+        expect(tester.getCenter(truck).dx, inExclusiveRange(from, dot(next)));
+        await tester.pump(const Duration(milliseconds: 170));
+        expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
+      }
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('Philippine greeting and sun icon follow separate clocks',

@@ -156,7 +156,7 @@ class _SundoDashboardEntranceState extends State<SundoDashboardEntrance>
   }
 }
 
-enum SundoDashboardDecoration { none, info, weather, route }
+enum SundoDashboardDecoration { none, info, weather }
 
 /// Cream/green clay surfaces use the existing SUNDO palette, with decorations
 /// clipped inside the card and painted behind its accessible real widgets.
@@ -560,7 +560,6 @@ class SundoLiveTruckCard extends StatelessWidget {
         : '${snapshot.simulated ? 'Simulated collection' : fresh ? 'Live city update' : 'Last known position'}${snapshot.route.name.isEmpty ? '' : ' · ${snapshot.route.name}'}';
     return SundoDashboardCard(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 16),
-        decoration: SundoDashboardDecoration.route,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Wrap(
               spacing: 9,
@@ -613,19 +612,11 @@ class SundoLiveTruckCard extends StatelessWidget {
                     fontSize: 10.5, height: 1.35, color: mood.mutedTextColor))
           ],
           const SizedBox(height: 1),
-          Align(
-              alignment: Alignment.centerRight,
-              child: SundoHomeTruckVideo(
+          SundoProgressTracker(
+              stage: snapshot?.stage ?? MapTrackingStage.notStarted,
+              available: available,
+              truck: SundoHomeTruckVideo(
                   active: isActive && available && snapshot.active)),
-          Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                  color: mood.surface.withValues(alpha: .93),
-                  borderRadius: BorderRadius.circular(19),
-                  border: Border.all(color: mood.surface)),
-              child: SundoProgressTracker(
-                  stage: snapshot?.stage ?? MapTrackingStage.notStarted,
-                  available: available)),
           const SizedBox(height: 11),
           _DashboardPrimaryButton(onPressed: onViewMap),
           if (onDemoPreview != null && (parked || preview))
@@ -646,101 +637,68 @@ class SundoLiveTruckCard extends StatelessWidget {
 class SundoProgressTracker extends StatelessWidget {
   final MapTrackingStage stage;
   final bool available;
+  final SundoHomeTruckVideo? truck;
   const SundoProgressTracker(
-      {super.key, required this.stage, this.available = true});
+      {super.key, required this.stage, this.available = true, this.truck});
 
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
-    return Semantics(
-        label: available
-            ? 'Collection status: ${mapStageLabel(stage)}'
-            : 'Collection status unavailable',
-        excludeSemantics: true,
-        child: LayoutBuilder(builder: (context, constraints) {
-          final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
-          if (constraints.maxWidth / scale < 235) {
-            return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 9),
-                child: Wrap(spacing: 13, runSpacing: 9, children: [
-                  for (final value in MapTrackingStage.values)
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.circle,
-                          size: 9,
-                          color: available && value.index <= stage.index
-                              ? mood.accent
-                              : mood.mutedTextColor.withValues(alpha: .35)),
-                      const SizedBox(width: 5),
-                      Text(mapStageLabel(value),
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: available && value == stage
-                                  ? mood.accent
-                                  : mood.mutedTextColor,
-                              fontWeight: available && value == stage
-                                  ? FontWeight.w800
-                                  : FontWeight.w500))
-                    ])
-                ]));
-          }
-          final fontSize = constraints.maxWidth < 280 ? 8.5 : 9.5;
-          // Longer labels receive more room, while each node stays centered
-          // above its own label at both regular and compact phone widths.
-          const columnWeights = [12, 10, 14, 9, 12];
-          return Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(children: [
-              for (var index = 0; index < 5; index++)
-                Expanded(
-                    flex: columnWeights[index],
-                    child: SizedBox(
-                        height: 14,
-                        child: Stack(alignment: Alignment.center, children: [
-                          Positioned.fill(
-                              child: Row(children: [
-                            Expanded(
-                                child: Container(
-                                    height: 3,
-                                    color: index == 0
-                                        ? Colors.transparent
-                                        : available && index <= stage.index
-                                            ? mood.accent
-                                            : mood.mutedTextColor
-                                                .withValues(alpha: .25))),
-                            Expanded(
-                                child: Container(
-                                    height: 3,
-                                    color: index == 4
-                                        ? Colors.transparent
-                                        : available && index < stage.index
-                                            ? mood.accent
-                                            : mood.mutedTextColor
-                                                .withValues(alpha: .25)))
-                          ])),
-                          Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: available && index <= stage.index
-                                      ? mood.accent
-                                      : mood.mutedTextColor
-                                          .withValues(alpha: .35),
-                                  border: Border.all(
-                                      color: mood.surface, width: 2)))
-                        ])))
-            ]),
-            const SizedBox(height: 6),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return LayoutBuilder(builder: (context, constraints) {
+      final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
+      const columnWeights = [12, 10, 14, 9, 12];
+      const totalWeight = 57;
+      const edgeDot = 6 / totalWeight;
+      final width = constraints.maxWidth;
+      // Keep the silhouette inside the card at the first and last stops.
+      final inset = truck == null
+          ? 0.0
+          : math.max(
+              0.0,
+              (math.min(30.0, width / 3) - width * edgeDot) /
+                  (1 - 2 * edgeDot));
+      final trackWidth = width - 2 * inset;
+      final wraps = trackWidth / scale < 235;
+      final compactLabels = trackWidth < 280;
+      final fontSize = compactLabels ? 8.5 : 9.5;
+      final stageIndex = available ? stage.index : 0;
+      final stageWeight = columnWeights
+              .take(stageIndex)
+              .fold<int>(0, (sum, weight) => sum + weight) +
+          columnWeights[stageIndex] / 2;
+      final dotX = inset + trackWidth * stageWeight / totalWeight;
+      final labels = wraps
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9),
+              child: Wrap(spacing: 13, runSpacing: 9, children: [
+                for (final value in MapTrackingStage.values)
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.circle,
+                        size: 9,
+                        color: available && value.index <= stage.index
+                            ? mood.accent
+                            : mood.mutedTextColor.withValues(alpha: .35)),
+                    const SizedBox(width: 5),
+                    Text(mapStageLabel(value),
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: available && value == stage
+                                ? mood.accent
+                                : mood.mutedTextColor,
+                            fontWeight: available && value == stage
+                                ? FontWeight.w800
+                                : FontWeight.w500))
+                  ])
+              ]))
+          : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               for (final value in MapTrackingStage.values)
                 Expanded(
                     flex: columnWeights[value.index],
                     child: Text(
                         switch (value) {
-                          MapTrackingStage.notStarted
-                              when constraints.maxWidth < 280 =>
+                          MapTrackingStage.notStarted when compactLabels =>
                             'Not\nStarted',
-                          MapTrackingStage.onRoute
-                              when constraints.maxWidth < 280 =>
+                          MapTrackingStage.onRoute when compactLabels =>
                             'On\nRoute',
                           _ => mapStageLabel(value)
                         },
@@ -755,9 +713,93 @@ class SundoProgressTracker extends StatelessWidget {
                             fontWeight: available && value == stage
                                 ? FontWeight.w800
                                 : FontWeight.w500)))
-            ])
-          ]);
-        }));
+            ]);
+      final dots = Row(children: [
+        for (var index = 0; index < 5; index++)
+          Expanded(
+              flex: columnWeights[index],
+              child: SizedBox(
+                  height: 14,
+                  child: Stack(alignment: Alignment.center, children: [
+                    Positioned.fill(
+                        child: Row(children: [
+                      Expanded(
+                          child: Container(
+                              height: 3,
+                              color: index == 0
+                                  ? Colors.transparent
+                                  : available && index <= stage.index
+                                      ? mood.accent
+                                      : mood.mutedTextColor
+                                          .withValues(alpha: .25))),
+                      Expanded(
+                          child: Container(
+                              height: 3,
+                              color: index == 4
+                                  ? Colors.transparent
+                                  : available && index < stage.index
+                                      ? mood.accent
+                                      : mood.mutedTextColor
+                                          .withValues(alpha: .25)))
+                    ])),
+                    Container(
+                        key: ValueKey(MapTrackingStage.values[index]),
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: available && index <= stage.index
+                                ? mood.accent
+                                : mood.mutedTextColor.withValues(alpha: .35),
+                            border: Border.all(color: mood.surface, width: 2)))
+                  ])))
+      ]);
+      final track = Semantics(
+        label: available
+            ? 'Collection status: ${mapStageLabel(stage)}'
+            : 'Collection status unavailable',
+        excludeSemantics: true,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: inset),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            if (!wraps || truck != null) ...[
+              dots,
+              const SizedBox(height: 6),
+            ],
+            labels,
+          ]),
+        ),
+      );
+      if (truck == null) return track;
+      return Column(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          height: SundoHomeTruckVideo.slotHeight,
+          width: width,
+          child: Stack(clipBehavior: Clip.none, children: [
+            AnimatedPositioned(
+              left: dotX - SundoHomeTruckVideo.slotWidth / 2,
+              width: SundoHomeTruckVideo.slotWidth,
+              top: 0,
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 340),
+              curve: Curves.easeInOutCubic,
+              child: truck!,
+            ),
+          ]),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+              color: mood.surface.withValues(alpha: .93),
+              borderRadius: BorderRadius.circular(19),
+              border: Border.all(color: mood.surface)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: track,
+          ),
+        ),
+      ]);
+    });
   }
 }
 
@@ -903,56 +945,6 @@ class _EcoDecorationPainter extends CustomPainter {
           const Size(27, 61), -.54 - wave * .025, green);
       _leaf(canvas, Offset(size.width * .93, size.height * 1.13),
           const Size(39, 84), -.34 + wave * .025, soft);
-    } else if (kind == SundoDashboardDecoration.route) {
-      final horizon = size.height * .44;
-      final building = Paint()
-        ..color = const Color(0xFF66C6A9).withValues(alpha: opacity * .7);
-      for (var i = 0; i < 5; i++) {
-        final left = size.width * (.57 + i * .066);
-        final height = 20.0 + (i % 3) * 9;
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(
-                Rect.fromLTWH(left, horizon - height, 18, height + 17),
-                const Radius.circular(2)),
-            building);
-        for (var y = 0; y < 2; y++) {
-          canvas.drawRect(
-              Rect.fromLTWH(left + 4, horizon - height + 6 + y * 9, 3, 4),
-              Paint()..color = Colors.white.withValues(alpha: .5));
-        }
-      }
-      final hills = Path()
-        ..moveTo(0, horizon + 38)
-        ..quadraticBezierTo(
-            size.width * .22, horizon - 20, size.width * .4, horizon + 29)
-        ..quadraticBezierTo(
-            size.width * .74, horizon - 17, size.width, horizon + 12)
-        ..lineTo(size.width, horizon + 66)
-        ..lineTo(0, horizon + 66)
-        ..close();
-      canvas.drawPath(hills, Paint()..color = soft);
-      final road = Path()
-        ..moveTo(size.width * .31, horizon + 62)
-        ..cubicTo(size.width * .65, horizon + 58, size.width * .96,
-            horizon + 54, size.width * .84, horizon + 20);
-      canvas.drawPath(
-          road,
-          Paint()
-            ..color = const Color(0xFF92A99A).withValues(alpha: opacity * .6)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 18);
-      canvas.drawPath(
-          road,
-          Paint()
-            ..color = Colors.white.withValues(alpha: opacity * 2)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5);
-      _cloud(canvas, Offset(size.width * .74 + wave * 5, horizon - 67), 45,
-          Colors.white.withValues(alpha: night ? .07 : .66));
-      _leaf(canvas, Offset(size.width * .99, horizon + 24), const Size(24, 70),
-          .32 + wave * .025, green);
-      _leaf(canvas, Offset(size.width * .11, horizon + 73), const Size(23, 63),
-          -.58 - wave * .025, green);
     }
     // A low-contrast rim highlight drifts across decoration only, below text.
     final highlight =
