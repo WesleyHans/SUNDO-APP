@@ -310,7 +310,7 @@ void main() {
     await show(truck(simulated: true, preview: true));
     final card =
         tester.widget<SundoDashboardCard>(find.byType(SundoDashboardCard));
-    expect(card.decoration, SundoDashboardDecoration.none);
+    expect(card.decoration, SundoDashboardDecoration.truckRoute);
     expect(card.scenery, isNull);
     expect(find.text('DEMO'), findsOneWidget);
     expect(find.text('LIVE'), findsNothing);
@@ -366,7 +366,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('the original still truck sits over the current progress dot',
+  testWidgets('the original truck and halo glide to the current progress dot',
       (tester) async {
     for (final (width, scale, reduceMotion) in [
       (390.0, 1.0, false),
@@ -401,20 +401,31 @@ void main() {
       double dot(MapTrackingStage value) =>
           tester.getCenter(find.byKey(ValueKey(value))).dx;
       final pulse = find.byKey(const ValueKey('active-progress-pulse'));
-      expect(pulse, findsNothing);
+      double pulseOpacity() => tester.widget<AnimatedOpacity>(pulse).opacity;
+      if (reduceMotion) {
+        expect(pulse, findsNothing);
+      } else {
+        expect(pulseOpacity(), 0);
+      }
       expect(tester.getCenter(truck).dx, closeTo(dot(stage), .01));
       for (final next in MapTrackingStage.values.skip(1)) {
+        final from = tester.getCenter(truck).dx;
         update(() => stage = next);
         await tester.pump();
         expect(truck, findsOneWidget);
-        expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
-        if (reduceMotion || next == MapTrackingStage.completed) {
+        if (reduceMotion) {
           expect(pulse, findsNothing);
+          expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
         } else {
-          expect(pulse, findsOneWidget);
+          expect(pulseOpacity(), next == MapTrackingStage.completed ? 0 : 1);
+          expect(tester.getCenter(truck).dx, closeTo(from, .01));
+          await tester.pump(const Duration(milliseconds: 200));
+          final halfway = tester.getCenter(truck).dx;
+          expect(halfway, inExclusiveRange(from, dot(next)));
+          expect(tester.getCenter(pulse).dx, closeTo(halfway, .01));
+          await tester.pump(const Duration(milliseconds: 200));
           expect(tester.getCenter(pulse).dx, closeTo(dot(next), .01));
         }
-        await tester.pump(const Duration(milliseconds: 260));
         expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
       }
     }
