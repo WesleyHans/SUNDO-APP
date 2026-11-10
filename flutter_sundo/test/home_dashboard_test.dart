@@ -368,7 +368,11 @@ void main() {
 
   testWidgets('the original still truck sits over the current progress dot',
       (tester) async {
-    for (final (width, scale) in [(390.0, 1.0), (320.0, 1.5)]) {
+    for (final (width, scale, reduceMotion) in [
+      (390.0, 1.0, false),
+      (320.0, 1.5, false),
+      (390.0, 1.0, true),
+    ]) {
       var stage = MapTrackingStage.notStarted;
       late StateSetter update;
       await _mount(
@@ -387,6 +391,7 @@ void main() {
         ),
         width: width,
         scale: scale,
+        reduceMotion: reduceMotion,
       );
       final truck = find.image(const AssetImage(sundoSideTruckAsset));
       expect(truck, findsOneWidget);
@@ -395,13 +400,21 @@ void main() {
           greaterThan(image.localToGlobal(Offset(image.size.width, 0)).dx));
       double dot(MapTrackingStage value) =>
           tester.getCenter(find.byKey(ValueKey(value))).dx;
+      final pulse = find.byKey(const ValueKey('active-progress-pulse'));
+      expect(pulse, findsNothing);
       expect(tester.getCenter(truck).dx, closeTo(dot(stage), .01));
       for (final next in MapTrackingStage.values.skip(1)) {
         update(() => stage = next);
         await tester.pump();
         expect(truck, findsOneWidget);
         expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
-        await tester.pump(const Duration(milliseconds: 170));
+        if (reduceMotion || next == MapTrackingStage.completed) {
+          expect(pulse, findsNothing);
+        } else {
+          expect(pulse, findsOneWidget);
+          expect(tester.getCenter(pulse).dx, closeTo(dot(next), .01));
+        }
+        await tester.pump(const Duration(milliseconds: 260));
         expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
       }
     }

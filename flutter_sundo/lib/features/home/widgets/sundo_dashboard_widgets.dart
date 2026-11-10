@@ -514,6 +514,8 @@ class SundoInfoCard extends StatelessWidget {
   }
 }
 
+const _trackingTransition = Duration(milliseconds: 260);
+
 class SundoLiveTruckCard extends StatelessWidget {
   final MapTruckSnapshot? truck;
   final VoidCallback onViewMap;
@@ -561,12 +563,21 @@ class SundoLiveTruckCard extends StatelessWidget {
               runSpacing: 7,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('Truck is $status',
-                    style: GoogleFonts.outfit(
-                        fontSize: 22,
-                        height: 1.1,
-                        color: mood.textColor,
-                        fontWeight: FontWeight.w800)),
+                AnimatedSwitcher(
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : _trackingTransition,
+                  switchInCurve: Curves.easeOutCubic,
+                  layoutBuilder: (current, _) =>
+                      current ?? const SizedBox.shrink(),
+                  child: Text('Truck is $status',
+                      key: ValueKey(status),
+                      style: GoogleFonts.outfit(
+                          fontSize: 22,
+                          height: 1.1,
+                          color: mood.textColor,
+                          fontWeight: FontWeight.w800)),
+                ),
                 if (available)
                   Semantics(
                       label: preview
@@ -641,6 +652,13 @@ class SundoProgressTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mood = SundoTimeScope.of(context);
+    final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final duration = reducedMotion ? Duration.zero : _trackingTransition;
+    final pulse = available &&
+        !reducedMotion &&
+        stage != MapTrackingStage.notStarted &&
+        stage != MapTrackingStage.completed;
+    final clock = SundoDashboardMotionScope.of(context);
     return LayoutBuilder(builder: (context, constraints) {
       final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
       const columnWeights = [12, 10, 14, 9, 12];
@@ -716,12 +734,14 @@ class SundoProgressTracker extends StatelessWidget {
           Expanded(
               flex: columnWeights[index],
               child: SizedBox(
-                  height: 14,
+                  height: 22,
                   child: Stack(alignment: Alignment.center, children: [
                     Positioned.fill(
                         child: Row(children: [
                       Expanded(
-                          child: Container(
+                          child: AnimatedContainer(
+                              duration: duration,
+                              curve: Curves.easeInOut,
                               height: 3,
                               color: index == 0
                                   ? Colors.transparent
@@ -730,7 +750,9 @@ class SundoProgressTracker extends StatelessWidget {
                                       : mood.mutedTextColor
                                           .withValues(alpha: .25))),
                       Expanded(
-                          child: Container(
+                          child: AnimatedContainer(
+                              duration: duration,
+                              curve: Curves.easeInOut,
                               height: 3,
                               color: index == 4
                                   ? Colors.transparent
@@ -739,8 +761,23 @@ class SundoProgressTracker extends StatelessWidget {
                                       : mood.mutedTextColor
                                           .withValues(alpha: .25)))
                     ])),
-                    Container(
+                    if (pulse && index == stageIndex)
+                      SizedBox.square(
+                        key: const ValueKey('active-progress-pulse'),
+                        dimension: 22,
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _LiveDotPainter(
+                                animation: clock,
+                                color: mood.accent,
+                                halo: true),
+                          ),
+                        ),
+                      ),
+                    AnimatedContainer(
                         key: ValueKey(MapTrackingStage.values[index]),
+                        duration: duration,
+                        curve: Curves.easeInOut,
                         width: 14,
                         height: 14,
                         decoration: BoxDecoration(
@@ -761,7 +798,7 @@ class SundoProgressTracker extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (!wraps || showTruck) ...[
               dots,
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
             ],
             labels,
           ]),
@@ -896,11 +933,21 @@ BoxDecoration _roundDecoration(SundoTimeMood mood, {bool green = false}) =>
 class _LiveDotPainter extends CustomPainter {
   final Animation<double> animation;
   final Color color;
-  _LiveDotPainter({required this.animation, required this.color})
+  final bool halo;
+  _LiveDotPainter(
+      {required this.animation, required this.color, this.halo = false})
       : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (halo) {
+      final breath = (1 - math.cos(animation.value * math.pi * 16)) / 2;
+      canvas.drawCircle(
+          size.center(Offset.zero),
+          size.shortestSide * (.35 + breath * .15),
+          Paint()..color = color.withValues(alpha: .16 + breath * .12));
+      return;
+    }
     final wave = math.sin(animation.value * math.pi * 6);
     canvas.drawCircle(
         size.center(Offset.zero),
@@ -910,7 +957,9 @@ class _LiveDotPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LiveDotPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.animation != animation;
+      oldDelegate.color != color ||
+      oldDelegate.animation != animation ||
+      oldDelegate.halo != halo;
 }
 
 class _EcoDecorationPainter extends CustomPainter {
