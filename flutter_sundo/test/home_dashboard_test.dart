@@ -12,12 +12,12 @@ import 'package:sundo_sipalay/core/theme/time_theme.dart';
 import 'package:sundo_sipalay/features/home/home_screen.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_card_scenery.dart';
 import 'package:sundo_sipalay/features/home/widgets/sundo_dashboard_widgets.dart';
-import 'package:sundo_sipalay/features/home/widgets/sundo_home_truck_video.dart';
 import 'package:sundo_sipalay/models/map_tracking.dart';
 import 'package:sundo_sipalay/repositories/schedule_repository.dart';
 import 'package:sundo_sipalay/repositories/weather_repository.dart';
 import 'package:sundo_sipalay/shared/widgets/resident_components.dart';
 import 'package:sundo_sipalay/shared/widgets/scenic_backdrop.dart';
+import 'package:sundo_sipalay/shared/widgets/sundo_graphics.dart';
 import 'package:sundo_sipalay/shared/widgets/time_based_background.dart';
 import 'package:sundo_sipalay/shared/widgets/weather_status_banner.dart';
 
@@ -366,7 +366,8 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('truck slides to the center of its progress dot', (tester) async {
+  testWidgets('the original still truck sits over the current progress dot',
+      (tester) async {
     for (final (width, scale) in [(390.0, 1.0), (320.0, 1.5)]) {
       var stage = MapTrackingStage.notStarted;
       late StateSetter update;
@@ -379,7 +380,7 @@ void main() {
               update = setState;
               return SundoProgressTracker(
                 stage: stage,
-                truck: const SundoHomeTruckVideo(active: true),
+                showTruck: true,
               );
             }),
           ),
@@ -387,23 +388,21 @@ void main() {
         width: width,
         scale: scale,
       );
-      final truck = find.byType(SundoHomeTruckVideo);
-      bool playsVideo() => tester.widget<SundoHomeTruckVideo>(truck).active;
+      final truck = find.image(const AssetImage(sundoSideTruckAsset));
+      expect(truck, findsOneWidget);
+      final image = tester.renderObject<RenderBox>(truck);
+      expect(image.localToGlobal(Offset.zero).dx,
+          greaterThan(image.localToGlobal(Offset(image.size.width, 0)).dx));
       double dot(MapTrackingStage value) =>
           tester.getCenter(find.byKey(ValueKey(value))).dx;
       expect(tester.getCenter(truck).dx, closeTo(dot(stage), .01));
-      expect(playsVideo(), isTrue);
       for (final next in MapTrackingStage.values.skip(1)) {
-        final from = dot(stage);
         update(() => stage = next);
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 170));
         expect(truck, findsOneWidget);
-        expect(playsVideo(), isFalse);
-        expect(tester.getCenter(truck).dx, inExclusiveRange(from, dot(next)));
+        expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
         await tester.pump(const Duration(milliseconds: 170));
         expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
-        expect(playsVideo(), isTrue);
       }
     }
     await tester.pumpWidget(const SizedBox.shrink());
