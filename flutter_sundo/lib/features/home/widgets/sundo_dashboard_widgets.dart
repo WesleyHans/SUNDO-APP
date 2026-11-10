@@ -156,7 +156,7 @@ class _SundoDashboardEntranceState extends State<SundoDashboardEntrance>
   }
 }
 
-enum SundoDashboardDecoration { none, info, weather }
+enum SundoDashboardDecoration { none, info, weather, truckRoute }
 
 /// Cream/green clay surfaces use the existing SUNDO palette, with decorations
 /// clipped inside the card and painted behind its accessible real widgets.
@@ -243,8 +243,12 @@ class SundoDashboardCard extends StatelessWidget {
                             child: RepaintBoundary(
                                 child: CustomPaint(
                                     painter: _EcoDecorationPainter(
-                                        animation: SundoDashboardMotionScope.of(
-                                            context),
+                                        animation: decoration ==
+                                                SundoDashboardDecoration
+                                                    .truckRoute
+                                            ? const AlwaysStoppedAnimation(0)
+                                            : SundoDashboardMotionScope.of(
+                                                context),
                                         kind: decoration,
                                         night: mood.isNight)))))),
               Padding(padding: padding, child: child)
@@ -514,7 +518,17 @@ class SundoInfoCard extends StatelessWidget {
   }
 }
 
-const _trackingTransition = Duration(milliseconds: 260);
+const _trackingTransition = Duration(milliseconds: 400);
+
+Widget _trackingTextTransition(Widget child, Animation<double> animation) =>
+    FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween(begin: const Offset(0, .15), end: Offset.zero)
+            .animate(animation),
+        child: child,
+      ),
+    );
 
 class SundoLiveTruckCard extends StatelessWidget {
   final MapTruckSnapshot? truck;
@@ -557,6 +571,7 @@ class SundoLiveTruckCard extends StatelessWidget {
         : '${snapshot.simulated ? 'Simulated collection' : fresh ? 'Live city update' : 'Last known position'}${snapshot.route.name.isEmpty ? '' : ' · ${snapshot.route.name}'}';
     return SundoDashboardCard(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 16),
+        decoration: SundoDashboardDecoration.truckRoute,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Wrap(
               spacing: 9,
@@ -568,6 +583,7 @@ class SundoLiveTruckCard extends StatelessWidget {
                       ? Duration.zero
                       : _trackingTransition,
                   switchInCurve: Curves.easeOutCubic,
+                  transitionBuilder: _trackingTextTransition,
                   layoutBuilder: (current, _) =>
                       current ?? const SizedBox.shrink(),
                   child: Text('Truck is $status',
@@ -608,9 +624,18 @@ class SundoLiveTruckCard extends StatelessWidget {
                           ])))
               ]),
           const SizedBox(height: 8),
-          Text(detail,
-              style: TextStyle(
-                  fontSize: 14, height: 1.3, color: mood.mutedTextColor)),
+          AnimatedSwitcher(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : _trackingTransition,
+            switchInCurve: Curves.easeOutCubic,
+            transitionBuilder: _trackingTextTransition,
+            layoutBuilder: (current, _) => current ?? const SizedBox.shrink(),
+            child: Text(detail,
+                key: ValueKey(detail),
+                style: TextStyle(
+                    fontSize: 14, height: 1.3, color: mood.mutedTextColor)),
+          ),
           if (source != null) ...[
             const SizedBox(height: 4),
             Text(source,
@@ -761,19 +786,6 @@ class SundoProgressTracker extends StatelessWidget {
                                       : mood.mutedTextColor
                                           .withValues(alpha: .25)))
                     ])),
-                    if (pulse && index == stageIndex)
-                      SizedBox.square(
-                        key: const ValueKey('active-progress-pulse'),
-                        dimension: 22,
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            painter: _LiveDotPainter(
-                                animation: clock,
-                                color: mood.accent,
-                                halo: true),
-                          ),
-                        ),
-                      ),
                     AnimatedContainer(
                         key: ValueKey(MapTrackingStage.values[index]),
                         duration: duration,
@@ -797,7 +809,37 @@ class SundoProgressTracker extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: inset),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (!wraps || showTruck) ...[
-              dots,
+              Stack(
+                children: [
+                  if (!reducedMotion)
+                    AnimatedPositioned(
+                      left: dotX - inset - 11,
+                      top: 0,
+                      duration: duration,
+                      curve: Curves.easeInOutCubic,
+                      child: AnimatedOpacity(
+                        key: const ValueKey('active-progress-pulse'),
+                        opacity: pulse ? 1 : 0,
+                        duration: duration,
+                        child: SizedBox.square(
+                          dimension: 22,
+                          child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: _LiveDotPainter(
+                                animation: pulse
+                                    ? clock
+                                    : const AlwaysStoppedAnimation(0),
+                                color: mood.accent,
+                                halo: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  dots,
+                ],
+              ),
               const SizedBox(height: 2),
             ],
             labels,
@@ -812,9 +854,11 @@ class SundoProgressTracker extends StatelessWidget {
           height: truckHeight,
           width: width,
           child: Stack(clipBehavior: Clip.none, children: [
-            Positioned(
+            AnimatedPositioned(
               left: dotX - truckWidth / 2,
               top: 0,
+              duration: duration,
+              curve: Curves.easeInOutCubic,
               child: Transform.flip(
                 flipX: true,
                 child: const SundoTruckGraphic(
@@ -972,6 +1016,10 @@ class _EcoDecorationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (kind == SundoDashboardDecoration.truckRoute) {
+      _truckRoute(canvas, size);
+      return;
+    }
     final wave = math.sin(animation.value * math.pi * 2);
     final opacity = night ? .10 : .22;
     final green = const Color(0xFF54B850).withValues(alpha: opacity);
@@ -1001,6 +1049,44 @@ class _EcoDecorationPainter extends CustomPainter {
         Paint()
           ..color = Colors.white.withValues(alpha: night ? .015 : .10)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9));
+  }
+
+  void _truckRoute(Canvas canvas, Size size) {
+    final width = size.width;
+    final height = size.height;
+    final tint = night ? const Color(0xFF9BDD9F) : const Color(0xFF3A9F66);
+    final stroke = Paint()
+      ..color = tint.withValues(alpha: night ? .14 : .12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    // Corner artwork keeps the track and truck silhouette visually clear.
+    canvas.drawPath(
+        Path()
+          ..moveTo(width * .66, 0)
+          ..cubicTo(width * .77, height * .04, width * .73, height * .11,
+              width * .87, height * .14)
+          ..quadraticBezierTo(width * .98, height * .16, width, height * .24)
+          ..lineTo(width, 0)
+          ..close(),
+        Paint()..color = tint.withValues(alpha: night ? .07 : .065));
+    for (final fraction in [0.0, .038, .076]) {
+      final offset = width * fraction;
+      canvas.drawPath(
+          Path()
+            ..moveTo(width * .69 + offset, -4)
+            ..cubicTo(width * .82 + offset, height * .04, width * .74 + offset,
+                height * .12, width * .86 + offset, height * .15)
+            ..quadraticBezierTo(width * .97 + offset, height * .17,
+                width * 1.02 + offset, height * .29),
+          stroke);
+    }
+    canvas.drawCircle(Offset(width * .86, height * .15), 3.5, stroke);
+
+    _leaf(canvas, Offset(0, height), const Size(22, 49), .54,
+        tint.withValues(alpha: night ? .13 : .11));
+    _leaf(canvas, Offset(width * .035, height), const Size(14, 31), .94,
+        tint.withValues(alpha: .16));
   }
 
   void _cloud(Canvas canvas, Offset origin, double width, Color color) {
