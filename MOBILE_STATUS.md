@@ -1,5 +1,16 @@
 # SUNDO mobile status
 
+## Version 1.5.19 stabilized Home truck
+
+The video loop keeps the truck body stable and preserves wheel motion from
+the supplied clip. One matching frame glides between dots and the video
+resumes at the new dot. The right-facing artwork and clean gradient remain.
+
+All 369 Flutter tests passed. The installer lint and build passed.
+The signed APK is **1.5.19+27** (com.sundo.sipalay), **136591888 bytes**.
+Its SHA-256 is 01a7d8d5f622fcbaff0c5f685cc8c08f77f58b2eb9230704d2001668212aaa61.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.18 Home truck follows the progress tracker
 
 The Home truck faces right in parked and moving states and slides above the
