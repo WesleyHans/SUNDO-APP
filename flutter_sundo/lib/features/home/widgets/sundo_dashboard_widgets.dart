@@ -776,15 +776,20 @@ class SundoProgressTracker extends StatelessWidget {
           height: SundoHomeTruckVideo.slotHeight,
           width: width,
           child: Stack(clipBehavior: Clip.none, children: [
-            AnimatedPositioned(
-              left: dotX - SundoHomeTruckVideo.slotWidth / 2,
-              width: SundoHomeTruckVideo.slotWidth,
-              top: 0,
+            TweenAnimationBuilder<double>(
+              tween: Tween(end: dotX),
               duration: MediaQuery.disableAnimationsOf(context)
                   ? Duration.zero
                   : const Duration(milliseconds: 340),
               curve: Curves.easeInOutCubic,
-              child: truck!,
+              builder: (context, x, _) => Positioned(
+                left: x - SundoHomeTruckVideo.slotWidth / 2,
+                width: SundoHomeTruckVideo.slotWidth,
+                top: 0,
+                // Move one rasterized truck while the video texture is paused.
+                child: SundoHomeTruckVideo(
+                    active: truck!.active && (x - dotX).abs() < .01),
+              ),
             ),
           ]),
         ),

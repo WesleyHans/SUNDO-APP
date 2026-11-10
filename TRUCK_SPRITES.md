@@ -28,12 +28,11 @@ assets are unchanged. The old artwork's rim masks are not applied to new views.
 The Home tracking card plays `assets/images/sundo-home-truck-loop.mp4`, a muted
 local video made from the supplied four-second truck clip. It is cropped to fit
 the existing card slot and encoded at 352 × 176, 30 fps. The three-second loop
-joins closely matched source frames so each frame shows a single truck. The
-parked artwork is the first frame of the video. Both use the same frame size
-and silhouette clip to expose the card scenery around the truck. The parked
-frame is also used when playback
-is unavailable or reduced motion is enabled. Truck status, distance, and ETA
-come from the tracking source.
+keeps the truck body fixed and uses motion from the supplied clip inside the
+wheel hubs. The matching first frame travels between progress dots and is used
+when parked, playback is unavailable, or reduced motion is enabled. A shared
+silhouette clip reveals the card gradient around the truck. Truck status,
+distance, and ETA come from the tracking source.
 
 `scripts/inspect-truck-directions.mjs` checks alpha, records silhouette bounds,
 and measures the blue windshield / yellow compactor direction for calibration.

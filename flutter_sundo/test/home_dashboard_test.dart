@@ -379,7 +379,7 @@ void main() {
               update = setState;
               return SundoProgressTracker(
                 stage: stage,
-                truck: const SundoHomeTruckVideo(active: false),
+                truck: const SundoHomeTruckVideo(active: true),
               );
             }),
           ),
@@ -388,17 +388,22 @@ void main() {
         scale: scale,
       );
       final truck = find.byType(SundoHomeTruckVideo);
+      bool playsVideo() => tester.widget<SundoHomeTruckVideo>(truck).active;
       double dot(MapTrackingStage value) =>
           tester.getCenter(find.byKey(ValueKey(value))).dx;
       expect(tester.getCenter(truck).dx, closeTo(dot(stage), .01));
+      expect(playsVideo(), isTrue);
       for (final next in MapTrackingStage.values.skip(1)) {
         final from = dot(stage);
         update(() => stage = next);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 170));
+        expect(truck, findsOneWidget);
+        expect(playsVideo(), isFalse);
         expect(tester.getCenter(truck).dx, inExclusiveRange(from, dot(next)));
         await tester.pump(const Duration(milliseconds: 170));
         expect(tester.getCenter(truck).dx, closeTo(dot(next), .01));
+        expect(playsVideo(), isTrue);
       }
     }
     await tester.pumpWidget(const SizedBox.shrink());
