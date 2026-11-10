@@ -98,6 +98,13 @@ void main() {
       expect(tester.getSize(find.byKey(const ValueKey('truck-video-view'))),
           const Size(104, 52));
       final videoFrame = tester.getRect(find.byType(ClipPath));
+      void expectFacingRight() {
+        final frame = tester.renderObject<RenderBox>(find.byType(ClipPath));
+        expect(frame.localToGlobal(Offset.zero).dx,
+            greaterThan(frame.localToGlobal(Offset(frame.size.width, 0)).dx));
+      }
+
+      expectFacingRight();
       final clip = tester.widget<ClipPath>(find.byType(ClipPath)).clipper!;
       final silhouette = clip.getClip(videoFrame.size);
       expect(silhouette.contains(const Offset(1, 1)), isFalse);
@@ -118,6 +125,7 @@ void main() {
       expect(player.playing, isFalse);
       expect(find.image(parkedAsset), findsOneWidget);
       expect(tester.getRect(find.image(parkedAsset)), videoFrame);
+      expectFacingRight();
       expect(
           tester.widget<ClipPath>(find.byType(ClipPath)).clipper, same(clip));
     } finally {
