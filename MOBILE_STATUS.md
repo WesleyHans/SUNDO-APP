@@ -1,5 +1,16 @@
 # SUNDO mobile status
 
+## Version 1.5.21 animated Home status and progress dots
+
+Home fades in the new truck status and eases progress line and dot color
+changes. The active On Route, Approaching, or Nearby dot pulses gently.
+The original truck artwork stays still. The effects respect reduced motion.
+
+All 368 Flutter tests passed. The installer lint and build passed.
+The signed APK is **1.5.21+29** (com.sundo.sipalay), **135371064 bytes**.
+Its SHA-256 is 925c2e6fb53f60be29c98acf3787863f31c7636ac34d4ea9f12210eac6c94279.
+The published GitHub download matched the signed APK.
+
 ## Version 1.5.20 original still Home truck
 
 The Home card uses the original transparent side-view truck artwork, facing
